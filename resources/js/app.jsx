@@ -1,5 +1,7 @@
 import React from "react"
+import './app' 
 import { createRoot } from "react-dom/client"
+import "../css/app.css";
 
 // Example component
 function Hello({ name }) {
