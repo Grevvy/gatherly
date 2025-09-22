@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Gatherly - Register</title>
-    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
+    @vite(['resources/js/app.jsx'])
 </head>
 
 <body

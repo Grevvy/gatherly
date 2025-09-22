@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
-  @vite(['resources/css/app.css','resources/js/app.jsx'])
+  @vite(['resources/js/app.jsx'])
 </head>
 <body class="bg-gray-100 min-h-screen">
   <header class="bg-white shadow">
