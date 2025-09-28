@@ -25,4 +25,6 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/events', fn() => view('events'))->name('events');
+    Route::get('/communities', fn() => view('communities'))->name('communities');
 });
