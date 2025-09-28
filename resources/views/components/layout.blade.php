@@ -30,7 +30,7 @@
                     class="block px-3 py-2 rounded hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
                     Feed
                 </a>
-                <a href="{{ route('events') }}" class="block px-3 py-2 rounded hover:bg-gray-100">Events</a>
+                <a href="{{ route('events') }}" class="block px-3 py-2 rounded hover:bg-gray-100 {{ request()->routeIs('events') ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">Events</a>
                 <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100">
                     Messages
                     <span class="ml-1 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">0</span>
@@ -79,7 +79,7 @@
                     class="py-2 {{ request()->routeIs('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                     Feed
                 </a>
-                <a href="{{ route('events') }}" class="py-2 text-gray-600 hover:text-gray-800">Events</a>
+                <a href="{{ route('events') }}" class="py-2 {{ request()->routeIs('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Events</a>
                 <a href="#" class="py-2 text-gray-600 hover:text-gray-800">Members</a>
                 <a href="#" class="py-2 text-gray-600 hover:text-gray-800"> Photo Gallery</a>
                 <!-- Eventually settings tab for creator/mod? -->
