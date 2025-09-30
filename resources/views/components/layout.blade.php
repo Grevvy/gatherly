@@ -23,28 +23,22 @@
                     class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring focus:ring-blue-300">
             </div>
 
-            <!-- Nav -->
-            <nav class="space-y-2 mb-6">
-                <!-- Eventually Dashboard in sidebar for creator/moderator -->
-                <a href="{{ route('dashboard') }}"
-                    class="block px-3 py-2 rounded hover:bg-gray-100 {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 font-medium' : '' }}">
-                    Feed
-                </a>
-                <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100">Events</a>
-                <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100">
-                    Messages
-                    <span class="ml-1 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">0</span>
-                </a>
-                <a href="#" class="block px-3 py-2 rounded hover:bg-gray-100">Members</a>
-            </nav>
-
             <!-- My Communities -->
             <div class="mb-6">
-                <h3 class="text-sm font-semibold text-gray-500 mb-2">MY COMMUNITIES</h3>
-                <div class="space-y-2">
-                    {{-- Add communities dynamically here later --}}
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-semibold text-gray-500">MY COMMUNITIES</h3>
+                    <!-- Add Community Button -->
+                    <button id="add-community-btn"
+                        class="flex items-center justify-center w-6 h-6 text-blue-600 text-sm font-medium hover:text-blue-800 rounded-full border border-blue-600">
+                        +
+                    </button>
+                </div>
+
+                <div id="community-list" class="space-y-2">
+                    {{-- Existing communities injected here --}}
                 </div>
             </div>
+
 
             <!-- User Profile + Logout -->
             <div class="mt-auto border-t pt-4">
@@ -79,10 +73,24 @@
                     class="py-2 {{ request()->routeIs('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                     Feed
                 </a>
-                <a href="#" class="py-2 text-gray-600 hover:text-gray-800">Events</a>
-                <a href="#" class="py-2 text-gray-600 hover:text-gray-800">Members</a>
-                <a href="#" class="py-2 text-gray-600 hover:text-gray-800"> Photo Gallery</a>
-                <!-- Eventually settings tab for creator/mod? -->
+                <a href="/events"
+                    class="py-2 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Events
+                </a>
+                <a href="#"
+                    class="py-2 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Messages
+                    <span class="ml-1 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">0</span>
+                </a>
+                <a href="#"
+                    class="py-2 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Members
+                </a>
+                <a href="#"
+                    class="py-2 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Photo Gallery
+                </a>
+                <!-- Later: Dashboard / Settings for creator & moderator -->
             </div>
 
             <!-- Page Content Slot -->
