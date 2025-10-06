@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('name', 120);
             $table->string('slug', 140)->unique(); // for clean URLs
             $table->text('description')->nullable();
+            $table->string('banner_image')->nullable();
 
             // Visibility: public => visible & joinable per policy,
             // private => visible but members-only content,

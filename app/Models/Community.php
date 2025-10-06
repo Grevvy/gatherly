@@ -17,6 +17,7 @@ class Community extends Model
         'visibility',   // 'public' | 'private' | 'hidden'
         'join_policy',  // 'open' | 'request' | 'invite'
         'owner_id',
+        'banner_image',
     ];
 
     protected $casts = [
