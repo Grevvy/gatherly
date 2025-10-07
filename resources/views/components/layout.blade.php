@@ -26,7 +26,8 @@
                     value="{{ request('search') }}" autocomplete="off" />
 
                 <!-- Live search dropdown -->
-                <div id="search-dropdown" class="hidden absolute left-0 mt-1 w-full bg-white border shadow-lg z-50 rounded-md overflow-hidden">
+                <div id="search-dropdown"
+                    class="hidden absolute left-0 mt-1 w-full bg-white border shadow-lg z-50 rounded-md overflow-hidden">
                     <div id="search-results" class="divide-y divide-gray-100 max-h-64 overflow-y-auto"></div>
                     <div id="search-empty" class="p-2 text-sm text-gray-500 hidden">No communities found.</div>
                 </div>
@@ -44,7 +45,7 @@
 
                 <div id="community-list" class="space-y-1">
                     @if (!empty($communities) && count($communities) > 0)
-                        <ul class="space-y-1">
+                        <ul class="space-y-1 list-none">
                             @foreach ($communities as $c)
                                 @php $active = request('community') === $c->slug; @endphp
                                 <li class="community-item">
@@ -318,7 +319,7 @@
 
                             // Create new community item
                             const li = document.createElement('li');
-                            li.className = 'community-item';
+                            li.className = 'community-item list-none';
                             li.innerHTML = `
                     <a href="/dashboard?community=${result.slug}" class="block px-2 py-1 rounded transition hover:bg-blue-50 text-gray-800">
                         <span class="font-medium text-sm">${result.name}</span>
@@ -377,7 +378,12 @@
                 }
 
                 try {
-                    const resp = await fetch(`/communities/search?q=${encodeURIComponent(q)}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                    const resp = await fetch(`/communities/search?q=${encodeURIComponent(q)}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    });
                     if (!resp.ok) throw new Error('Search failed');
                     const data = await resp.json();
 
@@ -398,16 +404,21 @@
                         if (c.membership) {
                             const status = c.membership.status;
                             if (status === 'active') {
-                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-200 text-gray-500" disabled>Joined</button>`;
+                                btnHtml =
+                                    `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-200 text-gray-500" disabled>Joined</button>`;
                             } else if (status === 'pending') {
-                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-100 text-gray-500" disabled>Request sent</button>`;
+                                btnHtml =
+                                    `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-100 text-gray-500" disabled>Request sent</button>`;
                             } else if (status === 'banned') {
-                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-red-200 text-red-700" disabled>Banned</button>`;
+                                btnHtml =
+                                    `<button class="btn-state text-xs px-2 py-1 rounded bg-red-200 text-red-700" disabled>Banned</button>`;
                             } else {
-                                btnHtml = `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
+                                btnHtml =
+                                    `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
                             }
                         } else {
-                            btnHtml = `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
+                            btnHtml =
+                                `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
                         }
 
                         item.innerHTML = `
@@ -478,7 +489,8 @@
                         if (list) {
                             const li = document.createElement('li');
                             li.className = 'community-item';
-                            li.innerHTML = `<a href="/dashboard?community=${slug}" class="block px-2 py-1 transition hover:bg-blue-50 text-gray-800"><span class="font-medium text-sm">${escapeHtml(btn.closest('div').querySelector('.font-medium')?.textContent || '')}</span></a>`;
+                            li.innerHTML =
+                                `<a href="/dashboard?community=${slug}" class="block px-2 py-1 transition hover:bg-blue-50 text-gray-800"><span class="font-medium text-sm">${escapeHtml(btn.closest('div').querySelector('.font-medium')?.textContent || '')}</span></a>`;
                             list.appendChild(li);
                         }
 
@@ -502,7 +514,8 @@
 
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
-                if (!document.getElementById('search-dropdown')?.contains(e.target) && e.target !== searchBox) {
+                if (!document.getElementById('search-dropdown')?.contains(e.target) && e.target !==
+                    searchBox) {
                     dropdown.classList.add('hidden');
                 }
             });
@@ -574,4 +587,6 @@
             });
         }
     </script>
+</body>
 
+</html>
