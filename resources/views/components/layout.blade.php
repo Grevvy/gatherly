@@ -391,15 +391,37 @@
                     data.forEach(c => {
                         const item = document.createElement('div');
                         item.className = 'flex items-center justify-between p-2 hover:bg-gray-50';
+
+                        // Decide button state based on membership
+                        let btnHtml = '';
+                        if (c.membership) {
+                            const status = c.membership.status;
+                            if (status === 'active') {
+                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-200 text-gray-500" disabled>Joined</button>`;
+                            } else if (status === 'pending') {
+                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-gray-100 text-gray-500" disabled>Request sent</button>`;
+                            } else if (status === 'banned') {
+                                btnHtml = `<button class="btn-state text-xs px-2 py-1 rounded bg-red-200 text-red-700" disabled>Banned</button>`;
+                            } else {
+                                btnHtml = `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
+                            }
+                        } else {
+                            btnHtml = `<button class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded" data-slug="${c.slug}">Join</button>`;
+                        }
+
                         item.innerHTML = `
                             <div class="flex-1 pr-2">
                                 <div class="font-medium text-sm">${escapeHtml(c.name)}</div>
                                 <div class="text-xs text-gray-500 truncate">${escapeHtml(c.description || '')}</div>
                             </div>
                             <div class="flex-shrink-0">
-                                <button data-slug="${c.slug}" class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded">Join</button>
+                                ${btnHtml}
                             </div>
                         `;
+
+                        // Slightly fade the whole item if membership exists
+                        if (c.membership) item.classList.add('opacity-70');
+
                         results.appendChild(item);
                     });
 

@@ -37,19 +37,39 @@ class CommunityController extends Controller
         // If debug=1 is provided, return broader results for troubleshooting
         $isDebug = $request->boolean('debug');
 
+        // Return communities that are public OR that the current user already belongs to.
         $q = Community::query()
-            ->when(!$isDebug, fn($qq) => $qq->where('visibility', 'public'))
+            ->when(!$isDebug, function ($qq) use ($uid) {
+                $qq->where(function ($q2) use ($uid) {
+                    $q2->where('visibility', 'public')
+                        ->orWhereHas('memberships', fn($m) => $m->where('user_id', $uid));
+                });
+            })
             ->when($request->filled('q'), function ($qq) use ($request) {
                 $term = '%'.strtolower($request->q).'%';
                 $qq->whereRaw('LOWER(name) LIKE ?', [$term]);
             })
-            ->when(!$isDebug, fn($qq) => $qq->whereDoesntHave('memberships', fn($m) => $m->where('user_id', $uid)))
+            // eager-load the current user's membership (if any)
+            ->with(['memberships' => fn($m) => $m->where('user_id', $uid)])
             ->withCount('memberships')
             ->orderBy('memberships_count', 'desc')
             ->limit(7)
             ->get(['id','name','slug','description']);
 
-        return response()->json($q);
+        // Map to include a single membership object (role, status) if present
+        $results = $q->map(function ($c) {
+            $m = $c->memberships->first();
+            return [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'description' => $c->description,
+                'memberships_count' => $c->memberships_count ?? 0,
+                'membership' => $m ? ['role' => $m->role, 'status' => $m->status] : null,
+            ];
+        });
+
+        return response()->json($results);
     }
 
     public function store(Request $request)
