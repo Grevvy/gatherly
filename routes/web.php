@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
 
     // Events
     Route::get('/events/list', [\App\Http\Controllers\EventController::class, 'index']);
+    Route::get('/events/calendar', [\App\Http\Controllers\EventController::class, 'calendar']);
     Route::post('/events', [\App\Http\Controllers\EventController::class, 'store']);
     Route::get('/events/{event}', [\App\Http\Controllers\EventController::class, 'show']);
     Route::patch('/events/{event}', [\App\Http\Controllers\EventController::class, 'update']);

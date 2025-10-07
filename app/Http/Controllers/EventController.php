@@ -7,6 +7,7 @@ use App\Models\EventAttendee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class EventController extends Controller
 {
@@ -55,6 +56,59 @@ class EventController extends Controller
             ->orderBy('starts_at', 'asc');
 
         return response()->json($q->paginate(12));
+    }
+
+    /**
+     * Calendar feed: return events overlapping a given date range.
+     * Accepts ?start=YYYY-MM-DD&end=YYYY-MM-DD and optional &community=ID
+     */
+    public function calendar(Request $request)
+    {
+        $start = $request->query('start');
+        $end = $request->query('end');
+
+        // If not provided, default to current month's range
+        try {
+            $startDt = $start ? Carbon::parse($start)->startOfDay() : Carbon::now()->startOfMonth();
+            $endDt = $end ? Carbon::parse($end)->endOfDay() : Carbon::now()->endOfMonth();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Invalid start or end date'], 422);
+        }
+
+        $q = Event::query()
+            ->where('status', 'published')
+            ->when($request->filled('community'), fn($qq) => $qq->where('community_id', $request->community))
+            ->where(function ($qq) use ($startDt, $endDt) {
+                $qq->where(function ($q2) use ($startDt, $endDt) {
+                    $q2->whereNotNull('ends_at')
+                        ->where('ends_at', '>=', $startDt)
+                        ->where('starts_at', '<=', $endDt);
+                })->orWhere(function ($q2) use ($startDt, $endDt) {
+                    $q2->whereNull('ends_at')
+                        ->whereBetween('starts_at', [$startDt, $endDt]);
+                });
+            })
+            ->with(['community:id,slug,name'])
+            ->withCount(['attendees as accepted_count' => function ($q) {
+                $q->where('status', 'accepted');
+            }])
+            ->orderBy('starts_at');
+
+        $events = $q->get()->map(function ($e) {
+            return [
+                'id' => $e->id,
+                'title' => $e->title,
+                'starts_at' => $e->starts_at?->toIso8601String(),
+                'ends_at' => $e->ends_at?->toIso8601String(),
+                'allDay' => false,
+                'status' => $e->status,
+                'capacity' => $e->capacity,
+                'accepted_count' => $e->accepted_count ?? 0,
+                'community' => $e->community ? $e->community->only(['id','slug','name']) : null,
+            ];
+        });
+
+        return response()->json($events);
     }
 
     public function show(Event $event)
