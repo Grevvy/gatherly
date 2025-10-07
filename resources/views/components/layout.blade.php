@@ -20,10 +20,16 @@
             <div class="text-2xl font-bold text-blue-600 mb-6">Gatherly</div>
 
             <!-- Search -->
-            <div class="mb-6">
+            <div class="mb-6 relative">
                 <input id="search-box" type="text" placeholder="Search communities..."
                     class="w-full px-3 py-2 border text-sm focus:outline-none focus:ring focus:ring-blue-300"
-                    value="{{ request('search') }}" />
+                    value="{{ request('search') }}" autocomplete="off" />
+
+                <!-- Live search dropdown -->
+                <div id="search-dropdown" class="hidden absolute left-0 mt-1 w-full bg-white border shadow-lg z-50 rounded-md overflow-hidden">
+                    <div id="search-results" class="divide-y divide-gray-100 max-h-64 overflow-y-auto"></div>
+                    <div id="search-empty" class="p-2 text-sm text-gray-500 hidden">No communities found.</div>
+                </div>
             </div>
 
             <!-- My Communities -->
@@ -353,6 +359,129 @@
                     noCom.textContent = "No communities found.";
                     communityList?.after(noCom);
                 } else if (noCom && visibleCount > 0) noCom.remove();
+            });
+
+            // Live global search dropdown for public communities (joinable)
+            const dropdown = document.getElementById('search-dropdown');
+            const results = document.getElementById('search-results');
+            const empty = document.getElementById('search-empty');
+            let searchTimer = null;
+
+            async function fetchSearch(q) {
+                if (!q || q.trim().length === 0) {
+                    dropdown.classList.add('hidden');
+                    results.innerHTML = '';
+                    empty.classList.add('hidden');
+                    return;
+                }
+
+                try {
+                    const resp = await fetch(`/communities/search?q=${encodeURIComponent(q)}`, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+                    if (!resp.ok) throw new Error('Search failed');
+                    const data = await resp.json();
+
+                    results.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        empty.classList.remove('hidden');
+                        dropdown.classList.remove('hidden');
+                        return;
+                    }
+
+                    empty.classList.add('hidden');
+                    data.forEach(c => {
+                        const item = document.createElement('div');
+                        item.className = 'flex items-center justify-between p-2 hover:bg-gray-50';
+                        item.innerHTML = `
+                            <div class="flex-1 pr-2">
+                                <div class="font-medium text-sm">${escapeHtml(c.name)}</div>
+                                <div class="text-xs text-gray-500 truncate">${escapeHtml(c.description || '')}</div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <button data-slug="${c.slug}" class="join-btn bg-blue-500 text-white text-xs px-2 py-1 rounded">Join</button>
+                            </div>
+                        `;
+                        results.appendChild(item);
+                    });
+
+                    dropdown.classList.remove('hidden');
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+
+            function escapeHtml(s) {
+                return String(s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            searchBox?.addEventListener('input', (e) => {
+                clearTimeout(searchTimer);
+                const q = e.target.value;
+                searchTimer = setTimeout(() => fetchSearch(q), 200);
+            });
+
+            // Click to join from results
+            document.addEventListener('click', async (e) => {
+                const btn = e.target.closest && e.target.closest('.join-btn');
+                if (!btn) return;
+                const slug = btn.dataset.slug;
+                btn.disabled = true;
+                btn.textContent = 'Joining...';
+
+                try {
+                    const token = '{{ csrf_token() }}';
+                    const res = await fetch(`/communities/${slug}/join`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({})
+                    });
+
+                    if (res.ok) {
+                        btn.textContent = 'Joined';
+                        btn.classList.remove('bg-blue-500');
+                        btn.classList.add('bg-green-500');
+
+                        // Optionally add to side list
+                        const list = document.getElementById('community-list');
+                        if (list) {
+                            const li = document.createElement('li');
+                            li.className = 'community-item';
+                            li.innerHTML = `<a href="/dashboard?community=${slug}" class="block px-2 py-1 transition hover:bg-blue-50 text-gray-800"><span class="font-medium text-sm">${escapeHtml(btn.closest('div').querySelector('.font-medium')?.textContent || '')}</span></a>`;
+                            list.appendChild(li);
+                        }
+
+                        // Hide dropdown after join
+                        setTimeout(() => {
+                            dropdown.classList.add('hidden');
+                        }, 500);
+                    } else {
+                        const data = await res.json().catch(() => ({}));
+                        alert(data.message || 'Failed to join community');
+                        btn.disabled = false;
+                        btn.textContent = 'Join';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Something went wrong');
+                    btn.disabled = false;
+                    btn.textContent = 'Join';
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('search-dropdown')?.contains(e.target) && e.target !== searchBox) {
+                    dropdown.classList.add('hidden');
+                }
             });
 
             // Delete community like rate form: normal submit for redirect

@@ -8,18 +8,48 @@ use App\Models\CommunityMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class CommunityController extends Controller
 {
     public function index(Request $request)
     {
         $q = Community::query()
-            ->when($request->filled('q'), fn($qq) => $qq->where('name', 'ILIKE', '%'.$request->q.'%'))
+            ->when($request->filled('q'), function ($qq) use ($request) {
+                $term = '%'.strtolower($request->q).'%';
+                $qq->whereRaw('LOWER(name) LIKE ?', [$term]);
+            })
             ->when($request->filled('visibility'), fn($qq) => $qq->where('visibility', $request->visibility))
-            ->when($request->boolean('mine'), fn($qq) => $qq->whereHas('memberships', fn($m) => $m->where('user_id', auth()->id())))
+            ->when($request->boolean('mine'), fn($qq) => $qq->whereHas('memberships', fn($m) => $m->where('user_id', Auth::id())))
             ->latest();
 
         return response()->json($q->paginate(12));
+    }
+
+    /**
+     * Search public communities for the sidebar dropdown.
+     * Returns a small list of public communities the current user is not a member of.
+     */
+    public function search(Request $request)
+    {
+    $uid = Auth::id();
+
+        // If debug=1 is provided, return broader results for troubleshooting
+        $isDebug = $request->boolean('debug');
+
+        $q = Community::query()
+            ->when(!$isDebug, fn($qq) => $qq->where('visibility', 'public'))
+            ->when($request->filled('q'), function ($qq) use ($request) {
+                $term = '%'.strtolower($request->q).'%';
+                $qq->whereRaw('LOWER(name) LIKE ?', [$term]);
+            })
+            ->when(!$isDebug, fn($qq) => $qq->whereDoesntHave('memberships', fn($m) => $m->where('user_id', $uid)))
+            ->withCount('memberships')
+            ->orderBy('memberships_count', 'desc')
+            ->limit(7)
+            ->get(['id','name','slug','description']);
+
+        return response()->json($q);
     }
 
     public function store(Request $request)
@@ -32,7 +62,7 @@ class CommunityController extends Controller
             'join_policy'  => ['nullable','in:open,request,invite'],
         ]);
 
-        $data['owner_id']   = auth()->id();
+    $data['owner_id']   = Auth::id();
         $data['visibility'] = $data['visibility'] ?? 'public';
         $data['join_policy'] = $data['join_policy'] ?? 'open';
 
@@ -103,7 +133,7 @@ class CommunityController extends Controller
 
     private function authorizeOwnerOrAdmin(Community $community): void
     {
-        $uid = auth()->id();
+    $uid = Auth::id();
         $isOwner = $community->owner_id === $uid;
         $isAdmin = $community->memberships()
             ->where('user_id', $uid)

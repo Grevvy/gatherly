@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     })->name('community.edit');
 
     // Communities
+    Route::get('/communities/search', [CommunityController::class, 'search']);
     Route::get('/communities', [CommunityController::class, 'index']);
     Route::post('/communities', [CommunityController::class, 'store']);
     Route::get('/communities/{community:slug}', [CommunityController::class, 'show']);
