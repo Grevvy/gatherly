@@ -44,6 +44,9 @@ Route::middleware('auth')->group(function () {
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');
+    Route::get('/community-edit', function () {
+        return view('community-edit');
+    })->name('community.edit');
 
     // Communities
     Route::get('/communities', [CommunityController::class, 'index']);

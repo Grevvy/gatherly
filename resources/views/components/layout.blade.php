@@ -1,3 +1,8 @@
+@props([
+    'title' => null,
+    'community' => null,
+    'communities' => [],
+])
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,9 +14,7 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
-
     <div class="flex flex-1">
-
         <!-- Sidebar -->
         <aside class="w-72 bg-white shadow-lg p-4 flex flex-col">
             <div class="text-2xl font-bold text-blue-600 mb-6">Gatherly</div>
@@ -33,29 +36,15 @@
                     </button>
                 </div>
 
-                @php
-                    use App\Models\Community;
-                    use Illuminate\Support\Facades\Auth;
-
-                    $communities = [];
-                    if (Auth::check()) {
-                        $communities = Community::whereHas('members', function ($query) {
-                            $query->where('user_id', Auth::id());
-                        })->get();
-                    }
-                @endphp
-
                 @if (!empty($communities) && count($communities) > 0)
                     <ul id="community-list" class="space-y-1">
-                        @foreach ($communities as $community)
-                            @php $active = request('community') === $community->slug; @endphp
+                        @foreach ($communities as $c)
+                            @php $active = request('community') === $c->slug; @endphp
                             <li class="community-item">
-                                <a href="/dashboard?community={{ $community->slug }}"
-                                    class="block px-2 py-1 rounded transition {{ $active ? 'bg-blue-100 text-blue-600 font-medium' : 'hover:bg-blue-50 text-gray-800' }}">
-                                    <span class="font-medium text-sm">{{ $community->name }}</span>
-                                    <span class="text-xs text-gray-400 block">
-                                        {{ ucfirst($community->visibility) }}
-                                    </span>
+                                <a href="/dashboard?community={{ $c->slug }}"
+                                    class="block px-2 py-1 transition {{ $active ? 'bg-blue-100 text-blue-600 font-medium' : 'hover:bg-blue-50 text-gray-800' }}">
+                                    <span class="font-medium text-sm">{{ $c->name }}</span>
+                                    <span class="text-xs text-gray-400 block">{{ ucfirst($c->visibility) }}</span>
                                 </a>
                             </li>
                         @endforeach
@@ -68,64 +57,50 @@
 
         <!-- Main Dashboard -->
         <main class="flex-1 flex flex-col bg-gray-50">
-            <!-- Top Tabs + Right Controls -->
-            <div class="flex items-center justify-between bg-white border-b px-6">
+            <!-- Top Tabs -->
+            <div class="flex items-center justify-between bg-white border-b px-6 relative">
                 <div class="flex space-x-6">
                     <a href="/dashboard"
-                        class="py-3 {{ request()->routeIs('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Feed
-                    </a>
+                        class="py-3 {{ request()->routeIs('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Feed</a>
                     <a href="/events"
-                        class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Events
-                    </a>
+                        class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Events</a>
                     <a href="/messages"
-                        class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Messages
-                        <span class="ml-1 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">0</span>
-                    </a>
+                        class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Messages</a>
                     <a href="/members"
-                        class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Members
-                    </a>
+                        class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Members</a>
                     <a href="/gallery"
-                        class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Photo Gallery
-                    </a>
-
-                    @if (in_array(auth()->user()->role, ['owner', 'admin', 'moderator']))
-                        <a href="#"
-                            class="py-3 {{ request()->is('dashboard-extra') ? 'border-b-2 border-indigo-600 text-indigo-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                            Dashboard
-                        </a>
-                    @endif
-
+                        class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Photo
+                        Gallery</a>
                 </div>
 
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center gap-4">
+                    <!-- Notification Bell -->
                     <div class="relative">
-                        <button id="notif-btn" class="relative p-2 text-gray-600 hover:text-gray-800">
-                            <i data-lucide="bell" class="w-5 h-5"></i>
-                            <span id="notif-badge"
-                                class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full"></span>
+                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2">
+                            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
                         </button>
+
                         <div id="notif-dropdown"
-                            class="hidden absolute right-0 mt-2 w-64 bg-white border shadow-lg z-50 rounded-md overflow-hidden">
-                            <div class="p-4 text-sm text-gray-500 text-center">No notifications</div>
+                            class="hidden absolute right-0 mt-0.99 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
+                            <div class="p-3 text-sm text-gray-700 border-b font-semibold">Notifications</div>
+                            <div class="max-h-60 overflow-y-auto divide-y divide-gray-100">
+                                <div class="p-3 text-sm text-gray-500 text-center">No notifications</div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- User Menu -->
                     <div class="relative">
                         <button id="user-menu-btn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
                             <div
-                                class="w-11 h-11 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 2)) }}
+                                class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, length: 1)) }}
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
                         </button>
 
                         <div id="user-menu-dropdown"
-                            class="hidden absolute right-0 mt-2 w-56 bg-white border shadow-lg z-50 rounded-md overflow-hidden divide-y divide-gray-100">
+                            class="hidden absolute right-0 mt-0 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
                             <div class="p-3">
                                 <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
@@ -142,9 +117,63 @@
                 </div>
             </div>
 
+
+            <!-- Community Banner -->
+            @if ($community)
+                <div class="relative w-full max-w-6xl h-60 overflow-hidden mx-auto community-banner-container">
+                    <!-- Banner Image -->
+                    <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
+                        alt="Community Banner" class="w-full h-full object-cover">
+
+                    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+
+                    <!-- Banner Content -->
+                    <div class="absolute bottom-4 left-4 flex items-start justify-between w-[95%] text-white">
+                        <div>
+                            <h2 class="text-2xl font-bold">{{ $community->name }}</h2>
+                            <p class="text-gray-200 text-sm">{{ $community->description ?? '' }}</p>
+
+                            <div class="flex gap-6 text-sm mt-2 text-gray-200 ml-auto">
+                                <span>{{ $community->memberships->count() }} members</span>
+                                <span>{{ $community->memberships->where('status', 'active')->count() }} active</span>
+                                <span>Owner: {{ $community->owner->name ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+
+                        @php
+                            $userId = auth()->id();
+                            $isOwner = $community->owner_id === $userId;
+                            $isAdmin = $community->memberships->contains(
+                                fn($m) => $m->user_id === $userId && $m->role === 'admin' && $m->status === 'active',
+                            );
+                        @endphp
+
+                        @if ($isOwner || $isAdmin)
+                            <div class="absolute bottom-0 right-1 flex gap-2">
+                                <a href="/community-edit?community={{ $community->slug }}"
+                                    class="inline-flex items-center justify-center bg-gray-800/50 text-white px-2 py-1.5 rounded-full text-[10px] font-medium shadow-sm hover:bg-gray-900/40 transition-all duration-150">
+                                    Edit Community
+                                </a>
+
+                                <form class="delete-community-form" data-slug="{{ $community->slug }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="inline-flex items-center justify-center bg-red-800/50 text-white px-2 py-1.5 rounded-full text-[10px] font-medium shadow-sm hover:bg-red-900/40 transition-all duration-150">
+                                        Delete Community
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+
+
+                    </div>
+                </div>
+            @endif
+
             <!-- Page Content -->
             <div class="flex-1 p-6">
-                {{ $slot ?? '' }}
+                {{ $slot }}
             </div>
         </main>
     </div>
@@ -152,7 +181,7 @@
     <!-- Community Modal -->
     <div id="community-modal"
         class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 w-96 shadow-lg">
+        <div class="bg-white p-6 w-96 shadow-lg">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-semibold">Community</h2>
                 <button onclick="toggleModal()" class="text-gray-500 hover:text-gray-700">✕</button>
@@ -167,45 +196,93 @@
                 <form id="create-community-form">
                     @csrf
                     <label class="block text-sm font-semibold mb-1">Community Name</label>
-                    <input type="text" name="name" required class="w-full p-2 border rounded mb-3" />
+                    <input type="text" name="name" required class="w-full p-2 border mb-3" />
 
                     <label class="block text-sm font-semibold mb-1">Description</label>
-                    <textarea name="description" rows="3" class="w-full p-2 border rounded mb-3"></textarea>
+                    <textarea name="description" rows="3" class="w-full p-2 border mb-3"></textarea>
+
+                    <label class="block text-sm font-semibold mb-1">Banner Image</label>
+                    <div class="mb-3">
+                        <input id="banner-upload" type="file" name="banner_image" accept="image/*"
+                            class="w-full p-2 border mb-2">
+                        <div id="banner-preview-container" class="hidden">
+                            <p class="text-xs text-gray-500 mb-1">Preview:</p>
+                            <img id="banner-preview" src="" alt="Banner Preview"
+                                class="w-full h-32 object-cover border border-gray-200 shadow-sm">
+                        </div>
+                    </div>
+
 
                     <label class="block text-sm font-semibold mb-1">Visibility</label>
-                    <select name="visibility" class="w-full p-2 border rounded mb-3">
+                    <select name="visibility" class="w-full p-2 border mb-3">
                         <option value="public">Public</option>
                         <option value="private">Private</option>
                         <option value="hidden">Hidden</option>
                     </select>
 
                     <label class="block text-sm font-semibold mb-1">Join Policy</label>
-                    <select name="join_policy" class="w-full p-2 border rounded mb-3">
+                    <select name="join_policy" class="w-full p-2 border mb-3">
                         <option value="open">Open</option>
                         <option value="request">Request</option>
                         <option value="invite">Invite Only</option>
                     </select>
 
-                    <button type="submit" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700">
+                    <button type="submit" class="bg-blue-500 text-white w-full py-2 hover:bg-blue-600">
                         Create Community
                     </button>
                 </form>
             </div>
         </div>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Lucide icons
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
-            const toggleDropdown = (btnId, menuId) => {
-                document.getElementById(btnId)?.addEventListener("click", () => {
-                    document.getElementById(menuId)?.classList.toggle("hidden");
+            const setupDropdown = (btnId, menuId) => {
+                const btn = document.getElementById(btnId);
+                const menu = document.getElementById(menuId);
+                let isLockedOpen = false; // track click-to-stay state
+
+                if (!btn || !menu) return;
+
+                // Toggle on click (lock open)
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    isLockedOpen = !isLockedOpen;
+                    menu.classList.toggle("hidden", !isLockedOpen);
+                });
+
+                // Show on hover (only if not locked open)
+                btn.addEventListener("mouseenter", () => {
+                    if (!isLockedOpen) menu.classList.remove("hidden");
+                });
+                btn.addEventListener("mouseleave", () => {
+                    if (!isLockedOpen) menu.classList.add("hidden");
+                });
+
+                // Also handle hovering over the menu itself
+                menu.addEventListener("mouseenter", () => {
+                    if (!isLockedOpen) menu.classList.remove("hidden");
+                });
+                menu.addEventListener("mouseleave", () => {
+                    if (!isLockedOpen) menu.classList.add("hidden");
+                });
+
+                // Close if clicked outside
+                document.addEventListener("click", (e) => {
+                    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                        menu.classList.add("hidden");
+                        isLockedOpen = false;
+                    }
                 });
             };
-            toggleDropdown("notif-btn", "notif-dropdown");
-            toggleDropdown("user-menu-btn", "user-menu-dropdown");
 
-            // Community Create Form
+            setupDropdown("notif-btn", "notif-dropdown");
+            setupDropdown("user-menu-btn", "user-menu-dropdown");
+
+            // Create Community
             const form = document.getElementById('create-community-form');
             form?.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -217,42 +294,32 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': token,
-                            'Accept': 'application/json',
+                            'Accept': 'application/json'
                         },
-                        body: data,
+                        body: data
                     });
                     const result = await res.json();
                     if (res.ok) {
-                        // Remove alert
                         form.reset();
                         toggleModal();
 
                         const list = document.getElementById('community-list');
                         if (list) {
-                            const li = document.createElement('li');
-                            li.className = 'community-item';
-
-                            const a = document.createElement('a');
-                            a.href = `/dashboard?community=${result.slug}`;
-                            a.className = 'block px-2 py-1 rounded hover:bg-blue-50 text-gray-800';
-
-                            const spanName = document.createElement('span');
-                            spanName.className = 'font-medium text-sm';
-                            spanName.textContent = result.name;
-
-                            const spanVis = document.createElement('span');
-                            spanVis.className = 'text-xs text-gray-400 block';
-                            spanVis.textContent = result.visibility.charAt(0).toUpperCase() + result
-                                .visibility.slice(1);
-
-                            a.appendChild(spanName);
-                            a.appendChild(spanVis);
-                            li.appendChild(a);
-                            list.appendChild(li);
-
-                            // Remove "No communities" message if present
+                            // Remove "No communities" if exists
                             const noCom = document.getElementById('no-communities');
                             if (noCom) noCom.remove();
+
+                            // Create new community item
+                            const li = document.createElement('li');
+                            li.className = 'community-item';
+                            li.innerHTML = `
+                    <a href="/dashboard?community=${result.slug}" class="block px-2 py-1 rounded transition hover:bg-blue-50 text-gray-800">
+                        <span class="font-medium text-sm">${result.name}</span>
+                        <span class="text-xs text-gray-400 block">${result.visibility.charAt(0).toUpperCase() + result.visibility.slice(1)}</span>
+                    </a>
+                `;
+                            list.appendChild(li);
+
                         }
                     } else {
                         alert(result.message || 'Failed to create community');
@@ -263,26 +330,21 @@
                 }
             });
 
-            // search in sidebar
+
+            // Sidebar search
             const searchBox = document.getElementById("search-box");
             const communityList = document.getElementById("community-list");
             const communityItems = communityList?.querySelectorAll(".community-item");
-
             searchBox?.addEventListener("input", () => {
-                const term = searchBox.value.toLowerCase().trim();
-
                 let visibleCount = 0;
                 communityItems?.forEach(item => {
-                    const name = item.textContent.toLowerCase();
-                    if (name.includes(term)) {
+                    if (item.textContent.toLowerCase().includes(searchBox.value.toLowerCase()
+                            .trim())) {
                         item.style.display = "";
                         visibleCount++;
-                    } else {
-                        item.style.display = "none";
-                    }
+                    } else item.style.display = "none";
                 });
 
-                // Show/hide "No communities" message
                 let noCom = document.getElementById("no-communities");
                 if (!noCom && visibleCount === 0) {
                     noCom = document.createElement("p");
@@ -290,21 +352,75 @@
                     noCom.className = "text-gray-500 text-sm";
                     noCom.textContent = "No communities found.";
                     communityList?.after(noCom);
-                } else if (noCom && visibleCount > 0) {
-                    noCom.remove();
-                }
+                } else if (noCom && visibleCount > 0) noCom.remove();
+            });
+
+            // Delete community like rate form: normal submit for redirect
+            // Handle community delete and redirect manually
+            document.querySelectorAll('.delete-community-form').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (!confirm('Are you sure you want to delete this community?')) return;
+
+                    const slug = form.dataset.slug;
+
+                    try {
+                        const res = await fetch(`/communities/${slug}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            // Redirect to dashboard after successful delete
+                            window.location.href = '/dashboard';
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            alert(data.message || 'Failed to delete community.');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert('Something went wrong deleting this community.');
+                    }
+                });
             });
 
         });
 
+        // Modal toggle
         function toggleModal() {
-            document.getElementById('community-modal').classList.toggle('hidden');
+            document.getElementById('community-modal')?.classList.toggle('hidden');
         }
 
+        // Tab switch
         function switchTab(tab) {
-            document.getElementById('tab-create').classList.add('hidden');
+            document.getElementById('tab-create')?.classList.add('hidden');
             document.getElementById('tab-join')?.classList.add('hidden');
-            document.getElementById(tab).classList.remove('hidden');
+            document.getElementById(tab)?.classList.remove('hidden');
+        }
+
+        // === Image Preview ===
+        const bannerInput = document.getElementById('banner-upload');
+        const bannerPreviewContainer = document.getElementById('banner-preview-container');
+        const bannerPreview = document.getElementById('banner-preview');
+
+        if (bannerInput) {
+            bannerInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        bannerPreview.src = event.target.result;
+                        bannerPreviewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    bannerPreviewContainer.classList.add('hidden');
+                    bannerPreview.src = '';
+                }
+            });
         }
     </script>
 
