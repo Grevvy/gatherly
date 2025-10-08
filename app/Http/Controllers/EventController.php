@@ -211,6 +211,27 @@ class EventController extends Controller
             'status' => ['sometimes','in:draft,published,cancelled'],
         ]);
 
+        // If attempting to set status to published, ensure user has rights (site admin or community owner/admin/moderator)
+        if (isset($data['status']) && $data['status'] === 'published') {
+            $user = Auth::user();
+            if (! ($user?->isSiteAdmin())) {
+                // if community event, check membership role
+                if ($event->community_id) {
+                    $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
+                        ->where('user_id', Auth::id())
+                        ->whereIn('role', ['owner','admin','moderator'])
+                        ->where('status', 'active')
+                        ->exists();
+                    if (! $isAdmin) {
+                        return response()->json(['message' => 'Insufficient permissions to publish event'], 403);
+                    }
+                } else {
+                    // Non-community events can only be published by site admins
+                    return response()->json(['message' => 'Insufficient permissions to publish event'], 403);
+                }
+            }
+        }
+
         $event->update($data);
         return response()->json($event->fresh());
     }
