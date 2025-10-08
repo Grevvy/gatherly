@@ -64,6 +64,17 @@
     $btnSecondary = $btnBase . ' bg-gray-300 hover:bg-gray-400 text-sm';
     // full-width primary (for forms)
     $btnPrimaryFull = $btnPrimary . ' w-full py-2';
+    // Can the current user publish events in this community? Site admins or community owner/admin/moderator
+    $canPublish = false;
+    if (auth()->check() && auth()->user()->isSiteAdmin()) {
+        $canPublish = true;
+    } elseif ($community && auth()->check()) {
+        $canPublish = \App\Models\CommunityMembership::where('community_id', $community->id)
+            ->where('user_id', auth()->id())
+            ->whereIn('role', ['owner','admin','moderator'])
+            ->where('status', 'active')
+            ->exists();
+    }
 @endphp
 <x-layout :community="$community" :communities="$communities">
     <div class="bg-gray-50 min-h-screen">
@@ -164,6 +175,8 @@
                                             <button onclick="approveEvent({{ $event->id }}, this)" class="ml-2 {{ $btnPrimary }}">Approve</button>
                                         @endif
 
+                                        <button onclick="editEvent({{ $event->id }})" class="ml-2 {{ $btnBorder }}">Edit</button>
+
                                         <button onclick="deleteEvent({{ $event->id }}, this)"
                                             class="ml-2 {{ $btnDanger }}">Delete</button>
                                     @endif
@@ -231,6 +244,8 @@
                                             <button onclick="approveEvent({{ $event->id }}, this)" class="ml-2 {{ $btnPrimary }}">Approve</button>
                                         @endif
 
+                                        <button onclick="editEvent({{ $event->id }})" class="ml-2 {{ $btnBorder }}">Edit</button>
+
                                         <button onclick="deleteEvent({{ $event->id }}, this)"
                                             class="ml-2 {{ $btnDanger }}">Delete</button>
                                     @endif
@@ -244,7 +259,7 @@
     <div id="event-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 w-96 shadow-lg rounded-lg">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Create Event</h2>
+                <h2 id="event-modal-title" class="text-lg font-semibold">Create Event</h2>
                 <button onclick="toggleEventModal()" class="text-gray-500 hover:text-gray-700 {{ $btnBorder }}">✕</button>
             </div>
             <form id="create-event-form"> @csrf <label class="block text-sm font-semibold mb-1">Event Title</label>
@@ -261,10 +276,13 @@
                     class="w-full p-2 border mb-3">
                     <option value="public">Public</option>
                     <option value="private">Private</option>
-                </select> <label class="block text-sm font-semibold mb-1">Status</label> <select name="status"
-                    class="w-full p-2 border mb-3">
+                </select>
+                <label class="block text-sm font-semibold mb-1">Status</label>
+                <select name="status" class="w-full p-2 border mb-3">
                     <option value="draft">Draft</option>
-                    <option value="published">Published</option>
+                    @if ($canPublish)
+                        <option value="published">Published</option>
+                    @endif
                     <option value="cancelled">Cancelled</option>
                 </select>
                 <button type="submit" class="{{ $btnPrimaryFull }}">Create Event</button>
@@ -292,6 +310,7 @@
         const btnDanger = @json($btnDanger);
         const btnSecondary = @json($btnSecondary);
         const btnPrimaryFull = @json($btnPrimaryFull);
+    const canPublish = @json($canPublish);
 
         // Tabs switching
         const calendarTab = document.getElementById('calendar-tab');
@@ -420,7 +439,21 @@
         const openEventBtn = document.getElementById('open-event-form');
 
         function toggleEventModal() {
-            eventModal.classList.toggle('hidden');
+            const wasHidden = eventModal.classList.contains('hidden');
+            if (wasHidden) {
+                eventModal.classList.remove('hidden');
+                return;
+            }
+            // closing modal - clear editing state and reset form
+            eventModal.classList.add('hidden');
+            if (form) {
+                delete form.dataset.editingId;
+                form.reset();
+                const titleEl = document.getElementById('event-modal-title');
+                if (titleEl) titleEl.textContent = 'Create Event';
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.textContent = 'Create Event';
+            }
         }
 
         openEventBtn.addEventListener('click', toggleEventModal);
@@ -428,71 +461,64 @@
             if (e.target === eventModal) toggleEventModal();
         });
 
-        // Event creation form
+        // Event creation / edit form
         const form = document.getElementById('create-event-form');
         form.addEventListener('submit', async e => {
             e.preventDefault();
+            const isEditing = !!form.dataset.editingId;
             const formData = new FormData(form);
             formData.append('community_id', '{{ $community?->id ?? '' }}');
 
             try {
-                const res = await fetch('/events', {
-                    method: 'POST',
+                const url = isEditing ? `/events/${form.dataset.editingId}` : '/events';
+                const opts = {
+                    method: isEditing ? 'PATCH' : 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
                     },
                     body: formData
-                });
+                };
+
+                const res = await fetch(url, opts);
 
                 if (!res.ok) throw new Error('Failed');
                 const event = await res.json();
 
-                // Add to Upcoming list
-                const container = document.getElementById('upcoming-view');
-                const startTime = new Date(event.starts_at).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                const endTime = event.ends_at ? new Date(event.ends_at).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }) : '';
-                const div = document.createElement('div');
-                div.className = 'border border-gray-200 rounded p-4 shadow-sm hover:shadow transition';
-                div.innerHTML = `
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h4 class="text-lg font-semibold text-gray-900">${event.title}</h4>
-                        <p class="text-sm text-gray-600">${event.description || ''}</p>
-                        <p class="text-xs text-gray-500">Hosted by ${event.owner?.name || 'Community'}</p>
-                    </div>
-                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded capitalize">${event.status}</span>
-                </div>
-                <div class="flex flex-wrap gap-6 text-sm text-gray-500 mb-3">
-                    <span>📅 ${new Date(event.starts_at).toLocaleDateString()}</span>
-                    <span>⏰ ${startTime} - ${endTime}</span>
-                    <span>📍 ${event.location || ''}</span>
-                </div>
-                <div class="flex justify-end gap-2 text-sm">
-                    <button onclick="showEventDetails(${event.id})" class="${btnBorder}">View Details</button>
-                    <button onclick="sendRSVP(${event.id}, 'accepted', this)" class="${btnPrimary}">RSVP</button>
-                </div>
-            `;
-                container.prepend(div);
-
-                // Add to calendar and re-render
-                events.push(event);
-                renderCalendar();
-
-                toggleEventModal();
-                form.reset();
+                // simple fallback: reload to reflect changes
+                window.location.reload();
             } catch (err) {
                 console.error(err);
-                alert('Failed to create event.');
+                alert('Failed to save event.');
             }
         });
+
+        async function editEvent(eventId) {
+            try {
+                const res = await fetch(`/events/${eventId}`);
+                if (!res.ok) throw new Error('Failed to fetch event');
+                const event = await res.json();
+                // fill form fields
+                form.title.value = event.title || '';
+                form.description.value = event.description || '';
+                form.location.value = event.location || '';
+                if (form.starts_at) form.starts_at.value = event.starts_at ? event.starts_at.replace(' ', 'T') : '';
+                if (form.ends_at) form.ends_at.value = event.ends_at ? event.ends_at.replace(' ', 'T') : '';
+                if (form.capacity) form.capacity.value = event.capacity || '';
+                if (form.visibility) form.visibility.value = event.visibility || 'public';
+                if (form.status) form.status.value = event.status || 'draft';
+
+                form.dataset.editingId = event.id;
+                const titleEl = document.getElementById('event-modal-title');
+                if (titleEl) titleEl.textContent = 'Edit Event';
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.textContent = 'Save Changes';
+                // open modal
+                if (eventModal.classList.contains('hidden')) toggleEventModal();
+            } catch (e) {
+                console.error(e);
+                alert('Failed to load event for editing.');
+            }
+        }
 
         async function sendRSVP(eventId, status, button) {
             button.disabled = true;
