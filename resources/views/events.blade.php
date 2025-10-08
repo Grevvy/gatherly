@@ -440,10 +440,7 @@
                     <h3 class="font-semibold">Attendees (${event.attendees?.length || 0}/${event.capacity || '∞'})</h3>
                     ${event.attendees?.length ? `<ul>${event.attendees.map(a => `<li>${a.user?.name || 'Unknown'}</li>`).join('')}</ul>` : '<p>No attendees yet.</p>'}
                 </div>
-                <div class="pt-6 flex justify-end space-x-2">
-                    <button onclick="sendRSVP(${event.id}, 'accepted', this)" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">RSVP Yes</button>
-                    <button onclick="sendRSVP(${event.id}, 'declined', this)" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Decline</button>
-                </div>
+            
             `;
             } catch {
                 content.innerHTML = `<p class="text-red-600 text-center">Error loading event.</p>`;
