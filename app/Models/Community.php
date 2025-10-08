@@ -50,6 +50,12 @@ class Community extends Model
             ->withTimestamps();
     }
 
+    // Community has many events
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
+
     // Helpers
     public function scopePublic($q)
     {

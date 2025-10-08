@@ -45,4 +45,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    // Helper: whether the user is a site admin (global)
+    public function isSiteAdmin(): bool
+    {
+        return (bool) ($this->is_site_admin ?? false);
+    }
 }

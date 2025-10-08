@@ -69,20 +69,55 @@
             <!-- Top Tabs -->
             <div class="flex items-center justify-between bg-white border-b px-6 relative">
                 <div class="flex space-x-6">
-                    <a href="/dashboard"
-                        class="py-3 {{ request()->routeIs('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Feed</a>
-                    <a href="/events"
-                        class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Events</a>
-                    <a href="/messages"
-                        class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Messages</a>
-                    <a href="/members"
-                        class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Members</a>
-                    <a href="/gallery"
-                        class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">Photo
-                        Gallery</a>
+                    @php $slug = request('community'); @endphp
+
+                    <a href="/dashboard{{ $slug ? '?community=' . $slug : '' }}"
+                        class="py-3 {{ request()->is('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        Feed
+                    </a>
+
+                    <a href="/events{{ $slug ? '?community=' . $slug : '' }}"
+                        class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        Events
+                    </a>
+
+                    <a href="/messages{{ $slug ? '?community=' . $slug : '' }}"
+                        class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        Messages
+                    </a>
+
+                    <a href="/members{{ $slug ? '?community=' . $slug : '' }}"
+                        class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        Members
+                    </a>
+
+                    <a href="/gallery{{ $slug ? '?community=' . $slug : '' }}"
+                        class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        Photo Gallery
+                    </a>
+
                 </div>
 
                 <div class="flex items-center gap-4">
+
+                    <!-- Calendar Icon -->
+                    <div class="relative mt-2">
+                        @php
+                            $slug = request('community');
+                        @endphp
+
+                        @if ($slug)
+                            <a href="{{ route('events', parameters: ['community' => $slug]) }}"
+                                class="p-2 hover:bg-gray-100 block">
+                                <i data-lucide="calendar" class="w-5 h-5 text-gray-600"></i>
+                            </a>
+                        @else
+                            <span class="p-2 block text-gray-400 cursor-not-allowed" title="Select a community first">
+                                <i data-lucide="calendar" class="w-5 h-5"></i>
+                            </span>
+                        @endif
+                    </div>
+
                     <!-- Notification Bell -->
                     <div class="relative">
                         <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2">

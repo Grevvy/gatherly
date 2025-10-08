@@ -8,12 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\CommunityMembershipController;
 
-// routes/web.php (top-level, no auth)
-Route::get('/csrf-token', function () {
-    return response()->json(['token' => csrf_token()]);
-});
-
-
+// routes/web.php
 // ------------------
 // Guest routes
 // ------------------
@@ -66,5 +61,21 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community:slug}/role', [CommunityMembershipController::class, 'setRole']);
     Route::post('/communities/{community:slug}/ban', [CommunityMembershipController::class, 'ban']);
     Route::delete('/communities/{community:slug}/members/{userId}', [CommunityMembershipController::class, 'remove']);
+
+    // Events
+    Route::get('/events/list', [\App\Http\Controllers\EventController::class, 'index']);
+    Route::get('/events/calendar', [\App\Http\Controllers\EventController::class, 'calendar']);
+    Route::post('/events', [\App\Http\Controllers\EventController::class, 'store']);
+    Route::get('/events/{event}', [\App\Http\Controllers\EventController::class, 'show']);
+    Route::patch('/events/{event}', [\App\Http\Controllers\EventController::class, 'update']);
+    Route::delete('/events/{event}', [\App\Http\Controllers\EventController::class, 'destroy']);
+
+    // Approve draft events (community owner/admin/moderator, event owner/host)
+    Route::post('/events/{event}/approve', [\App\Http\Controllers\EventController::class, 'approve']);
+
+    // RSVP
+    Route::post('/events/{event}/rsvp', [\App\Http\Controllers\EventController::class, 'rsvp']);
+    // Check-in
+    Route::post('/events/{event}/attendees/{attendee}/checkin', [\App\Http\Controllers\EventController::class, 'checkin']);
 });
 
