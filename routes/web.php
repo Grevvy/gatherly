@@ -70,6 +70,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/events/{event}', [\App\Http\Controllers\EventController::class, 'update']);
     Route::delete('/events/{event}', [\App\Http\Controllers\EventController::class, 'destroy']);
 
+    // Approve draft events (community owner/admin/moderator, event owner/host)
+    Route::post('/events/{event}/approve', [\App\Http\Controllers\EventController::class, 'approve']);
+
     // RSVP
     Route::post('/events/{event}/rsvp', [\App\Http\Controllers\EventController::class, 'rsvp']);
     // Check-in

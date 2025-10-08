@@ -32,7 +32,7 @@ class EventController extends Controller
         if ($event->community_id) {
             $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
                 ->where('user_id', $uid)
-                ->whereIn('role', ['owner','admin'])
+                ->whereIn('role', ['owner','admin','moderator'])
                 ->where('status', 'active')
                 ->exists();
             if ($isAdmin) return;
@@ -113,7 +113,42 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
-        return response()->json($event->load(['owner:id,name','community:id,slug,name','attendees']));
+        // If event is a draft, only allow viewing by the event owner/host or community owner/admin/moderator
+        if ($event->status === 'draft') {
+            $uid = Auth::id();
+
+            // Event owner
+            if ($event->owner_id === $uid) {
+                return response()->json($event->load(['owner:id,name','community:id,slug,name','attendees.user']));
+            }
+
+            // Event host
+            $isHost = EventAttendee::where('event_id', $event->id)
+                ->where('user_id', $uid)
+                ->where('role', 'host')
+                ->exists();
+            if ($isHost) {
+                return response()->json($event->load(['owner:id,name','community:id,slug,name','attendees.user']));
+            }
+
+            // Community admin/owner/moderator
+            if ($event->community_id) {
+                $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
+                    ->where('user_id', $uid)
+                    ->whereIn('role', ['owner','admin','moderator'])
+                    ->where('status', 'active')
+                    ->exists();
+                if ($isAdmin) {
+                    return response()->json($event->load(['owner:id,name','community:id,slug,name','attendees.user']));
+                }
+            }
+
+            // Not allowed to view drafts
+            abort(404);
+        }
+
+        // Published (or otherwise viewable) events
+        return response()->json($event->load(['owner:id,name','community:id,slug,name','attendees.user']));
     }
 
     public function store(Request $request)
@@ -132,10 +167,32 @@ class EventController extends Controller
 
         $data['owner_id'] = Auth::id();
         $data['visibility'] = $data['visibility'] ?? 'public';
+        // Default to draft
         $data['status'] = $data['status'] ?? 'draft';
 
+        // If this event is for a community, enforce membership rules:
+        // - user must be a member of the community to create an event
+        // - only community owners/admins may publish directly; regular members' events
+        //   will be created as 'draft' and require approval to publish (notifications are future work)
+        if (!empty($data['community_id'])) {
+            $membership = \App\Models\CommunityMembership::where('community_id', $data['community_id'])
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (! $membership) {
+                return response()->json(['message' => 'You must be a member of this community to create events'], 403);
+            }
+
+            $canPublishRoles = ['owner', 'admin', 'moderator'];
+            if (! in_array($membership->role, $canPublishRoles)) {
+                // Regular members cannot publish directly; force to draft
+                $data['status'] = 'draft';
+            }
+        }
+
         $event = Event::create($data);
-        return response()->json($event, 201);
+        // Return with owner relation so front-end can display Hosted by <name>
+        return response()->json($event->load(['owner:id,name']), 201);
     }
 
     public function update(Request $request, Event $event)
@@ -165,12 +222,55 @@ class EventController extends Controller
         return response()->json(['message' => 'Event deleted']);
     }
 
+    /**
+     * Approve a draft event: only allowed for event owner or community owner/admin/moderator
+     */
+    public function approve(Event $event)
+    {
+        $uid = Auth::id();
+
+        if ($event->status !== 'draft') {
+            return response()->json(['message' => 'Only draft events can be approved'], 400);
+        }
+
+        // Allow site admins
+        if (Auth::user()?->isSiteAdmin()) {
+            // allowed
+        } else {
+            // For community events: require community membership role in owner/admin/moderator
+            if ($event->community_id) {
+                $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
+                    ->where('user_id', $uid)
+                    ->whereIn('role', ['owner','admin','moderator'])
+                    ->where('status', 'active')
+                    ->exists();
+                if (! $isAdmin) {
+                    abort(403, 'Forbidden');
+                }
+            } else {
+                // Non-community (site-wide) events: only site admins may approve
+                abort(403, 'Forbidden');
+            }
+        }
+
+        $event->status = 'published';
+        $event->published_at = now();
+        $event->save();
+
+        return response()->json($event->fresh());
+    }
+
     // RSVP: accept/decline/waitlist
     public function rsvp(Request $request, Event $event)
     {
         $data = $request->validate([
             'status' => ['required','in:accepted,declined,waitlist']
         ]);
+
+        // Do not allow RSVP on drafts or non-published events
+        if ($event->status !== 'published') {
+            return response()->json(['message' => 'Cannot RSVP to an event that is not published.'], 403);
+        }
 
         $userId = Auth::id();
 
@@ -190,11 +290,14 @@ class EventController extends Controller
                 }
 
                 // Count accepted attendees under lock
-                $acceptedCount = DB::table('event_attendees')
+                // Postgres doesn't allow FOR UPDATE with aggregate functions
+                // select the matching rows with FOR UPDATE and count them in PHP
+                $acceptedRows = DB::table('event_attendees')
                     ->where('event_id', $ev->id)
                     ->where('status', 'accepted')
                     ->lockForUpdate()
-                    ->count();
+                    ->get(['id']);
+                $acceptedCount = $acceptedRows->count();
 
                 if ($acceptedCount < $ev->capacity) {
                     $att = EventAttendee::updateOrCreate(
@@ -211,7 +314,7 @@ class EventController extends Controller
                 );
 
                 // Compute waitlist position (order by created_at, tie-break by id)
-                $position = DB::table('event_attendees')
+                $positionRows = DB::table('event_attendees')
                     ->where('event_id', $ev->id)
                     ->where('status', 'waitlist')
                     ->where(function ($q) use ($att) {
@@ -222,13 +325,17 @@ class EventController extends Controller
                           });
                     })
                     ->lockForUpdate()
-                    ->count();
+                    ->get(['id']);
 
-                $total = DB::table('event_attendees')
+                $position = $positionRows->count();
+
+                $totalRows = DB::table('event_attendees')
                     ->where('event_id', $ev->id)
                     ->where('status', 'waitlist')
                     ->lockForUpdate()
-                    ->count();
+                    ->get(['id']);
+
+                $total = $totalRows->count();
 
                 return ['att' => $att, 'waitlisted' => true, 'waitlist_position' => $position + 1, 'waitlist_size' => $total];
             });
@@ -248,7 +355,7 @@ class EventController extends Controller
                     ['status' => 'waitlist', 'role' => 'attendee']
                 );
 
-                $position = DB::table('event_attendees')
+                $positionRows = DB::table('event_attendees')
                     ->where('event_id', $event->id)
                     ->where('status', 'waitlist')
                     ->where(function ($q) use ($att) {
@@ -259,13 +366,17 @@ class EventController extends Controller
                           });
                     })
                     ->lockForUpdate()
-                    ->count();
+                    ->get(['id']);
 
-                $total = DB::table('event_attendees')
+                $position = $positionRows->count();
+
+                $totalRows = DB::table('event_attendees')
                     ->where('event_id', $event->id)
                     ->where('status', 'waitlist')
                     ->lockForUpdate()
-                    ->count();
+                    ->get(['id']);
+
+                $total = $totalRows->count();
 
                 return ['att' => $att, 'waitlist_position' => $position + 1, 'waitlist_size' => $total];
             });

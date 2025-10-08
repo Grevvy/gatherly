@@ -26,6 +26,7 @@ class Event extends Model
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'published_at' => 'datetime',
     ];
 
     // Owner (creator) of the event
