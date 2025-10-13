@@ -1,41 +1,72 @@
-<x-layout title="Edit Community - Gatherly">
-    @php
-        $slug = request('community');
-        $community = \App\Models\Community::where('slug', $slug)->firstOrFail();
-    @endphp
+@php
+    use App\Models\Community;
 
-    <div class="max-w-2xl mx-auto bg-white shadow p-6">
-        <h2 class="text-2xl font-bold mb-4">Edit {{ $community->name }}</h2>
+    $slug = request('community');
+    $community = $slug
+        ? Community::with(['owner', 'memberships.user'])
+            ->where('slug', $slug)
+            ->firstOrFail()
+        : abort(404, 'Community not found');
 
+    // load communities the current user belongs to (for sidebar)
+    $communities = auth()->check()
+        ? Community::whereHas('memberships', fn($q) => $q->where('user_id', auth()->id()))->get()
+        : collect();
+
+    $canPublish =
+        auth()->check() &&
+        (auth()->user()->isSiteAdmin() ||
+            \App\Models\CommunityMembership::where('community_id', $community->id)
+                ->where('user_id', auth()->id())
+                ->whereIn('role', ['owner', 'admin', 'moderator'])
+                ->where('status', 'active')
+                ->exists());
+@endphp
+
+<x-layout title="Edit Community - Gatherly" :community="$community" :communities="$communities">
+    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8">
         <form id="edit-community-form" method="POST" action="{{ url("/communities/{$community->slug}") }}"
             enctype="multipart/form-data">
             @csrf
             @method('PATCH')
+            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2">
+                    Update Community
+                </button>
+                <a href="{{ url('/dashboard?community=' . $community->slug) }}" class="text-gray-600 underline">
+                    Cancel
+                </a>
+            </div>
 
             <!-- Name -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1">Name</label>
-                <input name="name" class="w-full border p-2" value="{{ $community->name }}" required />
+            <div class="relative mb-4">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community Name</span>
+                <input name="name" value="{{ $community->name }}"
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
             </div>
 
             <!-- Description -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full border p-2">{{ $community->description }}</textarea>
+            <div class="relative mb-4">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community
+                    Description</span>
+                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent">{{ $community->description }}</textarea>
             </div>
 
             <!-- Banner Image -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1">Banner Image</label>
+            <div class="relative mb-4">
                 <img id="banner-preview" src="{{ $community->banner_image ? asset($community->banner_image) : '' }}"
-                    alt="Banner Preview" class="w-full h-40 object-cover mb-2">
-                <input id="banner-input" type="file" name="banner_image" accept="image/*" class="w-full p-2 border">
+                    alt="Banner Preview" class="w-full h-40 object-cover rounded mb-2" />
+
+                <input id="banner-input" type="file" name="banner_image" accept="image/*"
+                    class="w-full p-2 pt-6 border text-gray-800 bg-transparent" />
             </div>
 
+
             <!-- Visibility -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1">Visibility</label>
-                <select name="visibility" class="w-full border p-2">
+            <div class="relative mb-4">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Visibility</span>
+                <select name="visibility" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
+                    required>
                     <option value="public" {{ $community->visibility == 'public' ? 'selected' : '' }}>Public</option>
                     <option value="private" {{ $community->visibility == 'private' ? 'selected' : '' }}>Private</option>
                     <option value="hidden" {{ $community->visibility == 'hidden' ? 'selected' : '' }}>Hidden</option>
@@ -43,9 +74,10 @@
             </div>
 
             <!-- Join Policy -->
-            <div class="mb-4">
-                <label class="block text-sm font-semibold mb-1">Join Policy</label>
-                <select name="join_policy" class="w-full border p-2">
+            <div class="relative mb-4">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Join Policy</span>
+                <select name="join_policy" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
+                    required>
                     <option value="open" {{ $community->join_policy == 'open' ? 'selected' : '' }}>Open</option>
                     <option value="request" {{ $community->join_policy == 'request' ? 'selected' : '' }}>Request
                     </option>
@@ -54,16 +86,6 @@
                 </select>
             </div>
 
-            <!-- Buttons -->
-            <div class="flex items-center justify-end mt-4 gap-2">
-                <button type="submit" class="bg-blue-500 text-white px-4 py-1 hover:bg-blue-600">
-                    Save Changes
-                </button>
-                <a href="{{ url('/dashboard?community=' . $community->slug) }}"
-                    class="bg-gray-300 text-gray-800 px-2 py-1 hover:bg-gray-400">
-                    Cancel
-                </a>
-            </div>
         </form>
     </div>
 
@@ -110,14 +132,15 @@
                         window.location.href = `/dashboard?community=${json.slug}`;
                     } else {
                         const err = await res.json().catch(() => ({}));
-                        alert(err.message || 'Failed to update community.');
+                        showToast(err.message || 'Failed to update community.', 'alert');
+
                     }
                 } catch (error) {
                     console.error(error);
-                    alert('Something went wrong.');
+                    showToast('Something went wrong.', 'alert');
+
                 }
             });
         });
     </script>
-
 </x-layout>

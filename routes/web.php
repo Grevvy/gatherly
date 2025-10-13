@@ -39,9 +39,27 @@ Route::middleware('auth')->group(function () {
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');
+    
     Route::get('/community-edit', function () {
         return view('community-edit');
     })->name('community.edit');
+
+    Route::get('/create-event', function () {
+        return view('create-event');
+    })->name(name: 'create-event');
+
+    Route::get('/events/{event}/edit', function (\App\Models\Event $event) {
+        return view('edit-event');
+    })->name('edit-event');
+
+
+    Route::get('/events/{event}/details', function () {
+        return view('event-details');
+    })->name('event.details');
+
+    Route::get('/create-community', action: function () {
+        return view('create-community');
+    })->name('create-community');
 
     // Communities
     Route::get('/communities/search', [CommunityController::class, 'search']);

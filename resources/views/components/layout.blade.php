@@ -14,6 +14,8 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
+    <input type="hidden" name="_token" id="csrf-token" value="{{ csrf_token() }}">
+
     <div class="flex flex-1">
         <!-- Sidebar -->
         <aside class="w-72 bg-white shadow-lg p-4 flex flex-col">
@@ -37,17 +39,19 @@
             <div class="mb-6">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-sm font-semibold text-gray-500">MY COMMUNITIES</h3>
-                    <button id="add-community-btn" onclick="toggleModal()"
-                        class="flex items-center justify-center w-6 h-6 text-blue-600 text-sm font-medium hover:text-blue-800 rounded-full border border-blue-600">
+                    <a href="{{ route('create-community') }}"
+                        class="flex items-center justify-center w-6 h-6 text-blue-600 text-sm font-medium hover:text-blue-800 rounded-full border border-blue-600 transition">
                         +
-                    </button>
+                    </a>
+
                 </div>
 
                 <div id="community-list" class="space-y-1">
                     @if (!empty($communities) && count($communities) > 0)
                         <ul class="space-y-1 list-none">
                             @foreach ($communities as $c)
-                                @php $active = request('community') === $c->slug; @endphp
+                                @php $active = isset($community) && $community->id === $c->id; @endphp
+
                                 <li class="community-item">
                                     <a href="/dashboard?community={{ $c->slug }}"
                                         class="block px-2 py-1 transition {{ $active ? 'bg-blue-100 text-blue-600 font-medium' : 'hover:bg-blue-50 text-gray-800' }}">
@@ -102,17 +106,16 @@
 
                     <!-- Calendar Icon -->
                     <div class="relative mt-2">
-                        @php
-                            $slug = request('community');
-                        @endphp
+                        @php $slug = $community?->slug ?? request('community'); @endphp
+
 
                         @if ($slug)
-                            <a href="{{ route('events', parameters: ['community' => $slug]) }}"
-                                class="p-2 hover:bg-gray-100 block">
-                                <i data-lucide="calendar" class="w-5 h-5 text-gray-600"></i>
+                            <a href="{{ route('events', ['community' => $slug, 'tab' => 'calendar']) }}"
+                                class="p-2 hover:bg-gray-100 block rounded-lg cursor-pointer">
+                                <i data-lucide="calendar-days" class="w-5 h-5 text-gray-600"></i>
                             </a>
                         @else
-                            <span class="p-2 block text-gray-400 cursor-not-allowed" title="Select a community first">
+                            <span class="p-2 block text-gray-400 opacity-50" title="Select a community first">
                                 <i data-lucide="calendar" class="w-5 h-5"></i>
                             </span>
                         @endif
@@ -120,7 +123,7 @@
 
                     <!-- Notification Bell -->
                     <div class="relative">
-                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2">
+                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2 rounded-lg">
                             <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
                         </button>
 
@@ -168,48 +171,86 @@
                     <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
                         alt="Community Banner" class="w-full h-full object-cover">
 
-                    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
-
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/60"></div>
                     <!-- Banner Content -->
-                    <div class="absolute bottom-4 left-4 flex items-start justify-between w-[95%] text-white">
-                        <div>
-                            <h2 class="text-2xl font-bold">{{ $community->name }}</h2>
-                            <p class="text-gray-200 text-sm">{{ $community->description ?? '' }}</p>
+                    @php
+                        $userId = auth()->id();
+                        $isOwner = $community->owner_id === $userId;
+                        $isAdmin = $community->memberships->contains(
+                            fn($m) => $m->user_id === $userId && $m->role === 'admin' && $m->status === 'active',
+                        );
+                    @endphp @if ($isOwner || $isAdmin)
+                        <div class="absolute top-3 right-4 flex gap-3 z-30">
+                            <!-- Edit Icon (Pencil) -->
+                            <a href="/community-edit?community={{ $community->slug }}"
+                                class="p-2 text-white bg-black/40 rounded-full backdrop-blur-sm hover:bg-black/60 transition flex items-center justify-center"
+                                aria-label="Edit Community">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
+                                </svg>
+                            </a>
 
-                            <div class="flex gap-6 text-sm mt-2 text-gray-200 ml-auto">
-                                <span>{{ $community->memberships->count() }} members</span>
-                                <span>{{ $community->memberships->where('status', 'active')->count() }} active</span>
-                                <span>Owner: {{ $community->owner->name ?? 'N/A' }}</span>
-                            </div>
+                            <form class="delete-community-form" method="POST"
+                                action="/communities/{{ $community->slug }}" data-slug="{{ $community->slug }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" onclick="confirmDelete(this)"
+                                    class="p-2 text-white bg-red-800/40 rounded-full backdrop-blur-sm hover:bg-red-900/60 transition flex items-center justify-center"
+                                    aria-label="Delete Community">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                    </svg>
+                                </button>
+                            </form>
+
                         </div>
+                    @endif
 
-                        @php
-                            $userId = auth()->id();
-                            $isOwner = $community->owner_id === $userId;
-                            $isAdmin = $community->memberships->contains(
-                                fn($m) => $m->user_id === $userId && $m->role === 'admin' && $m->status === 'active',
-                            );
-                        @endphp
+                    <div
+                        class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-20 pointer-events-none">
+                        <h1
+                            class="max-w-5xl text-5xl sm:text-6xl md:text-6xl font-display font-bold tracking-tight leading-tight text-white drop-shadow-[0_2px_6px_rgba(255,255,255,0.4)] shadow-white/20 animate-fade-in">
+                            {{ $community->name }}
+                        </h1>
 
-                        @if ($isOwner || $isAdmin)
-                            <div class="absolute bottom-0 right-1 flex gap-2">
-                                <a href="/community-edit?community={{ $community->slug }}"
-                                    class="inline-flex items-center justify-center bg-gray-800/50 text-white px-2 py-1.5 rounded-full text-[10px] font-medium shadow-sm hover:bg-gray-900/40 transition-all duration-150">
-                                    Edit Community
-                                </a>
-
-                                <form class="delete-community-form" data-slug="{{ $community->slug }}">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="inline-flex items-center justify-center bg-red-800/50 text-white px-2 py-1.5 rounded-full text-[10px] font-medium shadow-sm hover:bg-red-900/40 transition-all duration-150">
-                                        Delete Community
-                                    </button>
-                                </form>
-                            </div>
+                        @if ($community->description)
+                            <p
+                                class="mt-4 max-w-xl text-sm sm:text-base text-gray-100 leading-snug italic px-2 py-1 bg-gray-900/10 rounded-sm backdrop-blur-[0.5px] animate-fade-in delay-200">
+                                {{ $community->description }}
+                            </p>
                         @endif
+                    </div>
 
+                    <div class="absolute bottom-0 left-0 right-0 bg-black/15 backdrop-blur-sm">
+                        <div
+                            class="flex flex-wrap items-center justify-center gap-4 py-1.5 text-xs xs:text-xs text-gray-300">
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                @php
+                                    $memberCount = $community?->memberships->count() ?? 0;
+                                @endphp
+                                <strong>{{ $memberCount }}</strong> {{ $memberCount === 1 ? 'member' : 'members' }}
+                            </span>
 
+                            <span class="text-gray-400">|</span>
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="activity" class="w-4 h-4"></i>
+                                <strong>{{ $community?->memberships->where('status', 'active')->count() ?? 0 }}</strong>
+                                active
+                            </span>
+                            <span class="text-gray-400">|</span>
+                            <span class="flex items-center gap-2">
+                                <i data-lucide="calendar" class="w-4 h-4"></i>
+                                @php
+                                    $eventCount = $community?->events->count() ?? 0;
+                                @endphp
+                                <strong>{{ $eventCount }}</strong> {{ $eventCount === 1 ? 'event' : 'events' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             @endif
@@ -221,64 +262,152 @@
         </main>
     </div>
 
-    <!-- Community Modal -->
-    <div id="community-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 w-96 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Community</h2>
-                <button onclick="toggleModal()" class="text-gray-500 hover:text-gray-700">✕</button>
-            </div>
-
-            <div class="flex mb-4 border-b">
-                <button class="flex-1 py-2 text-sm font-semibold border-b-2 border-blue-500"
-                    onclick="switchTab('tab-create')">Create</button>
-            </div>
-
-            <div id="tab-create">
-                <form id="create-community-form">
-                    @csrf
-                    <label class="block text-sm font-semibold mb-1">Community Name</label>
-                    <input type="text" name="name" required class="w-full p-2 border mb-3" />
-
-                    <label class="block text-sm font-semibold mb-1">Description</label>
-                    <textarea name="description" rows="3" class="w-full p-2 border mb-3"></textarea>
-
-                    <label class="block text-sm font-semibold mb-1">Banner Image</label>
-                    <div class="mb-3">
-                        <input id="banner-upload" type="file" name="banner_image" accept="image/*"
-                            class="w-full p-2 border mb-2">
-                        <div id="banner-preview-container" class="hidden">
-                            <p class="text-xs text-gray-500 mb-1">Preview:</p>
-                            <img id="banner-preview" src="" alt="Banner Preview"
-                                class="w-full h-32 object-cover border border-gray-200 shadow-sm">
-                        </div>
-                    </div>
-
-
-                    <label class="block text-sm font-semibold mb-1">Visibility</label>
-                    <select name="visibility" class="w-full p-2 border mb-3">
-                        <option value="public">Public</option>
-                        <option value="private">Private</option>
-                        <option value="hidden">Hidden</option>
-                    </select>
-
-                    <label class="block text-sm font-semibold mb-1">Join Policy</label>
-                    <select name="join_policy" class="w-full p-2 border mb-3">
-                        <option value="open">Open</option>
-                        <option value="request">Request</option>
-                        <option value="invite">Invite Only</option>
-                    </select>
-
-                    <button type="submit" class="bg-blue-500 text-white w-full py-2 hover:bg-blue-600">
-                        Create Community
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Toast container -->
+    <div id="toast" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
     <script>
+        function showToast(message, type = 'alert', duration = 3000, buttons = []) {
+            const container = document.getElementById('toast');
+            const toast = document.createElement('div');
+
+            // Tailwind background + label
+            let bgClass = '';
+            let label = '';
+            let textColor = '';
+            if (type === 'success') {
+                bgClass = 'bg-green-100';
+                label = 'Success';
+                textColor = 'text-green-800';
+            } else if (type === 'confirm') {
+                bgClass = 'bg-white';
+                label = 'Confirmation';
+                textColor = 'text-black';
+            } else {
+                bgClass = 'bg-red-100';
+                label = 'Error';
+                textColor = 'text-red-800';
+            }
+
+            toast.className = `
+        flex flex-col gap-2 p-4 rounded-lg shadow-lg font-sans
+        min-w-[240px] max-w-[360px] ${bgClass} relative border border-gray-300
+    `;
+
+            // Header row
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center';
+
+            const title = document.createElement('span');
+            title.textContent = label;
+            title.className = 'font-semibold text-sm';
+
+            const close = document.createElement('button');
+            close.textContent = '✕';
+            close.className = 'text-gray-500 hover:text-gray-700 text-sm';
+            close.onclick = () => {
+                if (toast.parentNode) container.removeChild(toast);
+            };
+
+            header.appendChild(title);
+            header.appendChild(close);
+            toast.appendChild(header);
+
+            // Message
+            const text = document.createElement('div');
+            text.textContent = message;
+            text.className = 'text-sm';
+            toast.appendChild(text);
+
+            // Buttons
+            if (buttons.length) {
+                const btnContainer = document.createElement('div');
+                btnContainer.className = 'flex justify-center gap-4 mt-4';
+
+                buttons.forEach(btn => {
+                    const b = document.createElement('button');
+                    b.textContent = btn.text;
+
+                    if (btn.style) {
+                        b.className = `text-sm rounded px-4 py-2 cursor-pointer transition ${btn.style}`;
+                    } else if (btn.type === 'yes') {
+                        b.className = `
+                text-sm text-white bg-red-600 rounded px-4 py-2 cursor-pointer
+                hover:bg-red-700 transition
+            `;
+                    } else {
+                        b.className = `
+                text-sm text-gray-700 bg-gray-200 rounded px-4 py-2 cursor-pointer
+                hover:bg-gray-300 transition
+            `;
+                    }
+
+                    b.onclick = () => {
+                        if (typeof btn.onClick === 'function') btn.onClick();
+                        if (toast.parentNode) container.removeChild(toast);
+                    };
+
+                    btnContainer.appendChild(b);
+                });
+
+                toast.appendChild(btnContainer);
+            }
+
+            container.appendChild(toast);
+
+            // Auto-dismiss if no buttons
+            if (!buttons.length) {
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                    setTimeout(() => {
+                        if (toast.parentNode) container.removeChild(toast);
+                    }, 500);
+                }, duration || 6000);
+            }
+        }
+
+
+        function confirmDelete(button) {
+            const form = button.closest('.delete-community-form');
+            const slug = form.dataset.slug;
+
+            showToast(`Are you sure you want to delete this community?`, 'confirm', 0, [{
+                    text: "Delete",
+                    type: 'yes',
+                    onClick: async () => {
+                        try {
+                            const res = await fetch(`/communities/${slug}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
+                                        .value,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            if (res.ok) {
+                                // ✅ Redirect to dashboard after successful delete
+                                window.location.href = '/dashboard';
+                            } else {
+                                const data = await res.json().catch(() => ({}));
+                                showToast(data.message || 'Failed to delete community.', 'error');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showToast('Something went wrong.', 'error');
+                        }
+                    }
+                },
+                {
+                    text: 'Cancel',
+                    type: 'no',
+                    onClick: () => {
+                        // Do nothing
+                    }
+                }
+            ]);
+        }
+
+
         document.addEventListener('DOMContentLoaded', () => {
             // Lucide icons
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -324,55 +453,6 @@
 
             setupDropdown("notif-btn", "notif-dropdown");
             setupDropdown("user-menu-btn", "user-menu-dropdown");
-
-            // Create Community
-            const form = document.getElementById('create-community-form');
-            form?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const data = new FormData(form);
-                const token = data.get('_token');
-
-                try {
-                    const res = await fetch('/communities', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': token,
-                            'Accept': 'application/json'
-                        },
-                        body: data
-                    });
-                    const result = await res.json();
-                    if (res.ok) {
-                        form.reset();
-                        toggleModal();
-
-                        const list = document.getElementById('community-list');
-                        if (list) {
-                            // Remove "No communities" if exists
-                            const noCom = document.getElementById('no-communities');
-                            if (noCom) noCom.remove();
-
-                            // Create new community item
-                            const li = document.createElement('li');
-                            li.className = 'community-item list-none';
-                            li.innerHTML = `
-                    <a href="/dashboard?community=${result.slug}" class="block px-2 py-1 rounded transition hover:bg-blue-50 text-gray-800">
-                        <span class="font-medium text-sm">${result.name}</span>
-                        <span class="text-xs text-gray-400 block">${result.visibility.charAt(0).toUpperCase() + result.visibility.slice(1)}</span>
-                    </a>
-                `;
-                            list.appendChild(li);
-
-                        }
-                    } else {
-                        alert(result.message || 'Failed to create community');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alert('Something went wrong');
-                }
-            });
-
 
             // Sidebar search (filter existing list)
             const searchBox = document.getElementById("search-box");
@@ -535,13 +615,16 @@
                         }, 500);
                     } else {
                         const data = await res.json().catch(() => ({}));
-                        alert(data.message || 'Failed to join community');
+                        const msg = data.message || 'Failed to join community';
+                        showToast(msg, 'error');
+
                         btn.disabled = false;
                         btn.textContent = 'Join';
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('Something went wrong');
+                    showToast('Something went wrong', 'error');
+
                     btn.disabled = false;
                     btn.textContent = 'Join';
                 }
@@ -559,7 +642,10 @@
             document.querySelectorAll('.delete-community-form').forEach(form => {
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    if (!confirm('Are you sure you want to delete this community?')) return;
+                    // Remove confirm entirely
+                    // Proceed with deletion
+                    showToast('Community deleted', 'success');
+
 
                     const slug = form.dataset.slug;
 
@@ -577,14 +663,18 @@
                             window.location.href = '/dashboard';
                         } else {
                             const data = await res.json().catch(() => ({}));
-                            alert(data.message || 'Failed to delete community.');
+                            const msg = data.message || 'Failed to delete community.';
+                            showToast(msg, 'error');
+
                         }
                     } catch (err) {
                         console.error(err);
-                        alert('Something went wrong deleting this community.');
+                        showToast('Something went wrong deleting this community.', 'error');
+
                     }
                 });
             });
+
 
         });
 

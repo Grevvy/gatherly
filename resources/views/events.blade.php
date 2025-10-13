@@ -21,29 +21,39 @@
 
     // Filter visibility: drafts should only be visible to the event owner, event host, or community owner/admin/moderator
     $visibleUpcomingEvents = $allUpcomingEvents->filter(function ($event) {
-        if ($event->status !== 'draft') return true;
+        if ($event->status !== 'draft') {
+            return true;
+        }
 
         $uid = auth()->id();
-        if (! $uid) return false;
+        if (!$uid) {
+            return false;
+        }
 
         // Owner
-        if ($event->owner_id === $uid) return true;
+        if ($event->owner_id === $uid) {
+            return true;
+        }
 
         // Host
         $isHost = \App\Models\EventAttendee::where('event_id', $event->id)
             ->where('user_id', $uid)
             ->where('role', 'host')
             ->exists();
-        if ($isHost) return true;
+        if ($isHost) {
+            return true;
+        }
 
         // Community admin/owner/moderator
         if ($event->community_id) {
             $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
                 ->where('user_id', $uid)
-                ->whereIn('role', ['owner','admin','moderator'])
+                ->whereIn('role', ['owner', 'admin', 'moderator'])
                 ->where('status', 'active')
                 ->exists();
-            if ($isAdmin) return true;
+            if ($isAdmin) {
+                return true;
+            }
         }
 
         return false;
@@ -56,14 +66,6 @@
     $eventsToShow = $activeNestedTab === 'Attending' ? $attendingEvents : $visibleUpcomingEvents;
 @endphp
 @php
-    // Standardized button classes to keep sizes consistent across the events UI
-    $btnBase = 'px-3 py-1 text-sm rounded';
-    $btnBorder = $btnBase . ' border border-gray-300 text-gray-700 hover:bg-gray-100';
-    $btnPrimary = $btnBase . ' bg-blue-600 text-white hover:bg-blue-700';
-    $btnDanger = $btnBase . ' bg-red-600 text-white hover:bg-red-700';
-    $btnSecondary = $btnBase . ' bg-gray-300 hover:bg-gray-400 text-sm';
-    // full-width primary (for forms)
-    $btnPrimaryFull = $btnPrimary . ' w-full py-2';
     // Can the current user publish events in this community? Site admins or community owner/admin/moderator
     $canPublish = false;
     if (auth()->check() && auth()->user()->isSiteAdmin()) {
@@ -71,30 +73,53 @@
     } elseif ($community && auth()->check()) {
         $canPublish = \App\Models\CommunityMembership::where('community_id', $community->id)
             ->where('user_id', auth()->id())
-            ->whereIn('role', ['owner','admin','moderator'])
+            ->whereIn('role', ['owner', 'admin', 'moderator'])
             ->where('status', 'active')
             ->exists();
     }
 @endphp
+
 <x-layout :community="$community" :communities="$communities">
-    <div class="bg-gray-50 min-h-screen">
+    <div class="min-h-screen">
         @if ($community)
-            <div class="bg-white shadow p-6 mt-6 max-w-6xl mx-auto">
-                <div class="flex items-center justify-between mb-4">
-                    <div> </div>
-                    <button id="open-event-form" class="{{ $btnPrimary }}"> + Create Event</button>
+            <div class="p-6 mt-1 max-w-6xl mx-auto">
+                <div class="flex items-center justify-end mb-4">
+
+                    @if ($community)
+                        <a href="{{ route('create-event', ['community' => $community->slug]) }}"
+                            class="inline-flex items-center gap-2 bg-blue-500 text-white text-sm font-medium px-4 py-2 shadow-sm hover:bg-blue-600 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Event
+                        </a>
+                    @endif
+
                 </div>
-                <div class="flex border border-gray-300 rounded-lg overflow-hidden mb-6"> <button id="calendar-tab"
-                        class="flex-1 px-4 py-2 text-center font-medium text-gray-600 border-r border-gray-300">Calendar
-                        View</button> <button id="list-tab"
-                        class="flex-1 px-4 py-2 text-center font-medium text-gray-600">Event List</button> </div>
+                <div class="flex items-center justify-center mb-4">
+                    <div class="flex w-full bg-gray-200 rounded-full p-1">
+                        <button id="list-tab"
+                            class="flex-1 px-6 py-2 text-center text-sm font-semibold rounded-full bg-white text-gray-900 border border-blue-400 transition">
+                            Events
+                        </button>
+                        <button id="calendar-tab"
+                            class="flex-1 px-6 py-2 text-center text-sm font-semibold text-gray-700 rounded-full hover:text-gray-900 transition">
+                            Calendar
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Calendar View -->
-                <div id="calendar-view" class="space-y-4">
-                    <div class="flex justify-between items-center text-black px-4 py-2 rounded-lg">
-                        <h2 id="calendar-month" class="font-semibold"></h2>
-                        <div class="flex gap-2"> <button id="prev-month"
-                                        class="px-2 py-1 rounded hover:bg-gray-300">&lt;</button> <button id="next-month"
-                                        class="px-2 py-1 rounded hover:bg-gray-300">&gt;</button> </div>
+                <div id="calendar-view" class="mt-7 space-y-6 bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center text-black px-4 py-2 rounded-lg bg-gray-50">
+                        <h2 id="calendar-month" class="font-bold text-lg"></h2>
+                        <div class="flex gap-2">
+                            <button id="prev-month"
+                                class="px-3 py-1 rounded-full hover:bg-gray-200 transition">&lt;</button>
+                            <button id="next-month"
+                                class="px-3 py-1 rounded-full hover:bg-gray-200 transition">&gt;</button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-7 text-center text-sm font-medium text-gray-500">
                         <div>Sun</div>
@@ -107,216 +132,581 @@
                     </div>
                     <div id="calendar-days" class="grid grid-cols-7 text-center gap-y-4 text-gray-800"></div>
                     <div id="day-events" class="mt-6 space-y-4 hidden"></div>
-                </div> <!-- Event List View -->
-                <div id="list-view" class="hidden space-y-4">
-            <div class="flex border-b border-gray-200 mb-4"> <button id="upcoming-tab"
-                class="px-4 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">Upcoming
-                ({{ $visibleUpcomingEvents->count() }})</button> <button id="attending-tab"
-                class="px-4 py-2 text-sm font-medium text-gray-500">Attending
-                ({{ $attendingEvents->count() }})</button> </div>
-                    <div id="upcoming-view" class="space-y-4">
-                        @foreach ($visibleUpcomingEvents as $event)
-                            @php
-                                $canManage = false;
-                                $uid = auth()->id();
-                                if ($uid) {
-                                    if ($event->owner_id === $uid) $canManage = true;
-                                    if (! $canManage) {
-                                        $isHost = \App\Models\EventAttendee::where('event_id', $event->id)->where('user_id', $uid)->where('role', 'host')->exists();
-                                        if ($isHost) $canManage = true;
-                                    }
-                                    if (! $canManage && $event->community_id) {
-                                        $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
-                                            ->where('user_id', $uid)
-                                            ->whereIn('role', ['owner','admin','moderator'])
-                                            ->where('status', 'active')
-                                            ->exists();
-                                        if ($isAdmin) $canManage = true;
-                                    }
-                                }
-                            @endphp
-
-                            <div class="border border-gray-200 p-4 shadow-sm hover:shadow transition">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h4 class="text-lg font-semibold text-gray-900">{{ $event->title }}</h4>
-                                        <p class="text-xs text-gray-500">Hosted by
-                                            {{ $event->owner->name ?? 'Community' }} </p>
-                                    </div> <span
-                                        class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded capitalize">{{ $event->status }}</span>
-                                </div>
-                                <div class="flex flex-wrap gap-6 text-sm text-gray-500 mb-3"> <span>📅
-                                        {{ $event->starts_at?->format('Y-m-d') }}</span> <span>⏰
-                                        {{ $event->starts_at?->format('g:i A') }} -
-                                        {{ $event->ends_at?->format('g:i A') ?? '' }}</span> </div>
-                                <div class="flex justify-end gap-2 text-sm">
-                                    <button onclick="showEventDetails({{ $event->id }})"
-                                        class="{{ $btnBorder }}">View Details</button>
-                                    <div class="mt-2">
-                                        <button onclick="sendRSVP({{ $event->id }}, 'accepted', this)"
-                                            class="ml-2 {{ $btnPrimary }}">RSVP</button>
-                                    </div>
-                                    @if ($canManage)
-                                        @php
-                                            // canApprove: site admins or community owner/admin/moderator (active)
-                                            $canApprove = false;
-                                            if (auth()->check() && auth()->user()->isSiteAdmin()) {
-                                                $canApprove = true;
-                                            } elseif ($event->community_id && auth()->check()) {
-                                                $canApprove = \App\Models\CommunityMembership::where('community_id', $event->community_id)
-                                                    ->where('user_id', auth()->id())
-                                                    ->whereIn('role', ['owner','admin','moderator'])
-                                                    ->where('status', 'active')
-                                                    ->exists();
-                                            }
-                                        @endphp
-
-                                        @if ($event->status === 'draft' && $canApprove)
-                                            <button onclick="approveEvent({{ $event->id }}, this)" class="ml-2 {{ $btnPrimary }}">Approve</button>
-                                        @endif
-
-                                        <button onclick="editEvent({{ $event->id }})" class="ml-2 {{ $btnBorder }}">Edit</button>
-
-                                        <button onclick="deleteEvent({{ $event->id }}, this)"
-                                            class="ml-2 {{ $btnDanger }}">Delete</button>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <div id="attending-view" class="hidden space-y-4">
-                        @foreach ($attendingEvents as $event)
-                            @php
-                                $canManage = false;
-                                $uid = auth()->id();
-                                if ($uid) {
-                                    if ($event->owner_id === $uid) $canManage = true;
-                                    if (! $canManage) {
-                                        $isHost = \App\Models\EventAttendee::where('event_id', $event->id)->where('user_id', $uid)->where('role', 'host')->exists();
-                                        if ($isHost) $canManage = true;
-                                    }
-                                    if (! $canManage && $event->community_id) {
-                                        $isAdmin = \App\Models\CommunityMembership::where('community_id', $event->community_id)
-                                            ->where('user_id', $uid)
-                                            ->whereIn('role', ['owner','admin','moderator'])
-                                            ->where('status', 'active')
-                                            ->exists();
-                                        if ($isAdmin) $canManage = true;
-                                    }
-                                }
-                            @endphp
-
-                            <div class="border border-gray-200 rounded p-4 shadow-sm hover:shadow transition">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h4 class="text-lg font-semibold text-gray-900">{{ $event->title }}</h4>
-                                        <p class="text-sm text-gray-600">{{ $event->description }}</p>
-                                        <p class="text-xs text-gray-500">Hosted by
-                                            {{ $event->owner->name ?? 'Community' }} </p>
-                                    </div> <span
-                                        class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded capitalize">{{ $event->status }}</span>
-                                </div>
-                                <div class="flex flex-wrap gap-6 text-sm text-gray-500 mb-3"> <span>📅
-                                        {{ $event->starts_at?->format('Y-m-d') }}</span> <span>⏰
-                                        {{ $event->starts_at?->format('H:i') }} -
-                                        {{ $event->ends_at?->format('H:i') ?? '' }}</span> <span>📍
-                                        {{ $event->location }}</span> </div>
-                                <div class="flex justify-end gap-2 text-sm">
-                                    <button onclick="showEventDetails({{ $event->id }})"
-                                        class="{{ $btnBorder }}">View Details</button>
-                                    <button onclick="sendRSVP({{ $event->id }}, 'declined', this)"
-                                        class="{{ $btnSecondary }}">Leave Event</button>
-                                    @if ($canManage)
-                                        @php
-                                            $canApprove = false;
-                                            if (auth()->check() && auth()->user()->isSiteAdmin()) {
-                                                $canApprove = true;
-                                            } elseif ($event->community_id && auth()->check()) {
-                                                $canApprove = \App\Models\CommunityMembership::where('community_id', $event->community_id)
-                                                    ->where('user_id', auth()->id())
-                                                    ->whereIn('role', ['owner','admin','moderator'])
-                                                    ->where('status', 'active')
-                                                    ->exists();
-                                            }
-                                        @endphp
-
-                                        @if ($event->status === 'draft' && $canApprove)
-                                            <button onclick="approveEvent({{ $event->id }}, this)" class="ml-2 {{ $btnPrimary }}">Approve</button>
-                                        @endif
-
-                                        <button onclick="editEvent({{ $event->id }})" class="ml-2 {{ $btnBorder }}">Edit</button>
-
-                                        <button onclick="deleteEvent({{ $event->id }}, this)"
-                                            class="ml-2 {{ $btnDanger }}">Delete</button>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
                 </div>
-            </div>
-    </div> <!-- Create Event Modal -->
-    <div id="event-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 w-96 shadow-lg rounded-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="event-modal-title" class="text-lg font-semibold">Create Event</h2>
-                <button onclick="toggleEventModal()" class="text-gray-500 hover:text-gray-700 {{ $btnBorder }}">✕</button>
-            </div>
-            <form id="create-event-form"> @csrf <label class="block text-sm font-semibold mb-1">Event Title</label>
-                <input type="text" name="title" required class="w-full p-2 border mb-3" /> <label
-                    class="block text-sm font-semibold mb-1">Description</label>
-                <textarea name="description" rows="3" class="w-full p-2 border mb-3"></textarea> <label class="block text-sm font-semibold mb-1">Location</label> <input
-                    type="text" name="location" class="w-full p-2 border mb-3" /> <label
-                    class="block text-sm font-semibold mb-1">Starts At</label> <input type="datetime-local"
-                    name="starts_at" required class="w-full p-2 border mb-3" /> <label
-                    class="block text-sm font-semibold mb-1">Ends At</label> <input type="datetime-local" name="ends_at"
-                    class="w-full p-2 border mb-3" /> <label class="block text-sm font-semibold mb-1">Capacity</label>
-                <input type="number" name="capacity" min="1" class="w-full p-2 border mb-3" /> <label
-                    class="block text-sm font-semibold mb-1">Visibility</label> <select name="visibility"
-                    class="w-full p-2 border mb-3">
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                </select>
-                <label class="block text-sm font-semibold mb-1">Status</label>
-                <select name="status" class="w-full p-2 border mb-3">
-                    <option value="draft">Draft</option>
-                    @if ($canPublish)
-                        <option value="published">Published</option>
-                    @endif
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                <button type="submit" class="{{ $btnPrimaryFull }}">Create Event</button>
-            </form>
-        </div>
-    </div> <!-- View Event Modal -->
+
+                <!-- Event List View -->
+                <div id="list-view" class="hidden space-y-6">
+                    <div class="flex border-b border-gray-200 mb-4 space-x-8">
+                        <button id="upcoming-tab"
+                            class="px-4 py-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition-colors">
+                            Upcoming ({{ $visibleUpcomingEvents->count() }})
+                        </button>
+                        <button id="attending-tab"
+                            class="px-4 py-2 text-sm font-semibold text-gray-500 border-b-2 border-transparent transition-colors">
+                            Attending ({{ $attendingEvents->count() }})
+                        </button>
+                    </div>
+
+                    <div id="upcoming-view" class="space-y-6">
+                        @if ($visibleUpcomingEvents->isEmpty())
+                            <div class="flex flex-col items-center justify-center text-gray-500 py-12">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-gray-400"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <p>No upcoming events at the moment.</p>
+                            </div>
+                        @else
+                            @foreach ($visibleUpcomingEvents as $event)
+                                @php
+                                    $canManage = false;
+                                    $uid = auth()->id();
+                                    if ($uid) {
+                                        if ($event->owner_id === $uid) {
+                                            $canManage = true;
+                                        }
+                                        if (!$canManage) {
+                                            $isHost = \App\Models\EventAttendee::where('event_id', $event->id)
+                                                ->where('user_id', $uid)
+                                                ->where('role', 'host')
+                                                ->exists();
+                                            if ($isHost) {
+                                                $canManage = true;
+                                            }
+                                        }
+                                        if (!$canManage && $event->community_id) {
+                                            $isAdmin = \App\Models\CommunityMembership::where(
+                                                'community_id',
+                                                $event->community_id,
+                                            )
+                                                ->where('user_id', $uid)
+                                                ->whereIn('role', ['owner', 'admin', 'moderator'])
+                                                ->where('status', 'active')
+                                                ->exists();
+                                            if ($isAdmin) {
+                                                $canManage = true;
+                                            }
+                                        }
+                                    }
+
+                                    $statusColor =
+                                        $event->status === 'draft'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-green-100 text-green-700';
+                                @endphp
+
+                                <!-- Event Card -->
+                                <div
+                                    class="bg-white border border-gray-200 hover:border-blue-400 transition-all duration-300 mb-6">
+                                    <div class="p-6">
+                                        <!-- Header -->
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <!-- Host Info -->
+                                                <div class="flex items-center gap-2 -mt-2">
+                                                    <div
+                                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-900">
+                                                            {{ $event->owner->name ?? 'Community' }}
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">Event Organizer</p>
+                                                    </div>
+                                                </div>
+
+                                                <h3 class="text-xl font-semibold text-gray-900 mt-4">{{ $event->title }}
+                                                </h3>
+                                                <p class="text-sm text-gray-600 mt-1">{{ $event->description ?? '' }}
+                                                </p>
+                                            </div>
+
+                                            <!-- Status / Draft Dropdown -->
+                                            <div class="flex items-center gap-4">
+                                                @if ($event->status === 'draft' && $canManage)
+                                                    <div class="relative inline-block text-left">
+                                                        <button type="button"
+                                                            class="draft-badge px-2 py-1 rounded text-xs font-medium {{ $statusColor }} focus:outline-none flex items-center gap-1"
+                                                            data-event-id="{{ $event->id }}">
+                                                            {{ ucfirst($event->status) }}
+                                                            <svg class="ml-1 h-3 w-3" xmlns="http://www.w3.org/2000/svg"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </button>
+
+                                                        <div class="draft-menu origin-top-right absolute right-0 mt-2 w-32 shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden z-10"
+                                                            id="draft-menu-{{ $event->id }}">
+                                                            <div class="py-1">
+                                                                <button
+                                                                    onclick="approveEvent({{ $event->id }}, this)"
+                                                                    class="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50">
+                                                                    Approve
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @else
+                                                    <span
+                                                        class="text-xs px-2 py-1 rounded-md font-semibold {{ $statusColor }} capitalize">
+                                                        {{ ucfirst($event->status) }}
+                                                    </span>
+                                                @endif
+                                                @if ($canManage)
+                                                    <!-- Edit icon (pencil) -->
+                                                    <a href="{{ route('edit-event', ['event' => $event->id]) }}"
+                                                        class="text-blue-600 hover:text-blue-800 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
+                                                        </svg>
+
+                                                    </a>
+
+                                                    <!-- Delete icon (trash can) -->
+                                                    <button onclick="deleteEvent({{ $event->id }}, this)"
+                                                        class="text-red-600 hover:text-red-800 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                        </svg>
+
+                                                    </button>
+                                                @endif
+                                            </div>
+
+                                        </div>
+
+                                        <!-- Event Info Row -->
+                                        <div class="mt-4 border-t border-gray-200 pt-3">
+                                            <div class="flex flex-wrap gap-x-16 gap-y-6 text-sm text-gray-600">
+
+                                                <!-- Date -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <!-- Calendar Icon -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Date</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->starts_at?->format('D, M j, Y') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Time -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <!-- Clock Icon -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <circle cx="12" cy="12" r="9" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M12 7v5l3 3" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Time</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->starts_at?->format('g:i A') }} –
+                                                            {{ $event->ends_at?->format('g:i A') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Location -->
+                                                @if ($event->location)
+                                                    <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                            <!-- Location Icon -->
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 11a3 3 0 100-6 3 3 0 000 6z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z" />
+                                                            </svg>
+                                                        </span>
+                                                        <div>
+                                                            <p class="text-gray-500 text-[11px] leading-tight">Location
+                                                            </p>
+                                                            <p class="font-medium text-gray-800 text-[13px]">
+                                                                {{ $event->location }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <!-- Attendance -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M5 13l4 4L19 7M16 6a4 4 0 11-8 0 4 4 0 018 0zM4 20h16v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2z" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Capacity</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->accepted_count }}/{{ $event->capacity ?? '∞' }}
+                                                            spots filled
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+
+                                        <!-- Footer -->
+                                        <div class="mt-6 flex justify-end items-center border-t border-gray-200 pt-4">
+
+
+                                            <!-- Buttons -->
+                                            <div class="flex gap-3 w-full">
+
+                                                @php
+                                                    $isAttending = $event->attendees->contains(
+                                                        fn($att) => $att->user_id === auth()->id() &&
+                                                            $att->status === 'accepted',
+                                                    );
+                                                @endphp
+                                                <button
+                                                    class="flex-1 px-4 py-2 text-sm font-medium transition text-center 
+        {{ $isAttending ? 'bg-gray-200 text-gray-400 cursor-default' : 'bg-blue-500 text-white hover:bg-blue-600' }}"
+                                                    @if (!$isAttending) onclick="sendRSVP({{ $event->id }}, 'accepted', this)" @endif
+                                                    @if ($isAttending) disabled @endif>
+                                                    {{ $isAttending ? 'Attending' : 'RSVP to Event' }}
+                                                </button>
+                                                <a href="{{ route('event.details', ['event' => $event->id]) }}"
+                                                    class="flex-1 px-4 py-2 text-sm border border-gray-500 text-gray  hover:bg-gray-100 font-medium transition text-center">
+                                                    View Details
+                                                </a>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+
+
+                    <div id="attending-view" class="hidden space-y-6">
+                        @if ($attendingEvents->isEmpty())
+                            <div class="flex flex-col items-center justify-center text-gray-500 py-12">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-gray-400"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <p>You're not attending any events yet.</p>
+                            </div>
+                        @else
+                            @foreach ($attendingEvents as $event)
+                                @php
+                                    $canManage = false;
+                                    $uid = auth()->id();
+                                    if ($uid) {
+                                        if ($event->owner_id === $uid) {
+                                            $canManage = true;
+                                        }
+                                        if (!$canManage) {
+                                            $isHost = \App\Models\EventAttendee::where('event_id', $event->id)
+                                                ->where('user_id', $uid)
+                                                ->where('role', 'host')
+                                                ->exists();
+                                            if ($isHost) {
+                                                $canManage = true;
+                                            }
+                                        }
+                                        if (!$canManage && $event->community_id) {
+                                            $isAdmin = \App\Models\CommunityMembership::where(
+                                                'community_id',
+                                                $event->community_id,
+                                            )
+                                                ->where('user_id', $uid)
+                                                ->whereIn('role', ['owner', 'admin', 'moderator'])
+                                                ->where('status', 'active')
+                                                ->exists();
+                                            if ($isAdmin) {
+                                                $canManage = true;
+                                            }
+                                        }
+                                    }
+
+                                    $statusColor =
+                                        $event->status === 'draft'
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : 'bg-green-100 text-green-700';
+                                @endphp
+
+                                <div
+                                    class="bg-white border border-gray-200 hover:border-blue-400 transition-all duration-300 mb-6">
+                                    <div class="p-6">
+
+                                        <div class="flex justify-between items-start mb-3">
+
+                                            <div>
+                                                <!-- Host Info -->
+                                                <div class="flex items-center gap-2 -mt-2">
+                                                    <div
+                                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-900">
+                                                            {{ $event->owner->name ?? 'Community' }}
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">Event Organizer</p>
+                                                    </div>
+                                                </div>
+
+                                                <h3 class="text-xl font-semibold text-gray-900 mt-4">
+                                                    {{ $event->title }}
+                                                </h3>
+                                                <p class="text-sm text-gray-600 mt-1">{{ $event->description ?? '' }}
+                                                </p>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span
+                                                    class="px-2 py-1 rounded-md text-xs font-semibold {{ $statusColor }} capitalize">
+                                                    {{ ucfirst($event->status) }}
+                                                </span>
+                                                @if ($community)
+                                                    <!-- Edit icon (pencil) -->
+                                                    <a href="{{ route('edit-event', ['event' => $event->id]) }}"
+                                                        class="text-blue-600 hover:text-blue-800 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
+                                                        </svg>
+
+                                                    </a>
+
+                                                    <!-- Delete icon (trash can) -->
+                                                    <button onclick="deleteEvent({{ $event->id }}, this)"
+                                                        class="text-red-600 hover:text-red-800 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                        </svg>
+
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <!-- Event Info Row -->
+                                        <div class="mt-4 border-t border-gray-200 pt-3">
+                                            <div class="flex flex-wrap gap-x-16 gap-y-6 text-sm text-gray-600">
+
+                                                <!-- Date -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <!-- Calendar Icon -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Date</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->starts_at?->format('D, M j, Y') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Time -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <!-- Clock Icon -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <circle cx="12" cy="12" r="9" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M12 7v5l3 3" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Time</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->starts_at?->format('g:i A') }} –
+                                                            {{ $event->ends_at?->format('g:i A') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Location -->
+                                                @if ($event->location)
+                                                    <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                            <!-- Location Icon -->
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor" stroke-width="2">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 11a3 3 0 100-6 3 3 0 000 6z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z" />
+                                                            </svg>
+                                                        </span>
+                                                        <div>
+                                                            <p class="text-gray-500 text-[11px] leading-tight">Location
+                                                            </p>
+                                                            <p class="font-medium text-gray-800 text-[13px]">
+                                                                {{ $event->location }}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <!-- Attendance -->
+                                                <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
+                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                            stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M5 13l4 4L19 7M16 6a4 4 0 11-8 0 4 4 0 018 0zM4 20h16v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2z" />
+                                                        </svg>
+                                                    </span>
+                                                    <div>
+                                                        <p class="text-gray-500 text-[11px] leading-tight">Capacity</p>
+                                                        <p class="font-medium text-gray-800 text-[13px]">
+                                                            {{ $event->accepted_count }}/{{ $event->capacity ?? '∞' }}
+                                                            spots filled
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-6 flex justify-end items-center border-t border-gray-200 pt-4">
+                                            <!-- Buttons -->
+                                            <div class="flex gap-3 w-full">
+                                                <button onclick="sendRSVP({{ $event->id }}, 'declined', this)"
+                                                    class="flex-1 px-4 py-2 text-sm bg-blue-500 text-white  hover:bg-blue-600 font-medium transition text-center">
+                                                    Leave Event
+                                                </button>
+                                                <a href="{{ route('event.details', ['event' => $event->id]) }}"
+                                                    class="flex-1 px-4 py-2 text-sm border border-gray-500 text-gray  hover:bg-gray-100 font-medium transition text-center">
+                                                    View Details
+                                                </a>
+
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                    </div>
+        @endforeach
+        @endif
+    </div>
+    </div>
+    </div>
+    <!-- View Event Modal -->
     <div id="view-event-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
-        onclick="if(event.target.id==='view-event-modal') closeEventDetails()">
-        <div class="bg-white p-6 w-[520px] shadow-lg relative"> <button onclick="closeEventDetails()"
-                class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">✕</button>
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <!-- Inline Event Details Section -->
+
+        <div id="view-event-details" class="hidden bg-white p-6 w-full max-w-3xl mx-auto shadow-md rounded-md mt-6">
+            <div class="flex justify-end">
+                <button onclick="closeEventDetails()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
+            </div>
             <div id="event-details-content" class="space-y-4">
-                <p class="text-gray-500 text-center">Loading...</p>
+                <p class="text-gray-500 text-center">...</p>
             </div>
         </div>
     @else
-        <div class="min-h-screen flex flex-col items-center"> </div>
+        <div class="min-h-screen flex flex-col items-center"></div>
         @endif
     </div>
 
-    <script>
-        // Button class mappings from Blade (keeps JS-generated HTML consistent)
-        const btnBorder = @json($btnBorder);
-        const btnPrimary = @json($btnPrimary);
-        const btnDanger = @json($btnDanger);
-        const btnSecondary = @json($btnSecondary);
-        const btnPrimaryFull = @json($btnPrimaryFull);
-    const canPublish = @json($canPublish);
+    @php
+        $eventsForCalendar = $visibleUpcomingEvents->map(function ($event) {
+            return [
+                'id' => $event->id,
+                'title' => $event->title,
+                'starts_at' => $event->starts_at?->format('Y-m-d\TH:i:s'),
+                'ends_at' => $event->ends_at?->format('Y-m-d\TH:i:s'),
+                'owner' => ['name' => $event->owner->name ?? 'Community'],
+                'description' => $event->description,
+                'location' => $event->location,
+                'status' => $event->status,
+                'visibility' => $event->visibility,
+                'capacity' => $event->capacity,
+                'community' => ['name' => $event->community->name ?? 'Community'],
+                'attendees' => $event->attendees->map(fn($a) => ['user' => ['name' => $a->user->name ?? 'Unknown']]),
+            ];
+        });
+    @endphp
 
-        // Tabs switching
+    <script>
+        // Tab elements
         const calendarTab = document.getElementById('calendar-tab');
         const listTab = document.getElementById('list-tab');
         const calendarView = document.getElementById('calendar-view');
         const listView = document.getElementById('list-view');
+
+        // Function to activate the correct tab visually
+        function activateTab(activeTab, inactiveTab) {
+            // Show/hide views
+            if (activeTab === calendarTab) {
+                calendarView.classList.remove('hidden');
+                listView.classList.add('hidden');
+            } else {
+                listView.classList.remove('hidden');
+                calendarView.classList.add('hidden');
+            }
+
+            // Active (white, blue border)
+            activeTab.classList.add('bg-white', 'text-gray-900', 'border', 'border-blue-400', 'shadow-sm');
+            activeTab.classList.remove('bg-gray-200', 'text-gray-700');
+
+            // Inactive (gray)
+            inactiveTab.classList.remove('bg-white', 'border', 'border-blue-400', 'shadow-sm', 'text-gray-900');
+            inactiveTab.classList.add('bg-gray-200', 'text-gray-700');
+        }
+
+        // Default: Event List active on load
+        activateTab(listTab, calendarTab);
+
+        // Click handlers
+        listTab.addEventListener('click', () => activateTab(listTab, calendarTab));
+        calendarTab.addEventListener('click', () => activateTab(calendarTab, listTab));
+
+
 
         calendarTab.addEventListener('click', () => {
             calendarView.classList.remove('hidden');
@@ -362,7 +752,7 @@
         });
 
         // Calendar rendering
-        const events = @json($allUpcomingEvents);
+        const events = @json($eventsForCalendar);
         const calendarDays = document.getElementById('calendar-days');
         const calendarMonthLabel = document.getElementById('calendar-month');
         const dayEvents = document.getElementById('day-events');
@@ -370,9 +760,12 @@
         let currentDate = new Date();
 
         function renderCalendar() {
-            calendarDays.innerHTML = '';
+            calendarDays.textContent = '';
+            dayEvents.textContent = '';
+
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
+
             calendarMonthLabel.textContent = currentDate.toLocaleString('default', {
                 month: 'long',
                 year: 'numeric'
@@ -380,150 +773,229 @@
 
             const firstDay = new Date(year, month, 1).getDay();
             const lastDate = new Date(year, month + 1, 0).getDate();
+            const prevLastDate = new Date(year, month, 0).getDate();
 
-            for (let i = 0; i < firstDay; i++) {
-                calendarDays.appendChild(document.createElement('div'));
+            const today = new Date();
+            const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
+            let selectedCell = null;
+
+            // --- PREVIOUS MONTH DAYS ---
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const dayNum = prevLastDate - i;
+                const cell = document.createElement('div');
+                cell.textContent = dayNum;
+                cell.className =
+                    'flex items-center justify-center text-gray-300 text-center w-10 h-10 mx-auto cursor-pointer hover:bg-blue-100 rounded-full transition';
+                cell.addEventListener('click', () => {
+                    currentDate.setMonth(month - 1);
+                    renderCalendar();
+                    setTimeout(() => selectDay(dayNum), 0);
+                });
+                calendarDays.appendChild(cell);
             }
 
+            // --- CURRENT MONTH DAYS ---
             for (let d = 1; d <= lastDate; d++) {
-                const dateCell = document.createElement('div');
-                dateCell.className = 'p-2 border rounded cursor-pointer hover:bg-gray-100';
-                dateCell.textContent = d;
+                const cell = document.createElement('div');
+                cell.className =
+                    'relative flex items-center justify-center text-center cursor-pointer transition rounded-full w-10 h-10 mx-auto hover:bg-blue-200';
+                cell.textContent = d;
 
-                const dayDateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dayDate = new Date(year, month, d);
+                const dayDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 const dayEventsList = events.filter(e => e.starts_at?.slice(0, 10) === dayDateStr);
 
                 if (dayEventsList.length > 0) {
                     const dot = document.createElement('span');
-                    dot.className = 'block w-2 h-2 bg-blue-600 rounded-full mx-auto mt-1';
-                    dateCell.appendChild(dot);
+                    dot.className =
+                        'absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-blue-600 rounded-full';
+                    cell.appendChild(dot);
                 }
 
-                dateCell.addEventListener('click', () => {
-                    dayEvents.innerHTML = '';
-                    if (dayEventsList.length) {
-                        dayEventsList.forEach(ev => {
-                            const evDiv = document.createElement('div');
-                            evDiv.className = 'border border-gray-200 rounded p-2 shadow-sm';
-                            const startTime = new Date(ev.starts_at).toLocaleTimeString([], {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                            });
-                            evDiv.innerHTML = `<strong>${ev.title}</strong> - ${startTime}`;
-                            dayEvents.appendChild(evDiv);
-                        });
-                    } else {
-                        dayEvents.innerHTML = '<p class="text-gray-500">No events this day.</p>';
-                    }
-                    dayEvents.classList.remove('hidden');
+                if (isThisMonth && d === today.getDate()) {
+                    cell.classList.add('bg-blue-100', 'text-blue-700', 'font-semibold');
+                }
+
+                cell.addEventListener('click', () => {
+                    handleDayClick(cell, dayDate, dayEventsList);
                 });
 
-                calendarDays.appendChild(dateCell);
+                calendarDays.appendChild(cell);
+            }
+
+            // --- NEXT MONTH DAYS ---
+            const remaining = 42 - calendarDays.children.length;
+            for (let i = 1; i <= remaining; i++) {
+                const cell = document.createElement('div');
+                cell.textContent = i;
+                cell.className =
+                    'flex items-center justify-center text-gray-300 text-center w-10 h-10 mx-auto cursor-pointer hover:bg-blue-100 rounded-full transition';
+                cell.addEventListener('click', () => {
+                    currentDate.setMonth(month + 1);
+                    renderCalendar();
+                    setTimeout(() => selectDay(i), 0);
+                });
+                calendarDays.appendChild(cell);
+            }
+
+            // --- Default message ---
+            const defaultMsg = document.createElement('div');
+            defaultMsg.className = 'border-t border-gray-300 pt-2';
+            const msgRow = document.createElement('div');
+            msgRow.className = 'flex items-center space-x-2 text-gray-500';
+
+            const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            icon.setAttribute('class', 'h-4 w-4 text-blue-600');
+            icon.setAttribute('fill', 'none');
+            icon.setAttribute('viewBox', '0 0 24 24');
+            icon.setAttribute('stroke', 'currentColor');
+            icon.setAttribute('stroke-width', '2');
+            icon.innerHTML =
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />`;
+
+            const msgText = document.createElement('span');
+            msgText.textContent = 'Select a date with a blue dot to view events for that day.';
+
+            msgRow.appendChild(icon);
+            msgRow.appendChild(msgText);
+            defaultMsg.appendChild(msgRow);
+            dayEvents.appendChild(defaultMsg);
+            dayEvents.classList.remove('hidden');
+
+            // --- Click handler ---
+            function handleDayClick(cell, dayDate, dayEventsList) {
+                if (selectedCell && selectedCell !== cell) {
+                    selectedCell.classList.remove('bg-blue-600', 'text-white');
+                    if (isThisMonth && selectedCell.textContent == today.getDate()) {
+                        selectedCell.classList.add('bg-blue-100', 'text-blue-700');
+                    } else {
+                        selectedCell.classList.remove('bg-blue-100', 'text-blue-700');
+                    }
+                    const prevDot = selectedCell.querySelector('span');
+                    if (prevDot) prevDot.classList.replace('bg-white', 'bg-blue-600');
+                }
+
+                cell.classList.remove('bg-blue-100', 'text-blue-700');
+                cell.classList.add('bg-blue-600', 'text-white');
+                selectedCell = cell;
+
+                const dot = cell.querySelector('span');
+                if (dot) dot.classList.replace('bg-blue-600', 'bg-white');
+
+                dayEvents.textContent = '';
+                const divider = document.createElement('div');
+                divider.className = 'border-t border-gray-300 mt-2 mb-2';
+                dayEvents.appendChild(divider);
+
+                if (dayEventsList.length) {
+                    dayEventsList.forEach(ev => {
+                        const card = document.createElement('div');
+                        card.className = 'border border-gray-200 p-2 shadow-sm';
+
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'space-y-1 text-sm text-gray-800';
+
+                        const title = document.createElement('p');
+                        title.className = 'font-semibold';
+                        title.textContent = ev.title;
+
+                        const timeRow = document.createElement('div');
+                        timeRow.className = 'flex items-center gap-1 text-gray-600';
+
+                        const clockIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        clockIcon.setAttribute('class', 'h-4 w-4 text-blue-600');
+                        clockIcon.setAttribute('fill', 'none');
+                        clockIcon.setAttribute('viewBox', '0 0 24 24');
+                        clockIcon.setAttribute('stroke', 'currentColor');
+                        clockIcon.setAttribute('stroke-width', '2');
+                        clockIcon.innerHTML =
+                            `<circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3" />`;
+
+                        const start = ev.starts_at ? new Date(ev.starts_at) : null;
+                        const end = ev.ends_at ? new Date(ev.ends_at) : null;
+                        const startTime = formatEventTime(ev.starts_at);
+                        const endTime = end ? end.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                            timeZone: 'America/New_York'
+                        }) : '';
+
+                        const timeText = document.createElement('span');
+                        timeText.textContent = `${startTime}${endTime ? ` – ${endTime}` : ''}`;
+
+                        timeRow.appendChild(clockIcon);
+                        timeRow.appendChild(timeText);
+                        wrapper.appendChild(title);
+                        wrapper.appendChild(timeRow);
+                        card.appendChild(wrapper);
+                        dayEvents.appendChild(card);
+                    });
+                } else {
+                    const formattedDate = dayDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+
+                    const emptyMsg = document.createElement('div');
+                    emptyMsg.className = 'border-t border-gray-300 pt-2';
+
+                    const p = document.createElement('p');
+                    p.className = 'text-gray-500';
+                    p.textContent = `No events on ${formattedDate}.`;
+
+                    emptyMsg.appendChild(p);
+                    dayEvents.appendChild(emptyMsg);
+                }
+
+                dayEvents.classList.remove('hidden');
+            }
+
+            function selectDay(day) {
+                const dayCells = calendarDays.querySelectorAll('div');
+                const target = [...dayCells].find(cell => cell.textContent == day && cell.classList.contains(
+                    'cursor-pointer'));
+                if (target) target.click();
             }
         }
-
-        document.getElementById('prev-month').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            renderCalendar();
-        });
-        document.getElementById('next-month').addEventListener('click', () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            renderCalendar();
-        });
-
         renderCalendar();
 
-        // Modal handling
-        const eventModal = document.getElementById('event-modal');
-        const openEventBtn = document.getElementById('open-event-form');
+        function setActiveTab(active, inactive, activeView, inactiveView) {
+            activeView.classList.remove('hidden');
+            inactiveView.classList.add('hidden');
 
-        function toggleEventModal() {
-            const wasHidden = eventModal.classList.contains('hidden');
-            if (wasHidden) {
-                eventModal.classList.remove('hidden');
-                return;
-            }
-            // closing modal - clear editing state and reset form
-            eventModal.classList.add('hidden');
-            if (form) {
-                delete form.dataset.editingId;
-                form.reset();
-                const titleEl = document.getElementById('event-modal-title');
-                if (titleEl) titleEl.textContent = 'Create Event';
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) submitBtn.textContent = 'Create Event';
-            }
+            active.classList.add('text-blue-600', 'border-blue-600');
+            active.classList.remove('text-gray-500', 'border-transparent');
+
+            inactive.classList.remove('text-blue-600', 'border-blue-600');
+            inactive.classList.add('text-gray-500', 'border-transparent');
         }
 
-        openEventBtn.addEventListener('click', toggleEventModal);
-        eventModal.addEventListener('click', e => {
-            if (e.target === eventModal) toggleEventModal();
-        });
+        upcomingTab.addEventListener('click', () =>
+            setActiveTab(upcomingTab, attendingTab, upcomingView, attendingView)
+        );
+        attendingTab.addEventListener('click', () =>
+            setActiveTab(attendingTab, upcomingTab, attendingView, upcomingView)
+        );
 
-        // Event creation / edit form
-        const form = document.getElementById('create-event-form');
-        form.addEventListener('submit', async e => {
-            e.preventDefault();
-            const isEditing = !!form.dataset.editingId;
-            const formData = new FormData(form);
-            formData.append('community_id', '{{ $community?->id ?? '' }}');
+        // Set default tab on load
+        setActiveTab(upcomingTab, attendingTab, upcomingView, attendingView);
 
-            try {
-                const url = isEditing ? `/events/${form.dataset.editingId}` : '/events';
-                const opts = {
-                    method: isEditing ? 'PATCH' : 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                    },
-                    body: formData
-                };
+        const params = new URLSearchParams(window.location.search);
+        const initialTab = params.get('tab');
 
-                const res = await fetch(url, opts);
-
-                if (!res.ok) throw new Error('Failed');
-                const event = await res.json();
-
-                // simple fallback: reload to reflect changes
-                window.location.reload();
-            } catch (err) {
-                console.error(err);
-                alert('Failed to save event.');
-            }
-        });
-
-        async function editEvent(eventId) {
-            try {
-                const res = await fetch(`/events/${eventId}`);
-                if (!res.ok) throw new Error('Failed to fetch event');
-                const event = await res.json();
-                // fill form fields
-                form.title.value = event.title || '';
-                form.description.value = event.description || '';
-                form.location.value = event.location || '';
-                if (form.starts_at) form.starts_at.value = event.starts_at ? event.starts_at.replace(' ', 'T') : '';
-                if (form.ends_at) form.ends_at.value = event.ends_at ? event.ends_at.replace(' ', 'T') : '';
-                if (form.capacity) form.capacity.value = event.capacity || '';
-                if (form.visibility) form.visibility.value = event.visibility || 'public';
-                if (form.status) form.status.value = event.status || 'draft';
-
-                form.dataset.editingId = event.id;
-                const titleEl = document.getElementById('event-modal-title');
-                if (titleEl) titleEl.textContent = 'Edit Event';
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) submitBtn.textContent = 'Save Changes';
-                // open modal
-                if (eventModal.classList.contains('hidden')) toggleEventModal();
-            } catch (e) {
-                console.error(e);
-                alert('Failed to load event for editing.');
-            }
+        // Activate the correct main tab if present
+        if (initialTab === 'calendar') {
+            activateTab(calendarTab, listTab);
+        } else if (initialTab === 'list') {
+            activateTab(listTab, calendarTab);
         }
 
         async function sendRSVP(eventId, status, button) {
-            button.disabled = true;
-            const original = button.textContent;
-            button.textContent = '...';
+            if (button) button.disabled = true;
+
             try {
                 const res = await fetch(`/events/${eventId}/rsvp`, {
                     method: 'POST',
@@ -536,131 +1008,193 @@
                         status
                     })
                 });
+
                 let data = null;
-                try { data = await res.json(); } catch (e) { /* ignore json parse errors */ }
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    /* ignore json parse errors */
+                }
+
                 if (res.status === 200) {
-                    alert(`RSVP updated`);
+                    showToast('RSVP updated successfully.', 'success', 1000);
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';
-                    alert(`Waitlist #${pos}/${size}`);
+                    showToast(`Added to waitlist: #${pos} of ${size}`, 'alert', 5000);
                 } else if (res.status >= 400 && res.status < 600) {
                     const msg = data?.message ?? 'Failed to update RSVP.';
-                    alert(msg);
+                    showToast(msg, 'alert', 5000);
                 }
-                // reload so server-rendered attendee lists and select values match
-                window.location.reload();
-            } catch {
-                alert('Failed to RSVP.');
+
+                // Delay reload to allow toast visibility
+                setTimeout(() => window.location.reload(), 1500);
+
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to RSVP due to a network error.', 'alert', 5000);
+                if (!navigator.onLine) showToast('You appear to be offline.', 'alert', 5000);
             } finally {
-                button.disabled = false;
-                button.textContent = original;
+                if (button) button.disabled = false;
             }
         }
 
-        // (RSVP select removed; single RSVP button uses sendRSVP directly)
+        function formatEventTime(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+                timeZone: 'America/New_York'
+            });
+        }
 
-        async function showEventDetails(eventId) {
-            const modal = document.getElementById('view-event-modal');
-            const content = document.getElementById('event-details-content');
-            modal.classList.remove('hidden');
-            content.innerHTML = `<p class="text-gray-500 text-center">Loading...</p>`;
-            try {
-                const res = await fetch(`/events/${eventId}`);
-                const event = await res.json();
-                const startTime = new Date(event.starts_at).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                const endTime = event.ends_at ? new Date(event.ends_at).toLocaleTimeString([], {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                }) : 'N/A';
-                content.innerHTML = `
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">${event.title}</h2>
-                    <p class="text-sm text-gray-500">Hosted by <strong>${event.owner?.name || 'Unknown'}</strong> in <strong>${event.community?.name || 'Community'}</strong></p>
-                </div>
-                <div class="border-t pt-4 space-y-2">
-                    <p><b>Description:</b><br>${event.description || 'No description'}</p>
-                    <p><b>Location:</b> ${event.location || 'N/A'}</p>
-                    <p><b>Starts:</b> ${new Date(event.starts_at).toLocaleDateString()} ${startTime}</p>
-                    <p><b>Ends:</b> ${event.ends_at ? new Date(event.ends_at).toLocaleDateString() + ' ' + endTime : 'N/A'}</p>
-                    <p><b>Capacity:</b> ${event.capacity || 'Unlimited'}</p>
-                    <p><b>Visibility:</b> ${event.visibility}</p>
-                    <p><b>Status:</b> <span class="capitalize">${event.status}</span></p>
-                </div>
-                <div class="border-t pt-4">
-                    <h3 class="font-semibold">Attendees (${event.attendees?.length || 0}/${event.capacity || '∞'})</h3>
-                    ${event.attendees?.length ? `<ul>${event.attendees.map(a => `<li>${a.user?.name || 'Unknown'}</li>`).join('')}</ul>` : '<p>No attendees yet.</p>'}
-                </div>
-            
-            `;
-            } catch {
-                content.innerHTML = `<p class="text-red-600 text-center">Error loading event.</p>`;
-            }
+        function formatEventDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                timeZone: 'America/New_York'
+            });
+        }
+
+
+
+        function confirmToast(message, onConfirm) {
+            showToast(`${message}`, 'alert', 3000, [{
+                    text: 'Cancel',
+                    type: 'alert',
+                    onClick: () => {} // no-op
+                },
+                {
+                    text: 'Delete',
+                    type: 'confirm',
+                    onClick: onConfirm
+                }
+            ]);
         }
 
         async function deleteEvent(eventId, button) {
-            if (!confirm('Are you sure you want to delete this event? This cannot be undone.')) return;
-            button.disabled = true;
-            const original = button.textContent;
-            button.textContent = '...';
-            try {
-                const res = await fetch(`/events/${eventId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                        'Content-Type': 'application/json'
+            // Show confirmation toast instead of confirm()
+            showToast(
+                'Are you sure you want to delete this event?',
+                'confirm',
+                0,
+                [{
+                        text: "Delete",
+                        type: 'yes',
+                        onClick: async () => {
+                            button.disabled = true;
+                            const original = button.textContent;
+                            button.textContent = '...';
+                            try {
+                                const res = await fetch(`/events/${eventId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
+                                            .value,
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                if (res.ok) {
+                                    const params = new URLSearchParams(window.location.search);
+                                    const community = params.get('community');
+                                    window.location.href =
+                                        `/events${community ? '?community=' + community + '&tab=list' : '?tab=list'}`;
+                                } else {
+                                    const data = await res.json().catch(() => ({}));
+                                    showToast(data.message || 'Failed to delete event.', 'error');
+                                }
+                            } catch (e) {
+                                console.error(e);
+                                showToast('Failed to delete event.', 'error');
+                            } finally {
+                                button.disabled = false;
+                                button.textContent = original;
+                            }
+                        }
+                    },
+                    {
+                        text: 'Cancel',
+                        type: 'no',
+                        onClick: () => {
+                            // Do nothing, just close the toast
+                        }
                     }
-                });
-                if (res.ok) {
-                    window.location.reload();
-                } else {
-                    const data = await res.json().catch(() => ({}));
-                    alert(data.message || 'Failed to delete event.');
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Failed to delete event.');
-            } finally {
-                button.disabled = false;
-                button.textContent = original;
-            }
+                ]
+            );
         }
 
         async function approveEvent(eventId, button) {
-            if (!confirm('Approve this draft event and publish it?')) return;
-            button.disabled = true;
-            const original = button.textContent;
-            button.textContent = 'Approving...';
-            try {
-                const res = await fetch(`/events/${eventId}/approve`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                        'Content-Type': 'application/json'
+            // Show toast with Yes/No buttons
+            showToast(
+                'Are you sure you want to publish the event?',
+                'confirm',
+                0, // stays until user clicks
+                [{
+                        text: "Publish",
+                        type: 'yes',
+                        style: 'bg-blue-600 text-white hover:bg-blue-700',
+                        onClick: async () => {
+                            button.disabled = true;
+                            const original = button.textContent;
+                            button.textContent = 'Approving...';
+                            try {
+                                const res = await fetch(`/events/${eventId}/approve`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
+                                            .value,
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                if (res.ok) {
+                                    // Reload silently after approval
+                                    window.location.reload();
+                                } else {
+                                    const data = await res.json().catch(() => ({}));
+                                    showToast(data.message || 'Failed to approve event.', 'error');
+                                }
+                            } catch (e) {
+                                console.error(e);
+                                showToast('Failed to approve event.', 'error');
+                            } finally {
+                                button.disabled = false;
+                                button.textContent = original;
+                            }
+                        }
+                    },
+                    {
+                        text: 'Cancel',
+                        type: 'no',
+                        onClick: () => {} // simply closes the toast
                     }
-                });
-                if (res.ok) {
-                    window.location.reload();
-                } else {
-                    const data = await res.json().catch(() => ({}));
-                    alert(data.message || 'Failed to approve event.');
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Failed to approve event.');
-            } finally {
-                button.disabled = false;
-                button.textContent = original;
-            }
+                ]
+            );
         }
 
         function closeEventDetails() {
             document.getElementById('view-event-modal').classList.add('hidden');
         }
+        document.querySelectorAll('.draft-badge').forEach(btn => {
+            const eventId = btn.dataset.eventId;
+            const menu = document.getElementById(`draft-menu-${eventId}`);
+
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+            });
+        });
+
+        // Close dropdowns if clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.draft-menu').forEach(menu => menu.classList.add('hidden'));
+        });
     </script>
 </x-layout>
