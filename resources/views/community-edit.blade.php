@@ -128,19 +128,17 @@
 
                     if (res.ok) {
                         const json = await res.json();
-                        // redirect after success
                         window.location.href = `/dashboard?community=${json.slug}`;
                     } else {
                         const err = await res.json().catch(() => ({}));
-                        showToast(err.message || 'Failed to update community.', 'alert');
-
+                        showToastify(err.message || 'Failed to update community.', 'error');
                     }
                 } catch (error) {
                     console.error(error);
-                    showToast('Something went wrong.', 'alert');
-
+                    showToastify('Something went wrong.', 'error');
                 }
             });
+
         });
     </script>
 </x-layout>

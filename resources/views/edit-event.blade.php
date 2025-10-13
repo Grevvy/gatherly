@@ -104,7 +104,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('edit-event-form');
 
-            form.addEventListener('submit', async (e) => {
+            form?.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
                 const formData = new FormData(form);
@@ -122,18 +122,14 @@
 
                     if (!res.ok) {
                         const err = await res.json().catch(() => ({}));
-                        showToast(err.message || 'Failed to update event.', 'alert');
-
+                        showToastify(err.message || 'Failed to update event.', 'error');
                         return;
                     }
 
-                    // ✅ Redirect after success
                     window.location.href = `/events?community={{ $event->community?->slug }}`;
-
                 } catch (err) {
                     console.error(err);
-                    showToast('Something went wrong.', 'alert');
-
+                    showToastify('Something went wrong.', 'error');
                 }
             });
         });

@@ -113,7 +113,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('create-event-form');
 
-            form.addEventListener('submit', async (e) => {
+            form?.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const data = new FormData(form);
                 const token = data.get('_token');
@@ -133,13 +133,11 @@
                     if (res.ok) {
                         window.location.href = `/events?community={{ $community->slug }}`;
                     } else {
-                        showToast(err.message || 'Failed to create event.', 'alert');
-
+                        showToastify(result.message || 'Failed to create event.', 'error');
                     }
                 } catch (err) {
                     console.error(err);
-                    showToast('Something went wrong.', 'alert');
-
+                    showToastify('Something went wrong.', 'error');
                 }
             });
         });

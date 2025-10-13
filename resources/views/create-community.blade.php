@@ -112,14 +112,14 @@
                         window.location.href = `/dashboard?community=${json.slug}`;
                     } else {
                         const err = await res.json().catch(() => ({}));
-                        showToast(err.message || 'Failed to create community.', 'alert');
+                        showToastify(err.message || 'Failed to create community.', 'error');
                     }
                 } catch (error) {
                     console.error(error);
-                    showToast('Something went wrong.', 'alert');
-
+                    showToastify('Something went wrong.', 'error');
                 }
             });
+
         });
     </script>
 </x-layout>

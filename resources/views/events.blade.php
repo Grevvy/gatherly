@@ -1012,32 +1012,30 @@
                 let data = null;
                 try {
                     data = await res.json();
-                } catch (e) {
-                    /* ignore json parse errors */
-                }
+                } catch (e) {}
 
                 if (res.status === 200) {
-                    showToast('RSVP updated successfully.', 'success', 1000);
+                    showToastify('RSVP updated successfully.', 'success');
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';
-                    showToast(`Added to waitlist: #${pos} of ${size}`, 'alert', 5000);
-                } else if (res.status >= 400 && res.status < 600) {
+                    showToastify(`Added to waitlist: #${pos} of ${size}`, 'confirm');
+                } else {
                     const msg = data?.message ?? 'Failed to update RSVP.';
-                    showToast(msg, 'alert', 5000);
+                    showToastify(msg, 'error');
                 }
 
-                // Delay reload to allow toast visibility
                 setTimeout(() => window.location.reload(), 1500);
 
             } catch (err) {
                 console.error(err);
-                showToast('Failed to RSVP due to a network error.', 'alert', 5000);
-                if (!navigator.onLine) showToast('You appear to be offline.', 'alert', 5000);
+                showToastify('Failed to RSVP due to a network error.', 'error');
+                if (!navigator.onLine) showToastify('You appear to be offline.', 'error');
             } finally {
                 if (button) button.disabled = false;
             }
         }
+
 
         function formatEventTime(dateStr) {
             if (!dateStr) return 'N/A';
@@ -1062,8 +1060,6 @@
             });
         }
 
-
-
         function confirmToast(message, onConfirm) {
             showToast(`${message}`, 'alert', 3000, [{
                     text: 'Cancel',
@@ -1079,105 +1075,75 @@
         }
 
         async function deleteEvent(eventId, button) {
-            // Show confirmation toast instead of confirm()
-            showToast(
-                'Are you sure you want to delete this event?',
-                'confirm',
-                0,
-                [{
-                        text: "Delete",
-                        type: 'yes',
-                        onClick: async () => {
-                            button.disabled = true;
-                            const original = button.textContent;
-                            button.textContent = '...';
-                            try {
-                                const res = await fetch(`/events/${eventId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
-                                            .value,
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
+            showConfirmToast('Are you sure you want to delete this event?', async () => {
+                    button.disabled = true;
+                    const original = button.textContent;
+                    button.textContent = '...';
 
-                                if (res.ok) {
-                                    const params = new URLSearchParams(window.location.search);
-                                    const community = params.get('community');
-                                    window.location.href =
-                                        `/events${community ? '?community=' + community + '&tab=list' : '?tab=list'}`;
-                                } else {
-                                    const data = await res.json().catch(() => ({}));
-                                    showToast(data.message || 'Failed to delete event.', 'error');
-                                }
-                            } catch (e) {
-                                console.error(e);
-                                showToast('Failed to delete event.', 'error');
-                            } finally {
-                                button.disabled = false;
-                                button.textContent = original;
+                    try {
+                        const res = await fetch(`/events/${eventId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Content-Type': 'application/json'
                             }
+                        });
+
+                        if (res.ok) {
+                            const params = new URLSearchParams(window.location.search);
+                            const community = params.get('community');
+                            window.location.href =
+                                `/events${community ? '?community=' + community + '&tab=list' : '?tab=list'}`;
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            showToastify(data.message || 'Failed to delete event.', 'error');
                         }
-                    },
-                    {
-                        text: 'Cancel',
-                        type: 'no',
-                        onClick: () => {
-                            // Do nothing, just close the toast
-                        }
+                    } catch (e) {
+                        console.error(e);
+                        showToastify('Failed to delete event.', 'error');
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = original;
                     }
-                ]
-            );
+                },
+                'bg-red-400 hover:bg-red-500',
+                'Delete');
         }
+
 
         async function approveEvent(eventId, button) {
-            // Show toast with Yes/No buttons
-            showToast(
-                'Are you sure you want to publish the event?',
-                'confirm',
-                0, // stays until user clicks
-                [{
-                        text: "Publish",
-                        type: 'yes',
-                        style: 'bg-blue-600 text-white hover:bg-blue-700',
-                        onClick: async () => {
-                            button.disabled = true;
-                            const original = button.textContent;
-                            button.textContent = 'Approving...';
-                            try {
-                                const res = await fetch(`/events/${eventId}/approve`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
-                                            .value,
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
+            showConfirmToast('Are you sure you want to publish the event?', async () => {
+                    button.disabled = true;
+                    const original = button.textContent;
+                    button.textContent = 'Approving...';
 
-                                if (res.ok) {
-                                    // Reload silently after approval
-                                    window.location.reload();
-                                } else {
-                                    const data = await res.json().catch(() => ({}));
-                                    showToast(data.message || 'Failed to approve event.', 'error');
-                                }
-                            } catch (e) {
-                                console.error(e);
-                                showToast('Failed to approve event.', 'error');
-                            } finally {
-                                button.disabled = false;
-                                button.textContent = original;
+                    try {
+                        const res = await fetch(`/events/${eventId}/approve`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Content-Type': 'application/json'
                             }
+                        });
+
+                        if (res.ok) {
+                            window.location.reload();
+                        } else {
+                            const data = await res.json().catch(() => ({}));
+                            showToastify(data.message || 'Failed to approve event.', 'error');
                         }
-                    },
-                    {
-                        text: 'Cancel',
-                        type: 'no',
-                        onClick: () => {} // simply closes the toast
+                    } catch (e) {
+                        console.error(e);
+                        showToastify('Failed to approve event.', 'error');
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = original;
                     }
-                ]
-            );
+                },
+                'bg-blue-500 hover:bg-blue-600',
+                'Publish');
         }
+
 
         function closeEventDetails() {
             document.getElementById('view-event-modal').classList.add('hidden');

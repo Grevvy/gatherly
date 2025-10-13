@@ -11,6 +11,8 @@
     <title>{{ $title ?? 'Gatherly' }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -265,104 +267,75 @@
     <!-- Toast container -->
     <div id="toast" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
+    <!-- Confirmation modal -->
+    <div id="confirm-toast"
+        class="hidden fixed top-4 right-4 z-50 max-w-sm w-full sm:w-auto border border-gray-300 bg-white text-gray-800 px-4 py-3 text-sm transform transition-transform duration-300 ease-out -translate-y-10 opacity-0 flex flex-col gap-3">
+        <!-- Message -->
+        <p id="confirm-message" class="text-sm text-gray-800">Are you sure?</p>
+
+        <!-- Action buttons -->
+        <div class="flex justify-center gap-2">
+            <button id="confirm-yes"
+                class="px-3 py-1 bg-blue-600 text-white text-sm hover:bg-blue-700 rounded">Publish</button>
+            <button id="confirm-no"
+                class="px-3 py-1 bg-gray-200 text-gray-700 text-sm hover:bg-gray-300 rounded">Cancel</button>
+        </div>
+    </div>
+
+
     <script>
-        function showToast(message, type = 'alert', duration = 3000, buttons = []) {
-            const container = document.getElementById('toast');
-            const toast = document.createElement('div');
+        function showToastify(message, type = 'info', duration = 4000) {
+            Toastify({
+                text: message,
+                duration: duration,
+                close: true,
+                gravity: "top",
+                position: "right",
+                backgroundColor: type === 'success' ? "#4ade80" : // Tailwind green-400
+                    type === 'error' ? "#f87171" : // Tailwind red-400
+                    type === 'confirm' ? "#ffffff" : // White for confirm
+                    "#e5e7eb", // Tailwind gray-200
+                stopOnFocus: true
+            }).showToast();
+        }
 
-            // Tailwind background + label
-            let bgClass = '';
-            let label = '';
-            let textColor = '';
-            if (type === 'success') {
-                bgClass = 'bg-green-100';
-                label = 'Success';
-                textColor = 'text-green-800';
-            } else if (type === 'confirm') {
-                bgClass = 'bg-white';
-                label = 'Confirmation';
-                textColor = 'text-black';
-            } else {
-                bgClass = 'bg-red-100';
-                label = 'Error';
-                textColor = 'text-red-800';
-            }
+        function showConfirmToast(message, onConfirm, yesStyle = 'bg-blue-600 hover:bg-blue-700', yesLabel = 'Yes') {
+            const toast = document.getElementById('confirm-toast');
+            const msg = document.getElementById('confirm-message');
+            const yes = document.getElementById('confirm-yes');
+            const no = document.getElementById('confirm-no');
 
-            toast.className = `
-        flex flex-col gap-2 p-4 rounded-lg shadow-lg font-sans
-        min-w-[240px] max-w-[360px] ${bgClass} relative border border-gray-300
-    `;
+            msg.textContent = message;
+            yes.textContent = yesLabel;
 
-            // Header row
-            const header = document.createElement('div');
-            header.className = 'flex justify-between items-center';
+            // Apply styles
+            yes.className = `px-3 py-1 text-white text-sm rounded ${yesStyle}`;
+            no.className = 'px-3 py-1 bg-gray-200 text-gray-700 text-sm hover:bg-gray-300 rounded';
 
-            const title = document.createElement('span');
-            title.textContent = label;
-            title.className = 'font-semibold text-sm';
+            // Reset to hidden state before triggering animation
+            toast.classList.remove('hidden');
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('-translate-y-10', 'opacity-0');
 
-            const close = document.createElement('button');
-            close.textContent = '✕';
-            close.className = 'text-gray-500 hover:text-gray-700 text-sm';
-            close.onclick = () => {
-                if (toast.parentNode) container.removeChild(toast);
+            // Trigger reflow and then animate in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toast.classList.remove('-translate-y-10', 'opacity-0');
+                    toast.classList.add('translate-y-0', 'opacity-100');
+                });
+            });
+
+            const cleanup = () => {
+                toast.classList.add('hidden');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-10', 'opacity-0');
             };
 
-            header.appendChild(title);
-            header.appendChild(close);
-            toast.appendChild(header);
-
-            // Message
-            const text = document.createElement('div');
-            text.textContent = message;
-            text.className = 'text-sm';
-            toast.appendChild(text);
-
-            // Buttons
-            if (buttons.length) {
-                const btnContainer = document.createElement('div');
-                btnContainer.className = 'flex justify-center gap-4 mt-4';
-
-                buttons.forEach(btn => {
-                    const b = document.createElement('button');
-                    b.textContent = btn.text;
-
-                    if (btn.style) {
-                        b.className = `text-sm rounded px-4 py-2 cursor-pointer transition ${btn.style}`;
-                    } else if (btn.type === 'yes') {
-                        b.className = `
-                text-sm text-white bg-red-600 rounded px-4 py-2 cursor-pointer
-                hover:bg-red-700 transition
-            `;
-                    } else {
-                        b.className = `
-                text-sm text-gray-700 bg-gray-200 rounded px-4 py-2 cursor-pointer
-                hover:bg-gray-300 transition
-            `;
-                    }
-
-                    b.onclick = () => {
-                        if (typeof btn.onClick === 'function') btn.onClick();
-                        if (toast.parentNode) container.removeChild(toast);
-                    };
-
-                    btnContainer.appendChild(b);
-                });
-
-                toast.appendChild(btnContainer);
-            }
-
-            container.appendChild(toast);
-
-            // Auto-dismiss if no buttons
-            if (!buttons.length) {
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
-                    setTimeout(() => {
-                        if (toast.parentNode) container.removeChild(toast);
-                    }, 500);
-                }, duration || 6000);
-            }
+            yes.onclick = () => {
+                cleanup();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+            no.onclick = cleanup;
         }
 
 
@@ -370,43 +343,33 @@
             const form = button.closest('.delete-community-form');
             const slug = form.dataset.slug;
 
-            showToast(`Are you sure you want to delete this community?`, 'confirm', 0, [{
-                    text: "Delete",
-                    type: 'yes',
-                    onClick: async () => {
+            showConfirmToast(
+                'Are you sure you want to delete this community?',
+                async () => {
                         try {
                             const res = await fetch(`/communities/${slug}`, {
                                 method: 'DELETE',
                                 headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
-                                        .value,
+                                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
                                     'Content-Type': 'application/json'
                                 }
                             });
 
                             if (res.ok) {
-                                // ✅ Redirect to dashboard after successful delete
                                 window.location.href = '/dashboard';
                             } else {
                                 const data = await res.json().catch(() => ({}));
-                                showToast(data.message || 'Failed to delete community.', 'error');
+                                showToastify(data.message || 'Failed to delete community.', 'error');
                             }
                         } catch (err) {
                             console.error(err);
-                            showToast('Something went wrong.', 'error');
+                            showToastify('Something went wrong.', 'error');
                         }
-                    }
-                },
-                {
-                    text: 'Cancel',
-                    type: 'no',
-                    onClick: () => {
-                        // Do nothing
-                    }
-                }
-            ]);
+                    },
+                    'bg-red-400 hover:bg-red-500',
+                    'Delete'
+            );
         }
-
 
         document.addEventListener('DOMContentLoaded', () => {
             // Lucide icons
@@ -577,6 +540,7 @@
             document.addEventListener('click', async (e) => {
                 const btn = e.target.closest && e.target.closest('.join-btn');
                 if (!btn) return;
+
                 const slug = btn.dataset.slug;
                 btn.disabled = true;
                 btn.textContent = 'Joining...';
@@ -599,7 +563,6 @@
                         btn.classList.remove('bg-blue-500');
                         btn.classList.add('bg-green-500');
 
-                        // Optionally add to side list
                         const list = document.getElementById('community-list');
                         if (list) {
                             const li = document.createElement('li');
@@ -609,26 +572,23 @@
                             list.appendChild(li);
                         }
 
-                        // Hide dropdown after join
                         setTimeout(() => {
                             dropdown.classList.add('hidden');
                         }, 500);
                     } else {
                         const data = await res.json().catch(() => ({}));
-                        const msg = data.message || 'Failed to join community';
-                        showToast(msg, 'error');
-
+                        showToastify(data.message || 'Failed to join community', 'error');
                         btn.disabled = false;
                         btn.textContent = 'Join';
                     }
                 } catch (err) {
                     console.error(err);
-                    showToast('Something went wrong', 'error');
-
+                    showToastify('Something went wrong', 'error');
                     btn.disabled = false;
                     btn.textContent = 'Join';
                 }
             });
+
 
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
@@ -642,38 +602,36 @@
             document.querySelectorAll('.delete-community-form').forEach(form => {
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
-                    // Remove confirm entirely
-                    // Proceed with deletion
-                    showToast('Community deleted', 'success');
-
-
                     const slug = form.dataset.slug;
 
-                    try {
-                        const res = await fetch(`/communities/${slug}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Accept': 'application/json'
+                    showConfirmToast('Are you sure you want to delete this community?',
+                        async () => {
+                            try {
+                                const res = await fetch(`/communities/${slug}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json'
+                                    }
+                                });
+
+                                if (res.ok) {
+                                    window.location.href = '/dashboard';
+                                } else {
+                                    const data = await res.json().catch(() => ({}));
+                                    showToastify(data.message ||
+                                        'Failed to delete community.', 'error');
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                showToastify(
+                                    'Something went wrong deleting this community.',
+                                    'error');
                             }
                         });
-
-                        if (res.ok) {
-                            // Redirect to dashboard after successful delete
-                            window.location.href = '/dashboard';
-                        } else {
-                            const data = await res.json().catch(() => ({}));
-                            const msg = data.message || 'Failed to delete community.';
-                            showToast(msg, 'error');
-
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        showToast('Something went wrong deleting this community.', 'error');
-
-                    }
                 });
             });
+
 
 
         });
