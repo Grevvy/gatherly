@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\CommunityMembershipController;
+use App\Http\Controllers\ProfileController;
 
 // routes/web.php
 // ------------------
@@ -47,6 +48,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/create-event', function () {
         return view('create-event');
     })->name(name: 'create-event');
+
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/events/{event}/edit', function (\App\Models\Event $event) {
         return view('edit-event');
