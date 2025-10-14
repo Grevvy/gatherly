@@ -70,6 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community:slug}', [CommunityController::class, 'destroy']);
 
     // Memberships + moderation
+    Route::get('/members', [CommunityMembershipController::class, 'showMembers'])->name('members');
     Route::get('/communities/{community:slug}/members', [CommunityMembershipController::class, 'index']);
     Route::post('/communities/{community:slug}/join', [CommunityMembershipController::class, 'join']);
     Route::post('/communities/{community:slug}/leave', [CommunityMembershipController::class, 'leave']);
