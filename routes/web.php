@@ -66,7 +66,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/create-community', action: function () {
         return view('create-community');
     })->name('create-community');
->>>>>>> origin/main
 
     // Communities
     Route::get('/communities/search', [CommunityController::class, 'search']);
@@ -102,6 +101,5 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/{event}/rsvp', [\App\Http\Controllers\EventController::class, 'rsvp']);
     // Check-in
     Route::post('/events/{event}/attendees/{attendee}/checkin', [\App\Http\Controllers\EventController::class, 'checkin']);
-});
 });
 
