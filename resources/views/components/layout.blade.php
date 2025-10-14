@@ -155,11 +155,11 @@
                                 <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
                             </div>
                             <!--  View Profile link -->
-                           <a href="{{ route('profile') }}"
-                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                           <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
-                              View Profile
-                                  </a>
+                           <a href="{{ route('profile.show') }}"
+                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                          <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
+                                         View Profile
+                                     </a>
 
                             <form method="POST" action="{{ route('logout') }}" class="p-2">
                                 @csrf

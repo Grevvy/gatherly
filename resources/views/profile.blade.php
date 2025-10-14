@@ -15,10 +15,10 @@
                 <div class="h-40 bg-gradient-to-r from-blue-500 to-purple-500"></div>
 
                 <!-- Edit button -->
-                <button
+                <a href="{{ route('profile.edit') }}"
                     class="absolute top-4 right-4 bg-white text-gray-700 text-xs px-3 py-1 rounded-md border hover:bg-gray-100 shadow-sm">
                     Edit Profile
-                </button>
+                </a>
 
                 <!-- Avatar + Info -->
                 <div class="relative flex flex-col items-center px-6 pb-8 -mt-12">
@@ -37,7 +37,7 @@
                     </h2>
 
                     <p class="text-gray-500 text-sm">
-                        {{ '@' . (auth()->user()->username ?? Str::slug(auth()->user()->name ?? 'user')) }}
+                        {{ '@' . (auth()->user()->username ?? \Illuminate\Support\Str::slug(auth()->user()->name ?? 'user')) }}
                     </p>
 
                     <p class="text-gray-400 text-xs mt-1">
@@ -50,20 +50,24 @@
 
                     <div class="flex flex-wrap justify-center gap-4 mt-4 text-sm text-gray-600">
                         @if (auth()->user()->email)
-                            <span class="flex items-center gap-1"><i data-lucide="mail"></i>
-                                {{ auth()->user()->email }}</span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="mail"></i> {{ auth()->user()->email }}
+                            </span>
                         @endif
                         @if (auth()->user()->phone)
-                            <span class="flex items-center gap-1"><i data-lucide="phone"></i>
-                                {{ auth()->user()->phone }}</span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="phone"></i> {{ auth()->user()->phone }}
+                            </span>
                         @endif
                         @if (auth()->user()->location)
-                            <span class="flex items-center gap-1"><i data-lucide="map-pin"></i>
-                                {{ auth()->user()->location }}</span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="map-pin"></i> {{ auth()->user()->location }}
+                            </span>
                         @endif
                         @if (auth()->user()->website)
-                            <span class="flex items-center gap-1"><i data-lucide="globe"></i>
-                                {{ auth()->user()->website }}</span>
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="globe"></i> {{ auth()->user()->website }}
+                            </span>
                         @endif
                     </div>
                 </div>
