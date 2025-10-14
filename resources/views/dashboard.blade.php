@@ -1,5 +1,6 @@
 @php
     use App\Models\Community;
+    use Illuminate\Support\Facades\Storage;
 
     $community = null;
     $slug = request('community');
@@ -91,7 +92,6 @@
                 <!-- Feed -->
                 <div class="space-y-5">
                     @if ($community)
-                        {{-- example posts area --}}
                         <div class="flex items-center justify-center h-40 text-gray-600">
                             No posts yet.
                         </div>
