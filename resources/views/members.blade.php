@@ -1,3 +1,24 @@
+@php
+    use App\Models\Community;
+
+    $community = null;
+    $slug = request('community');
+
+    if ($slug) {
+        $community = Community::with(['owner', 'memberships.user'])
+            ->where('slug', $slug)
+            ->first();
+    }
+
+    // load communities the current user belongs to (for sidebar)
+    $communities = collect();
+    if (auth()->check()) {
+        $communities = Community::whereHas('memberships', function ($q) {
+            $q->where('user_id', auth()->id());
+        })->get();
+    }
+@endphp
+
 <x-layout>
     <div class="bg-gray-50 min-h-screen px-6 py-8">
 
