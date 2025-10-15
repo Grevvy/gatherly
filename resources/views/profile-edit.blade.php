@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :communities="$communities">
     <div class="bg-gray-50 min-h-screen py-10">
         <div class="max-w-4xl mx-auto px-6">
             <!-- Back link -->
