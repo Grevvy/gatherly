@@ -401,9 +401,12 @@
                                                     class="flex-1 px-4 py-2 text-sm border border-gray-500 text-gray  hover:bg-gray-100 font-medium transition text-center">
                                                     View Details
                                                 </a>
-
-
                                             </div>
+
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -600,8 +603,11 @@
                                                     View Details
                                                 </a>
 
-
                                             </div>
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -611,22 +617,9 @@
     </div>
     </div>
     </div>
-    <!-- View Event Modal -->
-    <div id="view-event-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <!-- Inline Event Details Section -->
-
-        <div id="view-event-details" class="hidden bg-white p-6 w-full max-w-3xl mx-auto shadow-md rounded-md mt-6">
-            <div class="flex justify-end">
-                <button onclick="closeEventDetails()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
-            </div>
-            <div id="event-details-content" class="space-y-4">
-                <p class="text-gray-500 text-center">...</p>
-            </div>
-        </div>
-    @else
-        <div class="min-h-screen flex flex-col items-center"></div>
-        @endif
+@else
+    <div class="min-h-screen flex flex-col items-center"></div>
+    @endif
     </div>
 
     @php
