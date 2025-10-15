@@ -122,12 +122,20 @@
                             @php
                                 $userId = auth()->id();
                                 $membership = $community->memberships->firstWhere('user_id', $userId);
-                                $canModerate = $membership && in_array($membership->role, ['owner', 'admin']);
+                                
+                                // For UI controls only - post visibility is handled by the controller
+                                $canModerate = $membership && 
+                                    in_array($membership->role, ['owner', 'admin', 'moderator']) && 
+                                    $membership->status === 'active';
+                                
+                                // All posts that made it to the view should be visible
+                                $canSeePost = true;
                             @endphp
+                            @if($canSeePost)
 
                             <div class="bg-white border border-gray-200 shadow p-4 relative hover:border-blue-400 transition-all duration-300 "
                                 id="post-{{ $post->id }}">
-                                @if ($canModerate)
+                                @if ($canModerate || $post->user_id === $userId)
                                     <!-- Dots Dropdown Above -->
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-3">
@@ -149,7 +157,7 @@
 
 
 
-                                        @if ($canModerate)
+                                        @if ($canModerate || $post->user_id === $userId)
                                             <div class="relative">
                                                 <button onclick="toggleDropdown({{ $post->id }})"
                                                     class="text-gray-500 hover:text-gray-700 focus:outline-none">
@@ -157,6 +165,21 @@
                                                 </button>
                                                 <div id="dropdown-{{ $post->id }}"
                                                     class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
+                                                    @if ($canModerate && $post->status === 'pending')
+                                                        <form method="POST"
+                                                            action="{{ route('posts.update', [$community->slug, $post->id]) }}"
+                                                            data-community="{{ $community->slug }}"
+                                                            onsubmit="return handlePostAction(event)">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="status" value="published">
+                                                            <input type="hidden" name="content" value="{{ $post->content }}">
+                                                            <button type="submit"
+                                                                class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
+                                                                Publish
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                     <button onclick="startEdit({{ $post->id }})"
                                                         class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
                                                     <form method="POST"
@@ -170,7 +193,6 @@
                                                             class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
                                                             Delete
                                                         </button>
-
                                                     </form>
                                                 </div>
                                             </div>
@@ -215,7 +237,7 @@
 
 
                                 <!-- Edit Form -->
-                                @if ($canModerate)
+                                @if ($canModerate || $post->user_id === $userId)
                                     <form method="POST"
                                         action="{{ route('posts.update', [$community->slug, $post->id]) }}"
                                         enctype="multipart/form-data" class="edit-form space-y-3 mt-2 hidden"
@@ -275,6 +297,7 @@
                                 @endif
 
                             </div>
+                        @endif
                         @endforeach
                     @else
                         <div class="flex items-center justify-center h-40 text-gray-600">

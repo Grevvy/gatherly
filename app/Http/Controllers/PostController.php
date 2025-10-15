@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\Community;
+use App\Models\CommunityMembership;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -23,17 +24,27 @@ class PostController extends Controller
 
         $posts = Post::where('community_id', $community->id)
             ->when(!Auth::user()->isSiteAdmin(), function ($query) use ($community) {
-                $membership = Auth::user()->memberships()
-                    ->where('community_id', $community->id)
+                // Check if user is a community moderator/admin/owner
+                $isAdmin = CommunityMembership::where('community_id', $community->id)
+                    ->where('user_id', Auth::id())
                     ->where('status', 'active')
-                    ->first();
+                    ->whereIn('role', ['owner', 'admin', 'moderator'])
+                    ->exists();
 
-                if (!$membership) {
-                    return $query->where('id', 0); // Return no posts if not a member
+                // If not a moderator, check regular membership
+                if (!$isAdmin) {
+                    $isMember = CommunityMembership::where('community_id', $community->id)
+                        ->where('user_id', Auth::id())
+                        ->where('status', 'active')
+                        ->exists();
+
+                    if (!$isMember) {
+                        return $query->where('id', 0); // Return no posts if not a member
+                    }
                 }
 
                 // If moderator/admin/owner, see all posts
-                if (in_array($membership->role, ['owner', 'admin', 'moderator'])) {
+                if ($isAdmin) {
                     return $query;
                 }
 
@@ -122,7 +133,7 @@ class PostController extends Controller
 
         $data = $request->validate([
             'content' => ['sometimes', 'string', 'max:1000'],
-            'status' => ['sometimes', 'in:draft,pending'],
+            'status' => ['sometimes', 'in:draft,pending,published'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'], // 5MB max
         ]);
 
