@@ -108,5 +108,9 @@
                 <p class="text-[15px] text-gray-500">No attendees yet.</p>
             @endif
         </div>
+        <div class="text-xs text-gray-400 mt-9">
+            Created on {{ $event->created_at->format('g:i A · M j, Y') }}
+        </div>
+
     </div>
 </x-layout>
