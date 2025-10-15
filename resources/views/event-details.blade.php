@@ -4,7 +4,9 @@
 
     // Retrieve the event from the route
     $eventId = request()->route('event');
-    $event = Event::with(['community', 'owner', 'attendees.user'])->findOrFail($eventId);
+    $event = Event::with(['community', 'owner', 'attendees' => function($query) {
+        $query->where('status', 'accepted')->with('user');
+    }])->findOrFail($eventId);
 
     // Load the community for the event
     $community = $event->community;
@@ -108,5 +110,9 @@
                 <p class="text-[15px] text-gray-500">No attendees yet.</p>
             @endif
         </div>
+        <div class="text-xs text-gray-400 mt-9">
+            Created on {{ $event->created_at->format('g:i A · M j, Y') }}
+        </div>
+
     </div>
 </x-layout>

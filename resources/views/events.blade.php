@@ -225,7 +225,7 @@
 
                                             <!-- Status / Draft Dropdown -->
                                             <div class="flex items-center gap-4">
-                                                @if ($event->status === 'draft' && $canManage)
+                                                @if ($event->status === 'draft' && $canPublish)
                                                     <div class="relative inline-block text-left">
                                                         <button type="button"
                                                             class="draft-badge px-2 py-1 rounded text-xs font-medium {{ $statusColor }} focus:outline-none flex items-center gap-1"
@@ -256,7 +256,7 @@
                                                         {{ ucfirst($event->status) }}
                                                     </span>
                                                 @endif
-                                                @if ($canManage)
+                                                @if ($canManage && $activeNestedTab !== 'Attending')
                                                     <!-- Edit icon (pencil) -->
                                                     <a href="{{ route('edit-event', ['event' => $event->id]) }}"
                                                         class="text-blue-600 hover:text-blue-800 transition">
@@ -401,9 +401,12 @@
                                                     class="flex-1 px-4 py-2 text-sm border border-gray-500 text-gray  hover:bg-gray-100 font-medium transition text-center">
                                                     View Details
                                                 </a>
-
-
                                             </div>
+
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -493,31 +496,7 @@
                                                     class="px-2 py-1 rounded-md text-xs font-semibold {{ $statusColor }} capitalize">
                                                     {{ ucfirst($event->status) }}
                                                 </span>
-                                                @if ($community)
-                                                    <!-- Edit icon (pencil) -->
-                                                    <a href="{{ route('edit-event', ['event' => $event->id]) }}"
-                                                        class="text-blue-600 hover:text-blue-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
-                                                        </svg>
 
-                                                    </a>
-
-                                                    <!-- Delete icon (trash can) -->
-                                                    <button onclick="deleteEvent({{ $event->id }}, this)"
-                                                        class="text-red-600 hover:text-red-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                                                        </svg>
-
-                                                    </button>
-                                                @endif
                                             </div>
                                         </div>
 
@@ -624,8 +603,11 @@
                                                     View Details
                                                 </a>
 
-
                                             </div>
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -635,22 +617,9 @@
     </div>
     </div>
     </div>
-    <!-- View Event Modal -->
-    <div id="view-event-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <!-- Inline Event Details Section -->
-
-        <div id="view-event-details" class="hidden bg-white p-6 w-full max-w-3xl mx-auto shadow-md rounded-md mt-6">
-            <div class="flex justify-end">
-                <button onclick="closeEventDetails()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
-            </div>
-            <div id="event-details-content" class="space-y-4">
-                <p class="text-gray-500 text-center">...</p>
-            </div>
-        </div>
-    @else
-        <div class="min-h-screen flex flex-col items-center"></div>
-        @endif
+@else
+    <div class="min-h-screen flex flex-col items-center"></div>
+    @endif
     </div>
 
     @php
@@ -1016,6 +985,8 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
+                    // Refresh the page when the RSVP is successful
+                    window.location.reload();
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';

@@ -1,4 +1,4 @@
-<x-layout>
+<x-layout :community="$community" :communities="$communities">
     <div class="bg-gray-50 min-h-screen px-6 py-8">
 
         <!-- Header -->
