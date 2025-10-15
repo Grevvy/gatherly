@@ -225,7 +225,7 @@
 
                                             <!-- Status / Draft Dropdown -->
                                             <div class="flex items-center gap-4">
-                                                @if ($event->status === 'draft' && $canManage)
+                                                @if ($event->status === 'draft' && $canPublish)
                                                     <div class="relative inline-block text-left">
                                                         <button type="button"
                                                             class="draft-badge px-2 py-1 rounded text-xs font-medium {{ $statusColor }} focus:outline-none flex items-center gap-1"
@@ -256,7 +256,7 @@
                                                         {{ ucfirst($event->status) }}
                                                     </span>
                                                 @endif
-                                                @if ($canManage)
+                                                @if ($canManage && $activeNestedTab !== 'Attending')
                                                     <!-- Edit icon (pencil) -->
                                                     <a href="{{ route('edit-event', ['event' => $event->id]) }}"
                                                         class="text-blue-600 hover:text-blue-800 transition">
@@ -493,31 +493,7 @@
                                                     class="px-2 py-1 rounded-md text-xs font-semibold {{ $statusColor }} capitalize">
                                                     {{ ucfirst($event->status) }}
                                                 </span>
-                                                @if ($community)
-                                                    <!-- Edit icon (pencil) -->
-                                                    <a href="{{ route('edit-event', ['event' => $event->id]) }}"
-                                                        class="text-blue-600 hover:text-blue-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
-                                                        </svg>
 
-                                                    </a>
-
-                                                    <!-- Delete icon (trash can) -->
-                                                    <button onclick="deleteEvent({{ $event->id }}, this)"
-                                                        class="text-red-600 hover:text-red-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                                                        </svg>
-
-                                                    </button>
-                                                @endif
                                             </div>
                                         </div>
 
@@ -1016,6 +992,8 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
+                    // Refresh the page when the RSVP is successful
+                    window.location.reload();
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';

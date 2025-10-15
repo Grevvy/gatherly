@@ -4,7 +4,9 @@
 
     // Retrieve the event from the route
     $eventId = request()->route('event');
-    $event = Event::with(['community', 'owner', 'attendees.user'])->findOrFail($eventId);
+    $event = Event::with(['community', 'owner', 'attendees' => function($query) {
+        $query->where('status', 'accepted')->with('user');
+    }])->findOrFail($eventId);
 
     // Load the community for the event
     $community = $event->community;
