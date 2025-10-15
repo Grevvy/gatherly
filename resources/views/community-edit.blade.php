@@ -69,7 +69,7 @@
                     required>
                     <option value="public" {{ $community->visibility == 'public' ? 'selected' : '' }}>Public</option>
                     <option value="private" {{ $community->visibility == 'private' ? 'selected' : '' }}>Private</option>
-                    <option value="hidden" {{ $community->visibility == 'hidden' ? 'selected' : '' }}>Hidden</option>
+
                 </select>
             </div>
 

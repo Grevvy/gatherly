@@ -15,7 +15,7 @@ class Community extends Model
         'name',
         'slug',
         'description',
-        'visibility',   // 'public' | 'private' | 'hidden'
+        'visibility',   // 'public' | 'private'
         'join_policy',  // 'open' | 'request' | 'invite'
         'owner_id',
         'banner_image',

@@ -49,7 +49,7 @@
                     <option value="" disabled selected></option>
                     <option value="public">Public</option>
                     <option value="private">Private</option>
-                    <option value="hidden">Hidden</option>
+
                 </select>
             </div>
 

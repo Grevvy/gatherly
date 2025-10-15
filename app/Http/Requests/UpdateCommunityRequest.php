@@ -30,7 +30,7 @@ class UpdateCommunityRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:120'],
             'description' => ['sometimes', 'nullable', 'string'],
             'banner_image' => ['sometimes', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'visibility' => ['sometimes', 'in:public,private,hidden'],
+            'visibility' => ['sometimes', 'in:public,private'],
             'join_policy' => ['sometimes', 'in:open,request,invite'],
         ];
     }
