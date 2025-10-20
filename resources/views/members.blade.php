@@ -59,17 +59,10 @@
                     $isOnline = $member->status === 'active';
                 @endphp
 
-                <<div class="member-card 
-    bg-white/70 backdrop-blur-lg 
-    rounded-2xl p-5 
-    shadow-md hover:shadow-xl 
-    border border-white/50 
-    transform hover:-translate-y-1 
-    transition-all duration-300 
-    flex flex-col justify-between"
-    data-role="{{ $member->role }}" 
-    data-online="{{ $isOnline ? 'true' : 'false' }}"
-    data-name="{{ strtolower($user->name) }}">
+                <div class="member-card  bg-white/70 backdrop-blur-lg rounded-2xl p-5 shadow-md hover:shadow-xl border border-white/50  transform hover:-translate-y-1  transition-all duration-300 flex flex-col justify-between"
+                     data-role="{{ $member->role }}" 
+                     data-online="{{ $isOnline ? 'true' : 'false' }}"
+                         data-name="{{ strtolower($user->name) }}">
 
                     
                     <!-- Top Row -->
