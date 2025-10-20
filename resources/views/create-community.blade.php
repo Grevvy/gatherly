@@ -8,12 +8,13 @@
 @endphp
 
 <x-layout :title="'Create Community - Gatherly'" :communities="$communities">
-    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8">
+    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8 rounded-2xl">
         <form id="create-community-form" method="POST" action="/communities" enctype="multipart/form-data">
             @csrf
 
             <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 font-medium">
+                <button type="submit"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
                     Create a New Community
                 </button>
                 <a href="{{ route('dashboard') }}" class="text-gray-600 underline text-sm">Cancel</a>
@@ -22,14 +23,14 @@
             <!-- Name -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community Name</span>
-                <input name="name" class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
+                <input name="name" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" required />
             </div>
 
             <!-- Description -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community
                     Description</span>
-                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent "></textarea>
+                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl "></textarea>
             </div>
 
             <!-- Banner Image -->
@@ -37,7 +38,7 @@
                 <img id="banner-preview" src="" alt="Banner Preview"
                     class="w-full h-40 object-cover  mb-2 hidden" />
                 <input id="banner-input" type="file" name="banner_image" accept="image/*"
-                    class="w-full p-2 pt-6 border text-gray-800 bg-transparent " />
+                    class="w-full p-2 pt-6 border text-gray-800 bg-transparent rounded-xl" />
             </div>
 
             <!-- Visibility -->
@@ -45,7 +46,7 @@
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Select
                     Visibility</span>
                 <select name="visibility"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-md" required>
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="" disabled selected></option>
                     <option value="public">Public</option>
                     <option value="private">Private</option>
@@ -59,7 +60,7 @@
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Select Join
                     Policy</span>
                 <select name="join_policy"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-md" required>
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="" disabled selected></option>
                     <option value="open">Open</option>
                     <option value="request">Request</option>

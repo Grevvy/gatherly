@@ -24,12 +24,13 @@
 @endphp
 
 <x-layout :title="'Create Event - Gatherly'" :community="$community" :communities="$communities">
-    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8">
+    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8 rounded-2xl">
         <form id="create-event-form" method="POST" action="{{ url('/events') }}">
             @csrf
 
             <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 font-medium">
+                <button type="submit"
+                    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
                     Create Event
                 </button>
                 <a href="{{ route('events', ['community' => $community->slug]) }}"
@@ -43,20 +44,20 @@
             <!-- Title -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event Title</span>
-                <input name="title" class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
+                <input name="title" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" required />
             </div>
 
             <!-- Description -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event
                     Description</span>
-                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent"></textarea>
+                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl"></textarea>
             </div>
 
             <!-- Location -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Location</span>
-                <input name="location" class="w-full border p-2 pt-6 text-gray-800 bg-transparent" />
+                <input name="location" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" />
             </div>
 
             <!-- Start & End Time -->
@@ -69,7 +70,7 @@
                 <div class="relative">
                     <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">End Time</span>
                     <input type="datetime-local" name="ends_at"
-                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent" />
+                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" />
                 </div>
             </div>
 
@@ -77,15 +78,15 @@
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Capacity</span>
                 <input type="number" name="capacity" min="1"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent" />
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" />
             </div>
 
             <!-- Visibility -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Select
                     Visibility</span>
-                <select name="visibility" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
-                    required>
+                <select name="visibility"
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="" disabled selected></option>
                     <option value="public">Public</option>
                     <option value="private">Private</option>
@@ -95,8 +96,8 @@
             <!-- Status -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Select Status</span>
-                <select name="status" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
-                    required>
+                <select name="status"
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="" disabled selected></option>
 
                     <option value="draft">Draft</option>
