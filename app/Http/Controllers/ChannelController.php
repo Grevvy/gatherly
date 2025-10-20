@@ -44,7 +44,7 @@ class ChannelController extends BaseController
         $channel->delete();
 
         return redirect()
-            ->route('communities.show', $channel->community)
+            ->to('/communities/' . $channel->community->slug)
             ->with('success', 'Channel deleted successfully.');
     }
 }

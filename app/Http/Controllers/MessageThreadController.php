@@ -45,7 +45,7 @@ class MessageThreadController extends BaseController
         
         $thread->participants()->attach($participants);
 
-        return redirect()->route('threads.show', $thread);
+        return redirect()->to('/threads/' . $thread->id);
     }
 
     public function show(MessageThread $thread): View
@@ -70,7 +70,7 @@ class MessageThreadController extends BaseController
         $thread->delete();
 
         return redirect()
-            ->route('communities.show', $thread->community)
+            ->to('/communities/' . $thread->community->slug)
             ->with('success', 'Conversation deleted.');
     }
 }
