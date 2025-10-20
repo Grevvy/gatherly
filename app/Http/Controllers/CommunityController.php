@@ -78,7 +78,7 @@ class CommunityController extends Controller
             'name'         => ['required','string','max:120'],
             'description'  => ['nullable','string'],
             'banner_image' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
-            'visibility'   => ['nullable','in:public,private,hidden'],
+            'visibility'   => ['nullable','in:public,private'],
             'join_policy'  => ['nullable','in:open,request,invite'],
         ]);
 
@@ -119,7 +119,7 @@ class CommunityController extends Controller
             'name'         => ['sometimes','string','max:120'],
             'description'  => ['sometimes','nullable','string'],
             'banner_image' => ['sometimes','nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
-            'visibility'   => ['sometimes','in:public,private,hidden'],
+            'visibility'   => ['sometimes','in:public,private'],
             'join_policy'  => ['sometimes','in:open,request,invite'],
         ]);
 

@@ -80,25 +80,26 @@
 @endphp
 
 <x-layout :community="$community" :communities="$communities">
-    <div class="min-h-screen">
+<div class="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50/40 to-white">
         @if ($community)
-            <div class="p-6 mt-1 max-w-6xl mx-auto">
+   <div class="p-8 mt-4 max-w-5xl mx-auto bg-white/80 backdrop-blur-md rounded-3xl shadow-md border border-gray-100">
                 <div class="flex items-center justify-end mb-4">
 
                     @if ($community)
-                        <a href="{{ route('create-event', ['community' => $community->slug]) }}"
-                            class="inline-flex items-center gap-2 bg-blue-500 text-white text-sm font-medium px-4 py-2 shadow-sm hover:bg-blue-600 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Create Event
-                        </a>
+                       <a href="{{ route('create-event', ['community' => $community->slug]) }}"
+    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+    Create Event
+    </a>
+
                     @endif
 
                 </div>
                 <div class="flex items-center justify-center mb-4">
-                    <div class="flex w-full bg-gray-200 rounded-full p-1">
+                <div class="flex w-full bg-white/50 backdrop-blur-md rounded-full p-1 shadow-inner border border-white/40">
                         <button id="list-tab"
                             class="flex-1 px-6 py-2 text-center text-sm font-semibold rounded-full bg-white text-gray-900 border border-blue-400 transition">
                             Events
@@ -111,7 +112,7 @@
                 </div>
 
                 <!-- Calendar View -->
-                <div id="calendar-view" class="mt-7 space-y-6 bg-white p-4 rounded-lg shadow-sm">
+                 <div id="calendar-view" class="mt-7 space-y-6 bg-white/70 backdrop-blur-md p-6 rounded-2xl shadow-md border border-gray-100">
                     <div class="flex justify-between items-center text-black px-4 py-2 rounded-lg bg-gray-50">
                         <h2 id="calendar-month" class="font-bold text-lg"></h2>
                         <div class="flex gap-2">
@@ -155,7 +156,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
-                                <p>No upcoming events at the moment.</p>
+                            <p class="text-gray-500 text-sm italic">No upcoming events 🌸 — maybe create one?</p>
                             </div>
                         @else
                             @foreach ($visibleUpcomingEvents as $event)
@@ -197,8 +198,9 @@
                                 @endphp
 
                                 <!-- Event Card -->
-                                <div
-                                    class="bg-white border border-gray-200 hover:border-blue-400 transition-all duration-300 mb-6">
+                                    <div
+                                            class="bg-white/80 backdrop-blur-lg border border-blue-100 rounded-3xl shadow-lg hover:shadow-2xl hover:border-blue-300 transition-all duration-300 mb-8">
+
                                     <div class="p-6">
                                         <!-- Header -->
                                         <div class="flex justify-between items-start mb-3">
@@ -225,7 +227,7 @@
 
                                             <!-- Status / Draft Dropdown -->
                                             <div class="flex items-center gap-4">
-                                                @if ($event->status === 'draft' && $canManage)
+                                                @if ($event->status === 'draft' && $canPublish)
                                                     <div class="relative inline-block text-left">
                                                         <button type="button"
                                                             class="draft-badge px-2 py-1 rounded text-xs font-medium {{ $statusColor }} focus:outline-none flex items-center gap-1"
@@ -251,12 +253,12 @@
                                                         </div>
                                                     </div>
                                                 @else
-                                                    <span
-                                                        class="text-xs px-2 py-1 rounded-md font-semibold {{ $statusColor }} capitalize">
-                                                        {{ ucfirst($event->status) }}
-                                                    </span>
+                                                    <span class="flex items-center gap-1 bg-gradient-to-r from-blue-100 to-sky-50 text-blue-700 text-xs font-medium px-3 py-1 rounded-full shadow-sm">
+                                                  {{ ucfirst($event->status) }}
+                                                        </span>
+
                                                 @endif
-                                                @if ($canManage)
+                                                @if ($canManage && $activeNestedTab !== 'Attending')
                                                     <!-- Edit icon (pencil) -->
                                                     <a href="{{ route('edit-event', ['event' => $event->id]) }}"
                                                         class="text-blue-600 hover:text-blue-800 transition">
@@ -286,12 +288,12 @@
                                         </div>
 
                                         <!-- Event Info Row -->
-                                        <div class="mt-4 border-t border-gray-200 pt-3">
+                               <div class="mt-4 border-t border-pink-100 pt-3">
                                             <div class="flex flex-wrap gap-x-16 gap-y-6 text-sm text-gray-600">
 
                                                 <!-- Date -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                             <span class="bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 p-1.5 rounded-lg shadow-sm">
                                                         <!-- Calendar Icon -->
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -310,7 +312,7 @@
 
                                                 <!-- Time -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                               <span class="bg-gradient-to-br from-pink-100 to-rose-100 text-pink-600 p-2 rounded-xl shadow-sm">
                                                         <!-- Clock Icon -->
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -332,7 +334,7 @@
                                                 <!-- Location -->
                                                 @if ($event->location)
                                                     <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
                                                             <!-- Location Icon -->
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                                 fill="none" viewBox="0 0 24 24"
@@ -355,7 +357,7 @@
 
                                                 <!-- Attendance -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                    <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
 
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -390,20 +392,28 @@
                                                             $att->status === 'accepted',
                                                     );
                                                 @endphp
-                                                <button
-                                                    class="flex-1 px-4 py-2 text-sm font-medium transition text-center 
-        {{ $isAttending ? 'bg-gray-200 text-gray-400 cursor-default' : 'bg-blue-500 text-white hover:bg-blue-600' }}"
-                                                    @if (!$isAttending) onclick="sendRSVP({{ $event->id }}, 'accepted', this)" @endif
-                                                    @if ($isAttending) disabled @endif>
-                                                    {{ $isAttending ? 'Attending' : 'RSVP to Event' }}
-                                                </button>
-                                                <a href="{{ route('event.details', ['event' => $event->id]) }}"
-                                                    class="flex-1 px-4 py-2 text-sm border border-gray-500 text-gray  hover:bg-gray-100 font-medium transition text-center">
-                                                    View Details
-                                                </a>
+                                              <button
+                      class="flex-1 px-4 py-2 rounded-full text-sm font-medium shadow-md transition-all duration-300 
+                          {{ $isAttending 
+                         ? 'bg-gray-200 text-gray-400 cursor-default' 
+                         : 'bg-gradient-to-r from-blue-400 to-sky-500 text-white hover:shadow-lg hover:scale-[1.02]' }}"
+                     @if (!$isAttending) onclick="sendRSVP({{ $event->id }}, 'accepted', this)" @endif
+                     @if ($isAttending) disabled @endif>
+                         {{ $isAttending ? 'Attending' : 'RSVP to Event' }}
+                    </button>
 
+
+                                    <a href="{{ route('event.details', ['event' => $event->id]) }}"
+                                    class="flex-1 px-4 py-2 rounded-full border border-blue-200 bg-white/60 backdrop-blur-md text-blue-700 hover:bg-blue-50 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300 text-center">
+                                                     View Details
+                                                    </a>
 
                                             </div>
+
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -493,31 +503,7 @@
                                                     class="px-2 py-1 rounded-md text-xs font-semibold {{ $statusColor }} capitalize">
                                                     {{ ucfirst($event->status) }}
                                                 </span>
-                                                @if ($community)
-                                                    <!-- Edit icon (pencil) -->
-                                                    <a href="{{ route('edit-event', ['event' => $event->id]) }}"
-                                                        class="text-blue-600 hover:text-blue-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 20h9M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
-                                                        </svg>
 
-                                                    </a>
-
-                                                    <!-- Delete icon (trash can) -->
-                                                    <button onclick="deleteEvent({{ $event->id }}, this)"
-                                                        class="text-red-600 hover:text-red-800 transition">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                                                        </svg>
-
-                                                    </button>
-                                                @endif
                                             </div>
                                         </div>
 
@@ -527,7 +513,7 @@
 
                                                 <!-- Date -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                        <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
                                                         <!-- Calendar Icon -->
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -546,7 +532,7 @@
 
                                                 <!-- Time -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                   <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
                                                         <!-- Clock Icon -->
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -568,7 +554,7 @@
                                                 <!-- Location -->
                                                 @if ($event->location)
                                                     <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                        <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                        <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
                                                             <!-- Location Icon -->
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                                 fill="none" viewBox="0 0 24 24"
@@ -591,7 +577,7 @@
 
                                                 <!-- Attendance -->
                                                 <div class="flex items-start gap-2 px-4 py-3 w-full sm:w-auto">
-                                                    <span class="bg-blue-50 text-blue-600 p-1.5 rounded-md">
+                                                    <span class="bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm">
 
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -624,8 +610,11 @@
                                                     View Details
                                                 </a>
 
-
                                             </div>
+
+                                        </div>
+                                        <div class="text-xs text-gray-400 mt-9">
+                                            Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
@@ -635,22 +624,9 @@
     </div>
     </div>
     </div>
-    <!-- View Event Modal -->
-    <div id="view-event-modal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <!-- Inline Event Details Section -->
-
-        <div id="view-event-details" class="hidden bg-white p-6 w-full max-w-3xl mx-auto shadow-md rounded-md mt-6">
-            <div class="flex justify-end">
-                <button onclick="closeEventDetails()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
-            </div>
-            <div id="event-details-content" class="space-y-4">
-                <p class="text-gray-500 text-center">...</p>
-            </div>
-        </div>
-    @else
-        <div class="min-h-screen flex flex-col items-center"></div>
-        @endif
+@else
+    <div class="min-h-screen flex flex-col items-center"></div>
+    @endif
     </div>
 
     @php
@@ -1016,6 +992,8 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
+                    // Refresh the page when the RSVP is successful
+                    window.location.reload();
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';
@@ -1163,4 +1141,5 @@
             document.querySelectorAll('.draft-menu').forEach(menu => menu.classList.add('hidden'));
         });
     </script>
+    
 </x-layout>

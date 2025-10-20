@@ -7,6 +7,8 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\CommunityMembershipController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PostController;
 
 // routes/web.php
 // ------------------
@@ -54,6 +56,11 @@ Route::middleware('auth')->group(function () {
         return view('create-event');
     })->name(name: 'create-event');
 
+    // Profile routes
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
     Route::get('/events/{event}/edit', function (\App\Models\Event $event) {
         return view('edit-event');
     })->name('edit-event');
@@ -76,6 +83,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community:slug}', [CommunityController::class, 'destroy']);
 
     // Memberships + moderation
+    Route::get('/members', [CommunityMembershipController::class, 'showMembers'])->name('members');
     Route::get('/communities/{community:slug}/members', [CommunityMembershipController::class, 'index']);
     Route::post('/communities/{community:slug}/join', [CommunityMembershipController::class, 'join']);
     Route::post('/communities/{community:slug}/leave', [CommunityMembershipController::class, 'leave']);
@@ -101,5 +109,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/events/{event}/rsvp', [\App\Http\Controllers\EventController::class, 'rsvp']);
     // Check-in
     Route::post('/events/{event}/attendees/{attendee}/checkin', [\App\Http\Controllers\EventController::class, 'checkin']);
+
+    // Posts
+    Route::get('/communities/{community:slug}/posts', [PostController::class, 'index'])->name('posts.index');
+    Route::post('/communities/{community:slug}/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('/communities/{community:slug}/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+    Route::patch('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
+    Route::get('/communities/{community:slug}/posts', [PostController::class, 'index'])->name('posts.index');
+    Route::post('/communities/{community:slug}/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('/communities/{community:slug}/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+    Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
 });
 

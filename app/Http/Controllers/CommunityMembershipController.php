@@ -7,9 +7,30 @@ use App\Models\Community;
 use App\Models\CommunityMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class CommunityMembershipController extends Controller
 {
+    public function showMembers(Request $request)
+    {
+        $slug = $request->query('community');
+        $community = $slug
+            ? Community::with(['owner', 'memberships.user'])
+                ->where('slug', $slug)
+                ->firstOrFail()
+            : abort(404, 'Community not found');
+
+        // load communities the current user belongs to (for sidebar)
+        $communities = Auth::check()
+            ? Community::whereHas('memberships', fn($q) => $q->where('user_id', Auth::id()))->get()
+            : collect();
+
+        return view('members', [
+            'community' => $community,
+            'communities' => $communities
+        ]);
+    }
+
     public function index(Community $community, Request $request)
     {
         $status = $request->get('status');
@@ -25,7 +46,7 @@ class CommunityMembershipController extends Controller
 
     public function join(Community $community)
     {
-        $uid = auth()->id();
+        $uid = Auth::id();
 
         $existing = CommunityMembership::where('community_id', $community->id)
             ->where('user_id', $uid)->first();
@@ -164,7 +185,7 @@ class CommunityMembershipController extends Controller
     // ---- Inline guards ----
     private function authorizeModerator(Community $community): void
     {
-        $uid = auth()->id();
+        $uid = Auth::id();
         $isMod = $community->owner_id === $uid
             || $community->memberships()
                 ->where('user_id', $uid)
@@ -177,6 +198,6 @@ class CommunityMembershipController extends Controller
 
     private function authorizeOwner(Community $community): void
     {
-        abort_unless($community->owner_id === auth()->id(), 403, 'Owner only');
+        abort_unless($community->owner_id === Auth::id(), 403, 'Owner only');
     }
 }

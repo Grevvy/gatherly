@@ -18,7 +18,7 @@ return new class extends Migration {
             // Visibility: public => visible & joinable per policy,
             // private => visible but members-only content,
             // hidden => not listed, invite/request only
-            $table->enum('visibility', ['public', 'private', 'hidden'])->default('public');
+            $table->enum('visibility', ['public', 'private'])->default('public');
 
             // Join policy: open => anyone can join,
             // request => must be approved,
