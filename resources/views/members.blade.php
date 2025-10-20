@@ -35,7 +35,7 @@
             <!-- Filter Tabs -->
             <div class="flex justify-center gap-3 mt-6 flex-wrap">
     <button data-filter="all"
-        class="tab-button active px-5 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-100 to-cyan-100 text-purple-700 shadow-sm hover:shadow-md transition">
+        class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
         All Members ({{ $community->memberships->count() }})
     </button>
     <button data-filter="online"
