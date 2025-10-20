@@ -68,8 +68,14 @@
                     <!-- Top Row -->
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                <span class="text-gray-600 font-semibold">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                @if ($user->avatar)
+                                    <img src="{{ asset('storage/' . $user->avatar) }}" 
+                                         alt="{{ $user->name }}'s avatar" 
+                                         class="w-full h-full object-cover">
+                                @else
+                                    <span class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+                                @endif
                             </div>
                             <div>
                                 <h3 class="font-semibold text-gray-900">{{ $user->name }}</h3>

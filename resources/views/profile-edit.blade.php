@@ -35,7 +35,10 @@
                                 Change
                             </label>
                         </div>
-                        <input id="avatar" type="file" name="avatar" class="hidden">
+                        <input id="avatar" type="file" name="avatar" accept="image/*" class="hidden">
+                        @error('avatar')
+                            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Input Fields -->
@@ -78,5 +81,31 @@
 
     <script>
         lucide.createIcons();
+
+        // Avatar preview functionality
+        document.getElementById('avatar')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.w-24.h-24');
+                    if (preview) {
+                        // If it's an img tag, update src
+                        if (preview.tagName === 'IMG') {
+                            preview.src = e.target.result;
+                        } 
+                        // If it's the div with initials, replace it with an img
+                        else {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'w-24 h-24 rounded-full object-cover border-4 border-white shadow-md';
+                            img.alt = 'Avatar Preview';
+                            preview.parentNode.replaceChild(img, preview);
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     </script>
 </x-layout>
