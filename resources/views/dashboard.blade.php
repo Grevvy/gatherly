@@ -21,11 +21,33 @@
 @endphp
 
 <x-layout :title="'Dashboard - Gatherly'" :community="$community" :communities="$communities">
-    <div class="bg-gray-50 min-h-screen">
+<div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
         <main class="max-w-6xl mx-auto mt-6 px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <style>
+    body {
+        scroll-behavior: smooth;
+    }
+</style>
+<style>
+    aside div:hover {
+        transform: translateY(-2px);
+    }
+</style>
+
 
             <!-- Posts Section -->
             <section class="lg:col-span-2 space-y-6">
+                <div class="flex items-center justify-between bg-white/80 backdrop-blur-xl shadow-sm rounded-2xl p-4 border border-blue-100/70">
+    <div>
+        <h2 class="text-lg font-semibold text-gray-800">Welcome back, {{ auth()->user()->name ?? 'Member' }} 👋</h2>
+        <p class="text-sm text-gray-500">Here’s what’s happening in {{ $community->name ?? 'your community' }} today.</p>
+    </div>
+    <div class="hidden sm:block">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712139.png" alt="community" class="w-10 h-10 opacity-80">
+    </div>
+</div>
+
                 @if ($community)
                     @php
                         $userId = auth()->id();
@@ -34,7 +56,7 @@
                         $requiresApproval = !in_array($role, ['owner', 'admin', 'moderator']);
                     @endphp
 
-                    <div class="bg-gradient-to-br from-white to-blue-50 border border-blue-100 shadow-lg p-3">
+                        <div class="bg-white/80 backdrop-blur-sm border border-blue-200 shadow-xl shadow-blue-100/50 rounded-2xl p-5 transition hover:shadow-blue-200/70">
                         <form method="POST" action="{{ route('posts.store', $community->slug) }}"
                             enctype="multipart/form-data" class="space-y-4">
                             @csrf
@@ -133,8 +155,9 @@
                             @endphp
                             @if($canSeePost)
 
-                            <div class="bg-white border border-gray-200 shadow p-4 relative hover:border-blue-400 transition-all duration-300 "
-                                id="post-{{ $post->id }}">
+                  <div class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]"
+
+                            id="post-{{ $post->id }}">
                                 @if ($canModerate || $post->user_id === $userId)
                                     <!-- Dots Dropdown Above -->
                                     <div class="flex items-center justify-between mb-2">
@@ -300,9 +323,11 @@
                         @endif
                         @endforeach
                     @else
-                        <div class="flex items-center justify-center h-40 text-gray-600">
-                            No posts yet.
-                        </div>
+                        <div class="flex flex-col items-center justify-center h-48 bg-white/70 backdrop-blur-lg rounded-2xl border border-blue-100 shadow-sm">
+    <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" alt="empty" class="w-12 h-12 opacity-80 mb-2">
+    <p class="text-gray-600 text-sm">No posts yet — be the first to share something!</p>
+                </div>
+
                     @endif
                 </div>
 
@@ -310,7 +335,8 @@
 
             @if ($community)
                 <aside id="sidebar" class="space-y-6">
-                    <div class="bg-white border border-gray-200 p-6 shadow">
+    <div class="bg-white/70 backdrop-blur-xl border border-blue-100/60 rounded-2xl shadow-[0_8px_24px_rgba(59,130,246,0.2)] hover:shadow-[0_12px_30px_rgba(59,130,246,0.3)] transition-all duration-300 p-6">
+
                         <h3 class="text-2xl font-bold text-gray-900 mb-4">
                             {{ $community->name ?? 'Community Info' }}
                             Information
@@ -319,7 +345,7 @@
 
                         <!-- Activity -->
                         <div class="border-b border-gray-300 pb-3 mb-3">
-                            <h4 class="text-gray-700 font-semibold flex items-center gap-2">
+                            <h4 class="text-blue-600 font-semibold flex items-center gap-2">
                                 <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
