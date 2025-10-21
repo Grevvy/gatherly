@@ -22,13 +22,15 @@
 
 
 <x-layout :title="'Edit Event - Gatherly'" :community="$community" :communities="$communities">
-    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8">
+    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8 rounded-2xl">
         <form id="edit-event-form" action="/events/{{ $event->id }}" method="POST">
             @csrf
             @method('PATCH')
 
             <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2">Update Event</button>
+                <button type="submit"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">Update
+                    Event</button>
 
                 <a href="{{ route('events', ['community' => $event->community?->slug]) }}"
                     class="text-gray-600 underline">Cancel</a>
@@ -38,21 +40,21 @@
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event Title</span>
                 <input type="text" name="title" value="{{ $event->title }}"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" required />
             </div>
 
             <!-- Description -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event
                     Description</span>
-                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent">{{ $event->description }}</textarea>
+                <textarea name="description" rows="3" class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl">{{ $event->description }}</textarea>
             </div>
 
             <!-- Location -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event Location</span>
                 <input type="text" name="location" value="{{ $event->location }}"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" required />
             </div>
 
             <!-- Start/End Dates -->
@@ -60,13 +62,13 @@
                 <div class="relative">
                     <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Start time</span>
                     <input type="datetime-local" name="starts_at"
-                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent"
+                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl"
                         value="{{ $event->ends_at?->format('Y-m-d\TH:i') }}" />
                 </div>
                 <div class="relative">
                     <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">End time</span>
                     <input type="datetime-local" name="ends_at"
-                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent"
+                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl"
                         value="{{ $event->ends_at?->format('Y-m-d\TH:i') }}" />
                 </div>
             </div>
@@ -75,14 +77,14 @@
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Capacity</span>
                 <input type="number" name="capacity" value="{{ $event->capacity }}" min="1"
-                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent" />
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" />
             </div>
 
             <!-- Visibility -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Visibility</span>
-                <select name="visibility" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
-                    required>
+                <select name="visibility"
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="public" {{ $event->visibility === 'public' ? 'selected' : '' }}>Public</option>
                     <option value="private" {{ $event->visibility === 'private' ? 'selected' : '' }}>Private</option>
                 </select>
@@ -91,8 +93,8 @@
             <!-- Status -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Status</span>
-                <select name="status" class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none"
-                    required>
+                <select name="status"
+                    class="w-full border p-2 pt-6 text-gray-800 bg-transparent appearance-none rounded-xl" required>
                     <option value="draft" {{ $event->status === 'draft' ? 'selected' : '' }}>Draft</option>
                     <option value="published" {{ $event->status === 'published' ? 'selected' : '' }}>Published</option>
                     <option value="cancelled" {{ $event->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>

@@ -4,9 +4,13 @@
 
     // Retrieve the event from the route
     $eventId = request()->route('event');
-    $event = Event::with(['community', 'owner', 'attendees' => function($query) {
-        $query->where('status', 'accepted')->with('user');
-    }])->findOrFail($eventId);
+    $event = Event::with([
+        'community',
+        'owner',
+        'attendees' => function ($query) {
+            $query->where('status', 'accepted')->with('user');
+        },
+    ])->findOrFail($eventId);
 
     // Load the community for the event
     $community = $event->community;
@@ -24,7 +28,7 @@
 @endphp
 
 <x-layout :title="'Edit Event - Gatherly'" :community="$community" :communities="$communities">
-    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8">
+    <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8 rounded-2xl">
         <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
             <div>
                 <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">{{ $event->title }}</h1>
@@ -34,7 +38,8 @@
                     in <span class="font-medium text-gray-800">{{ $event->community->name ?? 'Community' }}</span>
                 </p>
             </div>
-            <a href="{{ route('events', ['community' => $event->community?->slug]) }}" class="text-gray-600 underline">←
+            <a href="{{ route('events', ['community' => $event->community?->slug]) }}"
+                class="text-gray-600 underline hover:text-gray-800">←
                 Back to Events</a>
         </div>
 

@@ -20,14 +20,17 @@
 
     <div class="flex flex-1">
         <!-- Sidebar -->
-         <aside class="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-100 shadow-[0_8px_24px_rgba(0,0,0,0.05)] p-5 flex flex-col transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
-           <div class="flex items-center gap-2 mb-6">
-    <img src="{{ asset('images/gatherly-logo.png') }}" alt="Gatherly Logo"
-        class="w-8 h-8 rounded-lg shadow-sm object-contain">
-    <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight">
-        Gatherly
-    </h1>
-</div>
+        <aside
+            class="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-100 shadow-[0_8px_24px_rgba(0,0,0,0.05)] p-5 flex flex-col">
+
+            <div class="flex items-center gap-2 mb-6">
+                <img src="{{ asset('images/gatherly-logo.png') }}" alt="Gatherly Logo"
+                    class="w-8 h-8 rounded-lg shadow-sm object-contain">
+                <h1
+                    class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight">
+                    Gatherly
+                </h1>
+            </div>
 
             <!-- Search -->
             <div class="mb-6 relative">
@@ -161,11 +164,11 @@
                                 <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
                             </div>
                             <!--  View Profile link -->
-                           <a href="{{ route('profile.show') }}"
-                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                          <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
-                                         View Profile
-                                     </a>
+                            <a href="{{ route('profile.show') }}"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
+                                View Profile
+                            </a>
 
                             <form method="POST" action="{{ route('logout') }}" class="p-2">
                                 @csrf
@@ -181,33 +184,35 @@
 
             <!-- Community Banner -->
             @if ($community)
-               <div class="relative w-full max-w-6xl h-64 mx-auto rounded-3xl overflow-hidden group">
-                <!-- Background Image with Parallax Effect -->
-    <div class="absolute inset-0">
-        <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
-            alt="Community Banner"
-            class="w-full h-full object-cover transform group-hover:scale-105 transition-all duration-700 ease-out" />
-        <div class="absolute inset-0 bg-gradient-to-t from-white-900/70 via-white-700/20 to-transparent"></div>
-    </div>
+                <div class="relative w-full max-w-6xl h-64 mx-auto rounded-3xl overflow-hidden group">
+                    <!-- Background Image with Parallax Effect -->
+                    <div class="absolute inset-0">
+                        <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
+                            alt="Community Banner"
+                            class="w-full h-full object-cover transform group-hover:scale-105 transition-all duration-700 ease-out" />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-t from-white-900/70 via-white-700/20 to-transparent">
+                        </div>
+                    </div>
 
-     <!-- Glassy Title Card -->
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
-        <div
-            class="bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] px-8 py-4 rounded-3xl transition-all duration-500 hover:shadow-[0_8px_50px_0_rgba(31,38,135,0.5)]">
-            <h1
-                class="text-5xl font-extrabold text-white tracking-wide drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)]">
-                {{ $community->name }}
-            </h1>
-            @if ($community->description)
-                <p class="text-white/90 text-sm italic mt-2">
-                    {{ $community->description }}
-                </p>
-            @endif
-        </div>
-    </div>
+                    <!-- Glassy Title Card -->
+                    <div class="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
+                        <div
+                            class="bg-white/20 backdrop-blur-xl border border-white/30 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] px-8 py-4 rounded-3xl transition-all duration-500 hover:shadow-[0_8px_50px_0_rgba(31,38,135,0.5)]">
+                            <h1
+                                class="text-5xl font-extrabold text-white tracking-wide drop-shadow-[0_3px_10px_rgba(0,0,0,0.4)]">
+                                {{ $community->name }}
+                            </h1>
+                            @if ($community->description)
+                                <p class="text-white/90 text-sm italic mt-2">
+                                    {{ $community->description }}
+                                </p>
+                            @endif
+                        </div>
+                    </div>
 
-                
-                        <!-- Banner Content -->
+
+                    <!-- Banner Content -->
                     @php
                         $userId = auth()->id();
                         $isOwner = $community->owner_id === $userId;
@@ -248,20 +253,22 @@
                     <div
                         class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-20 pointer-events-none">
                         <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl shadow-md inline-block">
-                         <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white drop-shadow-lg">
-                           {{ $community->name }}
-                                     </h1>
+                            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white drop-shadow-lg">
+                                {{ $community->name }}
+                            </h1>
 
-                       @if ($community->description)
-                             <p class="text-white/90 text-sm italic mt-1">
-            {{ $community->description }}
-                                  </p>
-                                         @endif
+                            @if ($community->description)
+                                <p class="text-white/90 text-sm italic mt-1">
+                                    {{ $community->description }}
+                                </p>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-clear-950/50 via-blue-800/40 to-clear-950/50 backdrop-blur-md border-t border-white/10 py-2">
-                         <div class="flex flex-wrap items-center justify-center gap-10 text-sm text-white/90 font-medium">
+                    <div
+                        class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-clear-950/50 via-blue-800/40 to-clear-950/50 backdrop-blur-md border-t border-white/10 py-2">
+                        <div
+                            class="flex flex-wrap items-center justify-center gap-10 text-sm text-white/90 font-medium">
 
                             <span class="flex items-center gap-2">
                                 <i data-lucide="users" class="w-4 h-4"></i>
@@ -270,7 +277,7 @@
                                 @endphp
                                 <strong>{{ $memberCount }}</strong> {{ $memberCount === 1 ? 'member' : 'members' }}
                             </span>
-                           
+
 
                             <span class="text-gray-400">|</span>
                             <span class="flex items-center gap-2">
@@ -290,7 +297,7 @@
                     </div>
                 </div>
             @endif
-            
+
 
             <!-- Page Content -->
             <div class="flex-1 p-6">
