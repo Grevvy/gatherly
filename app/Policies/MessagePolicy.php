@@ -9,7 +9,7 @@ use App\Models\MessageThread;
 
 class MessagePolicy
 {
-    public function create(User $user, Message $message, $messageable): bool
+    public function create(User $user, $messageable): bool
     {
         if ($messageable instanceof Channel) {
             return $messageable->community->members->contains($user);

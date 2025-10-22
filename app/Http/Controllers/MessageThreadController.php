@@ -45,7 +45,10 @@ class MessageThreadController extends BaseController
         
         $thread->participants()->attach($participants);
 
-        return redirect()->to('/threads/' . $thread->id);
+        return redirect()->route('messages', [
+        'tab' => 'direct',
+        'community' => $community->slug,
+        ]);
     }
 
     public function show(MessageThread $thread): View
