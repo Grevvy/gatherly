@@ -124,18 +124,27 @@
 
                     </div>
                 @else
-                    <div class="min-h-screen flex flex-col items-center pt-16 ml-32">
-                        <div class="text-center text-gray-500 flex flex-col items-center gap-2 pl-32">
-                            <!-- Icon -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4v16m8-8H4" />
-                            </svg>
+                    <div class="flex flex-col items-center justify-center h-[70vh] text-center">
+    <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600 mb-3">
+        Welcome to Gatherly 🎉
+    </h1>
+    <p class="text-gray-500 mb-8 text-sm md:text-base">
+        You’re not in any communities yet — let’s get started!
+    </p>
 
-                            <!-- Text -->
-                            <span>Select/Create a community to get started.</span>
-                        </div>
+    <div class="flex gap-4">
+        <a href="{{ route('create-community') }}"
+           class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 shadow-md transition">
+            Create a Community
+        </a>
+
+        <a href="{{ route('explore') }}"
+           class="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 shadow-md transition">
+            Explore Communities
+        </a>
+    </div>
+</div>
+
                     </div>
                 @endif
 

@@ -110,6 +110,10 @@
                         class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Photo Gallery
                     </a>
+               <a href="/explore{{ $slug ? '?community=' . $slug : '' }}"
+               class="py-3 {{ request()->is('explore') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                Explore
+                 </a>
 
                 </div>
 
