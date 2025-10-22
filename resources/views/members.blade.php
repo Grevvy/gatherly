@@ -152,10 +152,14 @@
                                 </button>
                             </form>
                         @else
-                            <a href="/messages"
-                                class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
-                                Message
-                            </a>
+                            <form action="/threads/{{ $community->slug }}" method="POST" class="flex-1">
+                                @csrf
+                                <input type="hidden" name="participant_ids[]" value="{{ $user->id }}">
+                                <button type="submit"
+                                    class="w-full px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
+                                    Message
+                                </button>
+                            </form>
                             <a href="mailto:{{ $user->email }}"
                                 class="flex-1 px-3 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
                                 Email
