@@ -46,6 +46,12 @@
         class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
         Staff ({{ $community->memberships->whereIn('role', ['admin','moderator'])->count() }})
     </button>
+    @if(auth()->user()->id === $community->owner_id || $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0)
+    <button data-filter="pending"
+        class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
+        Pending ({{ $community->memberships->where('status', 'pending')->count() }})
+    </button>
+    @endif
 </div>
 
 
@@ -62,7 +68,8 @@
                 <div class="member-card  bg-white/70 backdrop-blur-lg rounded-2xl p-5 shadow-md hover:shadow-xl border border-white/50  transform hover:-translate-y-1  transition-all duration-300 flex flex-col justify-between"
                      data-role="{{ $member->role }}" 
                      data-online="{{ $isOnline ? 'true' : 'false' }}"
-                         data-name="{{ strtolower($user->name) }}">
+                     data-status="{{ $member->status }}"
+                     data-name="{{ strtolower($user->name) }}">
 
                     
                     <!-- Top Row -->
@@ -82,13 +89,18 @@
                                 <p class="text-xs text-gray-500">{{ $user->email }}</p>
                             </div>
                         </div>
-                        @if ($member->role === 'owner')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Owner 👑</span>
-                        @elseif ($member->role === 'admin')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Admin</span>
-                        @elseif ($member->role === 'moderator')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Moderator</span>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if ($member->status === 'pending')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Pending</span>
+                            @endif
+                            @if ($member->role === 'owner')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Owner 👑</span>
+                            @elseif ($member->role === 'admin')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Admin</span>
+                            @elseif ($member->role === 'moderator')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Moderator</span>
+                            @endif
+                        </div>
                     </div>
 
                     <!-- Bio Placeholder -->
@@ -122,16 +134,77 @@
                     </div>
 
                     <div class="flex gap-3">
-                        <a href="/messages"
-    class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
-    Message
-</a>
-
-                        <a href="mailto:{{ $user->email }}"
-                            class="flex-1 px-3 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Email
-                        </a>
+                        @if ($member->status === 'pending' && (auth()->user()->id === $community->owner_id || $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0))
+                            <form action="/communities/{{ $community->slug }}/approve" method="POST" class="flex-1">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <button type="submit"
+                                    class="w-full px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-green-400 to-emerald-400 text-white hover:from-green-500 hover:to-emerald-500 transition">
+                                    Approve
+                                </button>
+                            </form>
+                            <form action="/communities/{{ $community->slug }}/reject" method="POST" class="flex-1">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <button type="submit"
+                                    class="w-full px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-red-400 to-pink-400 text-white hover:from-red-500 hover:to-pink-500 transition">
+                                    Reject
+                                </button>
+                            </form>
+                        @else
+                            <a href="/messages"
+                                class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
+                                Message
+                            </a>
+                            <a href="mailto:{{ $user->email }}"
+                                class="flex-1 px-3 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Email
+                            </a>
+                        @endif
                     </div>
+
+                    @php
+                        $currentUser = auth()->user();
+                        $isOwnerOrAdmin = $currentUser->id === $community->owner_id || 
+                            $community->memberships->where('user_id', $currentUser->id)
+                                ->whereIn('role', ['admin'])->count() > 0;
+                        $canModerate = $isOwnerOrAdmin || $community->memberships->where('user_id', $currentUser->id)
+                                ->whereIn('role', ['moderator'])->count() > 0;
+                        $targetIsOwner = $member->role === 'owner';
+                        $targetIsAdmin = $member->role === 'admin';
+                        $targetIsModerator = $member->role === 'moderator';
+                        $canPromote = $isOwnerOrAdmin && !$targetIsOwner && !$targetIsAdmin && !$targetIsModerator && $member->status === 'active';
+                        $canRemove = $canModerate && $currentUser->id !== $user->id && !$targetIsOwner && $member->status === 'active';
+                        $canDemote = $isOwnerOrAdmin && $targetIsModerator && $currentUser->id !== $user->id;
+                    @endphp
+
+                    @if($canPromote || $canRemove || $canDemote)
+                        <div class="flex gap-3 mt-3 border-t pt-3">
+                            @if($canPromote)
+                                <button onclick="promoteMember('{{ $community->slug }}', {{ $user->id }}, '{{ $user->name }}')"
+                                    class="flex-1 px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-purple-200 to-indigo-200 
+                                        hover:from-purple-300 hover:to-indigo-300 transition text-center">
+                                    Make Moderator
+                                </button>
+                            @endif
+
+                            @if($canDemote)
+                                <button onclick="demoteModerator('{{ $community->slug }}', {{ $user->id }}, '{{ $user->name }}')"
+                                    class="flex-1 px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-amber-200 to-orange-200 
+                                        hover:from-amber-300 hover:to-orange-300 transition text-center">
+                                    Remove Moderator
+                                </button>
+                            @endif
+
+                            @if($canRemove)
+                                <button onclick="removeMember('{{ $community->slug }}', {{ $user->id }}, '{{ $user->name }}')"
+                                    class="flex-1 px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-red-200 to-pink-200 
+                                        hover:from-red-300 hover:to-pink-300 transition text-center">
+                                    Remove Member
+                                </button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             @empty
                 <p class="col-span-full text-gray-500 text-center">No members yet.</p>
@@ -156,9 +229,11 @@
                     const isOnline = card.dataset.online === 'true';
                     const role = card.dataset.role;
 
+                    const status = card.dataset.status;
                     if (filter === 'all') card.style.display = 'flex';
                     else if (filter === 'online' && isOnline) card.style.display = 'flex';
                     else if (filter === 'staff' && (role === 'admin' || role === 'moderator')) card.style.display = 'flex';
+                    else if (filter === 'pending' && status === 'pending') card.style.display = 'flex';
                     else card.style.display = 'none';
                 });
             });
@@ -180,6 +255,106 @@
     });
 });
 
+        async function demoteModerator(slug, userId, userName) {
+            showConfirmToast(
+                `Remove moderator status from ${userName}?`,
+                async () => {
+                    try {
+                        const response = await fetch(`/communities/${slug}/role`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                user_id: userId,
+                                role: 'member'
+                            })
+                        });
+
+                        if (response.ok) {
+                            showToastify(`${userName} is no longer a moderator`, 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            const data = await response.json();
+                            showToastify(data.message || 'Failed to update role', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToastify('Something went wrong', 'error');
+                    }
+                },
+                'bg-amber-400 hover:bg-amber-500',
+                'Remove Moderator'
+            );
+        }
+
+        async function promoteMember(slug, userId, userName) {
+            showConfirmToast(
+                `Make ${userName} a moderator of this community?`,
+                async () => {
+                    try {
+                        const response = await fetch(`/communities/${slug}/role`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                user_id: userId,
+                                role: 'moderator'
+                            })
+                        });
+
+                        if (response.ok) {
+                            showToastify(`${userName} is now a moderator`, 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            const data = await response.json();
+                            showToastify(data.message || 'Failed to update role', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToastify('Something went wrong', 'error');
+                    }
+                },
+                'bg-purple-400 hover:bg-purple-500',
+                'Make Moderator'
+            );
+        }
+
+        async function removeMember(slug, userId, userName) {
+            showConfirmToast(
+                `Remove ${userName} from this community?`,
+                async () => {
+                    try {
+                        const response = await fetch(`/communities/${slug}/members/${userId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            showToastify(`${userName} has been removed from the community`, 'success');
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            const data = await response.json();
+                            showToastify(data.message || 'Failed to remove member', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToastify('Something went wrong', 'error');
+                    }
+                },
+                'bg-red-400 hover:bg-red-500',
+                'Remove'
+            );
+        }
     </script>
     
 </x-layout>

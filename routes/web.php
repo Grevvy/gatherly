@@ -9,6 +9,8 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\CommunityMembershipController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Models\Community;
+
 
 // routes/web.php
 // ------------------
@@ -38,6 +40,12 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 // Authenticated routes
 // ------------------
 Route::middleware('auth')->group(function () {
+Route::get('/explore', function () {
+    // Show all public communities (or all if you haven’t added visibility)
+    $communities = Community::where('visibility', 'public')->get();
+
+    return view('explore', compact('communities'));
+})->name('explore');
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');

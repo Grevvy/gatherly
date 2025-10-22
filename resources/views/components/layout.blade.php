@@ -63,12 +63,27 @@
                             @foreach ($communities as $c)
                                 @php $active = isset($community) && $community->id === $c->id; @endphp
 
-                                <li class="community-item">
-                                    <a href="/dashboard?community={{ $c->slug }}"
-                                        class="block px-2 py-1 transition {{ $active ? 'bg-blue-100 text-blue-600 font-medium' : 'hover:bg-blue-50 text-gray-800' }}">
-                                        <span class="font-medium text-sm">{{ $c->name }}</span>
-                                        <span class="text-xs text-gray-400 block">{{ ucfirst($c->visibility) }}</span>
-                                    </a>
+                                <li class="community-item group">
+                                    <div class="flex items-center justify-between px-2 py-1 transition {{ $active ? 'bg-blue-100' : 'hover:bg-blue-50' }}">
+                                        <a href="/dashboard?community={{ $c->slug }}"
+                                            class="{{ $active ? 'text-blue-600 font-medium' : 'text-gray-800' }} flex-grow">
+                                            <span class="font-medium text-sm">{{ $c->name }}</span>
+                                            <span class="text-xs text-gray-400 block">{{ ucfirst($c->visibility) }}</span>
+                                        </a>
+                                        @if($c->owner_id !== auth()->id())
+                                            <form action="/communities/{{ $c->slug }}/leave" method="POST" class="hidden group-hover:block ml-2 leave-community-form">
+                                                @csrf
+                                                <button type="button" 
+                                                    class="p-1 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+                                                    onclick="confirmLeaveCommunity(this, '{{ $c->name }}')"
+                                                    title="Leave Community">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 </li>
                             @endforeach
                         </ul>
@@ -91,25 +106,29 @@
                         Feed
                     </a>
 
-                    <a href="/events{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/events?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Events
                     </a>
 
-                    <a href="/messages{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/messages?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Messages
                     </a>
 
-                    <a href="/members{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/members?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Members
                     </a>
 
-                    <a href="/gallery{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/gallery?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Photo Gallery
                     </a>
+               <a href="/explore"
+               class="py-3 {{ request()->is('explore') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                Explore
+                 </a>
 
                 </div>
 
@@ -325,7 +344,57 @@
     </div>
 
 
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToastify("{{ session('success') }}", 'success');
+            });
+        </script>
+    @endif
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToastify("{{ session('error') }}", 'error');
+            });
+        </script>
+    @endif
+
     <script>
+        function confirmLeaveCommunity(button, communityName) {
+            showConfirmToast(
+                `Are you sure you want to leave ${communityName}?`,
+                async () => {
+                    const form = button.closest('form');
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            showToastify(`Successfully left ${communityName}`, 'success');
+                            // Short delay to show the success message before redirect
+                            setTimeout(() => {
+                                window.location.href = '/dashboard';
+                            }, 1000);
+                        } else {
+                            const data = await response.json();
+                            showToastify(data.message || 'Failed to leave community', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToastify('Something went wrong', 'error');
+                    }
+                },
+                'bg-red-400 hover:bg-red-500',
+                'Leave'
+            );
+        }
+
         function showToastify(message, type = 'info', duration = 4000) {
             Toastify({
                 text: message,
