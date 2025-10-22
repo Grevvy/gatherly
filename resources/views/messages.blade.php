@@ -313,6 +313,92 @@
 
     <!-- Scripts -->
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector('form[action="{{ route('messages.store') }}"]');
+            const input = document.getElementById('messageInput');
+            const scrollContainer = document.getElementById('message-scroll');
+
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault(); // stop full reload
+
+                    const formData = new FormData(form);
+                    const token = form.querySelector('input[name="_token"]').value;
+                    const body = formData.get('body').trim();
+                    if (!body) return;
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": token,
+                            },
+                            body: formData,
+                        });
+
+                        if (!response.ok) throw new Error("Failed to send message");
+
+                        let newId = null;
+                        if (response.redirected) {
+                            const url = new URL(response.url);
+
+                        }
+
+                        const html = await response.text();
+                        const match = html.match(/\/messages\/(\d+)/);
+                        if (match) {
+                            newId = match[1];
+                        }
+
+
+                        const newMsg = document.createElement("div");
+                        newMsg.className = "flex justify-end group items-start gap-2 fade-in";
+                        newMsg.innerHTML = `
+<form method="POST" action="/messages/${newId ?? 'temp'}" 
+    data-id="${newId ?? ''}"
+    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px]">
+    <input type="hidden" name="_token" value="${token}">
+    <input type="hidden" name="_method" value="DELETE">
+    <button type="button" onclick="confirmDeleteMessage(this)"
+        class="text-red-400 hover:text-red-500 transition transform hover:scale-110"
+        title="Delete">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+        </svg>
+    </button>
+</form>
+
+
+    <div class="max-w-[75%] space-y-1">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl rounded-br-none flex justify-end mr-2 px-4 py-2 shadow-sm text-sm transition-transform hover:scale-[1.02] duration-150 mt-1">
+            ${body.replace(/\n/g, "<br>")}
+        </div>
+        <div class="text-[9px] text-gray-400 text-right mr-2">
+            ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        </div>
+    </div>
+`;
+
+
+                        scrollContainer.appendChild(newMsg);
+
+                        // clear text area and scroll to bottom
+                        input.value = "";
+                        updateCharCount();
+                        setTimeout(() => {
+                            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                        }, 100);
+
+                    } catch (error) {
+                        console.error(error);
+                        showToastify("Failed to send message.", "error");
+                    }
+                });
+            }
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('message-scroll');
 

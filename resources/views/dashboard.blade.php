@@ -128,17 +128,20 @@
                     <div class="ml-72 px-4">
                         <div
                             class="max-w-3xl mx-auto flex flex-col items-center justify-center h-[50vh] text-center animate-fade-in">
-                            <h1
-                                class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 mb-6 drop-shadow transition-transform duration-300 hover:scale-105 whitespace-nowrap">
-                                Welcome to Gatherly 🎉
-                            </h1>
+                            <div class="flex items-center gap-4 mb-6">
+                                <h1
+                                    class="text-4xl sm:text-3xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 drop-shadow transition-transform duration-300 hover:scale-105 whitespace-nowrap">
+                                    Welcome to Gatherly
+                                </h1>
+                                <i class="fas fa-star text-purple-600 text-4xl drop-shadow-md"></i>
+
+                            </div>
 
                             <p class="text-gray-600 mb-10 text-sm sm:text-base md:text-lg tracking-wide">
                                 Let’s get started!
                             </p>
 
                             <div class="flex flex-row gap-4 justify-center">
-
                                 <a href="{{ route('create-community') }}"
                                     class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:brightness-110 hover:scale-105 transition-all duration-200">
                                     Create a Community
