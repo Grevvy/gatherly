@@ -62,6 +62,16 @@ class Community extends Model
         return $this->hasMany(Post::class);
     }
 
+    public function channels(): HasMany
+    {
+        return $this->hasMany(Channel::class);
+    }
+
+    public function messageThreads(): HasMany
+    {
+        return $this->hasMany(MessageThread::class);
+    }
+
     // Helpers
     public function scopePublic($q)
     {

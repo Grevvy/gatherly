@@ -4,9 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\CommunityMembershipController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Models\Community;
@@ -50,6 +53,23 @@ Route::get('/explore', function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');
     
+    // Messages & Channels
+    Route::get('/messages', function () {
+        return view('messages');
+    })->name('messages');
+    
+    Route::post('/channels/{community}', [ChannelController::class, 'store'])->name('channels.store');
+    Route::get('/channels/{channel}', [ChannelController::class, 'show'])->name('channels.show');
+    Route::delete('/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
+    
+    Route::post('/threads/{community}', [MessageThreadController::class, 'store'])->name('threads.store');
+    Route::get('/threads/{thread}', [MessageThreadController::class, 'show'])->name('threads.show');
+    Route::delete('/threads/{thread}', [MessageThreadController::class, 'destroy'])->name('threads.destroy');
+    
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // Community routes
     Route::get('/community-edit', function () {
         return view('community-edit');
     })->name('community.edit');
