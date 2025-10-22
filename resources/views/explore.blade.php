@@ -15,11 +15,31 @@
 
     <div class="max-w-6xl mx-auto px-4">
 
-        <h1 class="text-4xl font-extrabold text-blue-700 mb-10 text-center">
-    🌎 Discover New Communities
-              </h1>
+        <h1 class="text-4xl font-extrabold text-blue-700 mb-6 text-center">
+            🌎 Discover New Communities
+        </h1>
 
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Search Bar -->
+        <div class="max-w-2xl mx-auto mb-10">
+            <div class="relative">
+                <input 
+                    id="communitySearch" 
+                    type="text" 
+                    placeholder="Search communities by name or description..."
+                    class="w-full px-4 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 
+                        shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-200 focus:outline-none 
+                        placeholder-gray-400 text-sm transition-all duration-300 hover:shadow-md hover:border-blue-100"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    class="absolute right-3 top-3 h-5 w-5 text-gray-400 pointer-events-none"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+            </div>
+        </div>
+
+        <div id="communitiesGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             @forelse($communities as $community)
                <div class="group relative bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-md 
              hover:shadow-blue-200/70 transition-all duration-300 p-5 flex flex-col justify-between 
@@ -106,6 +126,38 @@
     </div>
 
     <script>
+        // Search functionality
+        const searchInput = document.getElementById('communitySearch');
+        const communitiesGrid = document.getElementById('communitiesGrid');
+        const communityCards = document.querySelectorAll('.group.relative');
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            let hasResults = false;
+
+            communityCards.forEach(card => {
+                const name = card.querySelector('h2').textContent.toLowerCase();
+                const description = card.querySelector('p').textContent.toLowerCase();
+                const matches = name.includes(searchTerm) || description.includes(searchTerm);
+                
+                card.style.display = matches ? '' : 'none';
+                if (matches) hasResults = true;
+            });
+
+            // Show/hide no results message
+            let noResultsMsg = communitiesGrid.querySelector('.no-results-message');
+            if (!hasResults) {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('p');
+                    noResultsMsg.className = 'col-span-full text-center text-gray-500 text-sm no-results-message';
+                    noResultsMsg.textContent = 'No communities found matching your search.';
+                    communitiesGrid.appendChild(noResultsMsg);
+                }
+            } else if (noResultsMsg) {
+                noResultsMsg.remove();
+            }
+        });
+
         async function joinCommunity(slug, communityName, buttonText) {
             const btn = event.target;
             btn.disabled = true;
