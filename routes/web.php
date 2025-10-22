@@ -78,6 +78,10 @@ Route::get('/explore', function () {
         return view('create-event');
     })->name(name: 'create-event');
 
+        Route::get('/photo-gallery', function () {
+        return view('photo-gallery');
+    })->name(name: 'photo-gallery');
+
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
