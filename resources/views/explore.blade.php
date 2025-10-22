@@ -82,17 +82,15 @@
                                Request Pending
                            </button>
                        @else
-                           <form action="/communities/{{ $community->slug }}/join" method="POST" target="hidden_iframe_{{ $community->id }}">
-                               @csrf
-                               <button type="submit"
-                                   class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-4 py-1.5 rounded-xl 
-                                       font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 
-                                       transition-all duration-300 hover:-translate-y-0.5"
-                                   {{ $joinPolicy === 'invite' ? 'disabled' : '' }}
-                                   title="{{ $joinPolicy === 'invite' ? 'This community is invite-only' : '' }}">
-                                   {{ $buttonText }}
-                               </button>
-                           </form>
+                           <button
+                               onclick="joinCommunity('{{ $community->slug }}', '{{ $community->name }}', '{{ $buttonText }}')"
+                               class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-4 py-1.5 rounded-xl 
+                                   font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 
+                                   transition-all duration-300 hover:-translate-y-0.5"
+                               {{ $joinPolicy === 'invite' ? 'disabled' : '' }}
+                               title="{{ $joinPolicy === 'invite' ? 'This community is invite-only' : '' }}">
+                               {{ $buttonText }}
+                           </button>
                        @endif
                 <iframe name="hidden_iframe_{{ $community->id }}" style="display:none;"></iframe>
 
@@ -108,12 +106,10 @@
     </div>
 
     <script>
-        document.addEventListener('click', async (e) => {
-            const btn = e.target.closest('.join-btn');
-            if (!btn) return;
-
-            const slug = btn.dataset.slug;
+        async function joinCommunity(slug, communityName, buttonText) {
+            const btn = event.target;
             btn.disabled = true;
+            const originalText = btn.textContent;
             btn.textContent = 'Joining...';
 
             try {
@@ -121,40 +117,43 @@
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     }
                 });
 
-                if (res.ok) {
-                    btn.textContent = 'Joined ✓';
-                    btn.classList.remove('bg-blue-500');
-                    btn.classList.add('bg-green-500');
-                    btn.disabled = true;
+                const data = await res.json();
 
-                    // Wait a bit longer for DB update before reload
-                    setTimeout(() => window.location.reload(), 1500);
+                if (res.ok) {
+                    // Show success message based on join policy
+                    const successMsg = buttonText === 'Request to Join' 
+                        ? `Request sent to join ${communityName}`
+                        : `Successfully joined ${communityName}`;
+                    
+                    showToastify(successMsg, 'success');
+
+                    // Update button appearance
+                    if (buttonText === 'Request to Join') {
+                        btn.textContent = 'Request Pending';
+                        btn.disabled = true;
+                        btn.className = 'bg-yellow-100 text-yellow-700 text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed';
+                    } else {
+                        btn.textContent = 'Joined ✓';
+                        btn.disabled = true;
+                        btn.className = 'bg-gray-300 text-white text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed';
+                    }
                 } else {
-                    btn.textContent = 'Join';
+                    showToastify(data.message || 'Failed to join community', 'error');
                     btn.disabled = false;
-                    alert('Something went wrong joining this community.');
+                    btn.textContent = originalText;
                 }
             } catch (err) {
                 console.error(err);
-                alert('Error joining community.');
-                btn.textContent = 'Join';
+                showToastify('Something went wrong', 'error');
                 btn.disabled = false;
+                btn.textContent = originalText;
             }
-        });
-    </script>
-    <script>
-      document.querySelectorAll('form[action*="/join"]').forEach(form => {
-    form.addEventListener('submit', () => {
-        // reload page after short delay so user sees update
-        setTimeout(() => {
-            window.location.reload();
-        }, 800);
-    });
-});
+        }
 </script>
 
 </x-layout>

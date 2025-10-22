@@ -81,7 +81,12 @@ class CommunityMembershipController extends Controller
             ->where('user_id', $uid)
             ->delete();
 
-        return response()->json(['message' => 'Left community']);
+        if (request()->wantsJson()) {
+            return response()->json(['message' => 'Left community']);
+        }
+
+        return redirect()->route('dashboard')
+            ->with('success', 'Successfully left ' . $community->name);
     }
 
     public function approve(Request $request, Community $community)
