@@ -15,6 +15,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </head>
+  <!-- Alpine.js for placeholder dropdowns -->
+    <script src="https://unpkg.com/alpinejs" defer></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    </script>
+</head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <input type="hidden" name="_token" id="csrf-token" value="{{ csrf_token() }}">
@@ -152,20 +161,41 @@
                         @endif
                     </div>
 
-                    <!-- Notification Bell -->
-                    <div class="relative">
-                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2 rounded-lg">
-                            <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
-                        </button>
+   <!-- Notification Bell -->
+                    <div class="relative" x-data="{ open: false, notifications: [
+                         { id: 1, text: 'Shauna commented on your post 💬', time: '2m ago', read: false },
+                        { id: 2, text: 'Gerrit created an event: Movie Night 🎬', time: '1h ago', read: true },
+                    { id: 3, text: 'New member joined your community 👋', time: 'Yesterday', read: false },
+                        ] }">
+                    <button @click="open = !open" class="p-2 hover:bg-gray-100 relative mt-2 rounded-lg">
+                   <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
+              <span x-show="notifications.some(n => !n.read)" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
 
-                        <div id="notif-dropdown"
-                            class="hidden absolute right-0 mt-0.99 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
-                            <div class="p-3 text-sm text-gray-700 border-b font-semibold">Notifications</div>
-                            <div class="max-h-60 overflow-y-auto divide-y divide-gray-100">
-                                <div class="p-3 text-sm text-gray-500 text-center">No notifications</div>
-                            </div>
-                        </div>
+                <div x-show="open" @click.away="open = false"
+                 class="absolute right-0 top-full mt-2 w-64 bg-white/70 backdrop-blur-xl border border-gray-100 
+                    shadow-[0_8px_24px_rgba(0,0,0,0.05)] z-50 rounded-2xl overflow-hidden transition-all duration-200"
+                 x-transition>
+
+                   <div class="p-3 border-b text-sm font-semibold text-gray-700">Notifications</div>
+                   <template x-for="note in notifications" :key="note.id">
+            <div role="notification-item"
+                    class="px-4 py-3 hover:bg-gray-50 flex flex-col text-sm border-b border-gray-100 cursor-pointer">
+                       <span x-text="note.text" :class="{'font-semibold': !note.read}"></span>
+                   <span x-text="note.time" class="text-xs text-gray-400"></span>
+                 </div>
+                </template>
+
+                    <div x-show="notifications.length === 0" class="p-4 text-center text-gray-400 text-sm">
+            No notifications yet 📭
+        </div>
+                 <a href="{{ route('notifications') }}" 
+            class="block p-2 text-center text-blue-600 text-sm hover:underline hover:bg-white/60">
+             View all
+                     </a>
                     </div>
+                </div>
+
 
                     <!-- User Menu -->
                     <div class="relative">
@@ -323,8 +353,8 @@
             <div class="flex-1 p-6">
                 {{ $slot }}
             </div>
-        </main>
-    </div>
+                 </main>
+                     </div>
 
     <!-- Toast container -->
     <div id="toast" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
@@ -781,6 +811,9 @@
                 }
             });
         }
+
+
+
     </script>
 </body>
 
