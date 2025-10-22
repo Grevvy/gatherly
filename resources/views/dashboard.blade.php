@@ -129,7 +129,7 @@
         Welcome to Gatherly 🎉
     </h1>
     <p class="text-gray-500 mb-8 text-sm md:text-base">
-        You’re not in any communities yet — let’s get started!
+        let’s get started!
     </p>
 
     <div class="flex gap-4">

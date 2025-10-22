@@ -94,7 +94,13 @@ class CommunityMembershipController extends Controller
             ->firstOrFail();
 
         $m->update(['status' => 'active']);
-        return response()->json($m->fresh());
+        
+        if ($request->wantsJson()) {
+            return response()->json($m->fresh());
+        }
+        
+        return redirect()->route('members', ['community' => $community->slug])
+            ->with('success', 'Member approved successfully');
     }
 
     public function reject(Request $request, Community $community)
@@ -106,7 +112,12 @@ class CommunityMembershipController extends Controller
             ->where('user_id', $data['user_id'])
             ->delete();
 
-        return response()->json(['message' => 'Request rejected']);
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Request rejected']);
+        }
+        
+        return redirect()->route('members', ['community' => $community->slug])
+            ->with('success', 'Member request rejected');
     }
 
     public function invite(Request $request, Community $community)

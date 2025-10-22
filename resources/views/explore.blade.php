@@ -44,6 +44,9 @@
     <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
         {{ ucfirst($community->visibility ?? 'public') }}
     </span>
+    <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+        {{ ucfirst($community->join_policy ?? 'open') }}
+    </span>
     <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
         {{ $community->memberships->count() ?? 0 }} members
     </span>
@@ -55,16 +58,42 @@
                         <a href="/dashboard?community={{ $community->slug }}"
                            class="text-blue-600 text-sm font-medium hover:underline">View</a>
 
-                       <form action="/communities/{{ $community->slug }}/join" method="POST" target="hidden_iframe_{{ $community->id }}">
-                             @csrf
-                             <button type="submit"
-    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-4 py-1.5 rounded-xl 
-           font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 
-           transition-all duration-300 hover:-translate-y-0.5">
-    Join
-</button>
-
-                                    </form>
+                       @php
+                           $membership = $community->memberships->where('user_id', auth()->id())->first();
+                           $isMember = $membership && $membership->status === 'active';
+                           $isPending = $membership && $membership->status === 'pending';
+                           $joinPolicy = $community->join_policy ?? 'open';
+                           $buttonText = match($joinPolicy) {
+                               'request' => 'Request to Join',
+                               'invite' => 'Invite Only',
+                               default => 'Join'
+                           };
+                       @endphp
+                       @if ($isMember)
+                           <button disabled
+                               class="bg-gray-300 text-white text-sm px-4 py-1.5 rounded-xl 
+                                   font-semibold cursor-not-allowed">
+                               Member ✓
+                           </button>
+                       @elseif ($isPending)
+                           <button disabled
+                               class="bg-yellow-100 text-yellow-700 text-sm px-4 py-1.5 rounded-xl 
+                                   font-semibold cursor-not-allowed">
+                               Request Pending
+                           </button>
+                       @else
+                           <form action="/communities/{{ $community->slug }}/join" method="POST" target="hidden_iframe_{{ $community->id }}">
+                               @csrf
+                               <button type="submit"
+                                   class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-4 py-1.5 rounded-xl 
+                                       font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 
+                                       transition-all duration-300 hover:-translate-y-0.5"
+                                   {{ $joinPolicy === 'invite' ? 'disabled' : '' }}
+                                   title="{{ $joinPolicy === 'invite' ? 'This community is invite-only' : '' }}">
+                                   {{ $buttonText }}
+                               </button>
+                           </form>
+                       @endif
                 <iframe name="hidden_iframe_{{ $community->id }}" style="display:none;"></iframe>
 
                         </form>

@@ -91,26 +91,26 @@
                         Feed
                     </a>
 
-                    <a href="/events{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/events?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Events
                     </a>
 
-                    <a href="/messages{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/messages?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Messages
                     </a>
 
-                    <a href="/members{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/members?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Members
                     </a>
 
-                    <a href="/gallery{{ $slug ? '?community=' . $slug : '' }}"
+                    <a href="{{ $slug ? '/gallery?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Photo Gallery
                     </a>
-               <a href="/explore{{ $slug ? '?community=' . $slug : '' }}"
+               <a href="/explore"
                class="py-3 {{ request()->is('explore') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                 Explore
                  </a>
@@ -328,6 +328,21 @@
         </div>
     </div>
 
+
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToastify("{{ session('success') }}", 'success');
+            });
+        </script>
+    @endif
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                showToastify("{{ session('error') }}", 'error');
+            });
+        </script>
+    @endif
 
     <script>
         function showToastify(message, type = 'info', duration = 4000) {

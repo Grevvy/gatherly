@@ -46,6 +46,12 @@
         class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
         Staff ({{ $community->memberships->whereIn('role', ['admin','moderator'])->count() }})
     </button>
+    @if(auth()->user()->id === $community->owner_id || $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0)
+    <button data-filter="pending"
+        class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
+        Pending ({{ $community->memberships->where('status', 'pending')->count() }})
+    </button>
+    @endif
 </div>
 
 
@@ -62,7 +68,8 @@
                 <div class="member-card  bg-white/70 backdrop-blur-lg rounded-2xl p-5 shadow-md hover:shadow-xl border border-white/50  transform hover:-translate-y-1  transition-all duration-300 flex flex-col justify-between"
                      data-role="{{ $member->role }}" 
                      data-online="{{ $isOnline ? 'true' : 'false' }}"
-                         data-name="{{ strtolower($user->name) }}">
+                     data-status="{{ $member->status }}"
+                     data-name="{{ strtolower($user->name) }}">
 
                     
                     <!-- Top Row -->
@@ -82,13 +89,18 @@
                                 <p class="text-xs text-gray-500">{{ $user->email }}</p>
                             </div>
                         </div>
-                        @if ($member->role === 'owner')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Owner 👑</span>
-                        @elseif ($member->role === 'admin')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Admin</span>
-                        @elseif ($member->role === 'moderator')
-                            <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Moderator</span>
-                        @endif
+                        <div class="flex items-center gap-2">
+                            @if ($member->status === 'pending')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Pending</span>
+                            @endif
+                            @if ($member->role === 'owner')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Owner 👑</span>
+                            @elseif ($member->role === 'admin')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Admin</span>
+                            @elseif ($member->role === 'moderator')
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Moderator</span>
+                            @endif
+                        </div>
                     </div>
 
                     <!-- Bio Placeholder -->
@@ -122,15 +134,33 @@
                     </div>
 
                     <div class="flex gap-3">
-                        <a href="/messages"
-    class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
-    Message
-</a>
-
-                        <a href="mailto:{{ $user->email }}"
-                            class="flex-1 px-3 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Email
-                        </a>
+                        @if ($member->status === 'pending' && (auth()->user()->id === $community->owner_id || $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0))
+                            <form action="/communities/{{ $community->slug }}/approve" method="POST" class="flex-1">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <button type="submit"
+                                    class="w-full px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-green-400 to-emerald-400 text-white hover:from-green-500 hover:to-emerald-500 transition">
+                                    Approve
+                                </button>
+                            </form>
+                            <form action="/communities/{{ $community->slug }}/reject" method="POST" class="flex-1">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                                <button type="submit"
+                                    class="w-full px-3 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-red-400 to-pink-400 text-white hover:from-red-500 hover:to-pink-500 transition">
+                                    Reject
+                                </button>
+                            </form>
+                        @else
+                            <a href="/messages"
+                                class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-xl bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 transition">
+                                Message
+                            </a>
+                            <a href="mailto:{{ $user->email }}"
+                                class="flex-1 px-3 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Email
+                            </a>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -156,9 +186,11 @@
                     const isOnline = card.dataset.online === 'true';
                     const role = card.dataset.role;
 
+                    const status = card.dataset.status;
                     if (filter === 'all') card.style.display = 'flex';
                     else if (filter === 'online' && isOnline) card.style.display = 'flex';
                     else if (filter === 'staff' && (role === 'admin' || role === 'moderator')) card.style.display = 'flex';
+                    else if (filter === 'pending' && status === 'pending') card.style.display = 'flex';
                     else card.style.display = 'none';
                 });
             });
