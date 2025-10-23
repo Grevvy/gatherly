@@ -39,6 +39,12 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'interests' => 'array', 
+    ];
+
 
     /**
      * Get the attributes that should be cast.
@@ -66,4 +72,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
+    public function memberships()
+{
+    return $this->hasMany(\App\Models\CommunityMembership::class, 'user_id');
+}
+
 }

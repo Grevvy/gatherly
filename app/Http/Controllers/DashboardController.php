@@ -4,46 +4,55 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Community;
+use App\Models\Post;
 use App\Models\CommunityMembership;
 
 class DashboardController extends \Illuminate\Routing\Controller
 {
-    // Ensure only authenticated users can access
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $community = request('community') ? \App\Models\Community::where('slug', request('community'))->first() : null;
+        $user = auth()->user();
+
         
+        if (!$user->memberships()->exists()) {
+            return redirect()->route('explore')
+                ->with('info', 'Join a community to start your feed!');
+        }
+
+        
+        $community = $request->query('community')
+            ? Community::where('slug', $request->query('community'))->first()
+            : null;
+
         $posts = collect();
+
         if ($community) {
-            $posts = \App\Models\Post::where('community_id', $community->id)
+            $posts = Post::where('community_id', $community->id)
                 ->with(['user:id,name'])
-                ->when(!\Illuminate\Support\Facades\Auth::user()->isSiteAdmin(), function ($query) use ($community) {
-                    // Check if user is a community moderator/admin/owner
-                    $isAdmin = \App\Models\CommunityMembership::where('community_id', $community->id)
-                        ->where('user_id', \Illuminate\Support\Facades\Auth::id())
+                ->when(!Auth::user()->isSiteAdmin(), function ($query) use ($community) {
+                    $isAdmin = CommunityMembership::where('community_id', $community->id)
+                        ->where('user_id', Auth::id())
                         ->where('status', 'active')
                         ->whereIn('role', ['owner', 'admin', 'moderator'])
                         ->exists();
 
-                    // If moderator/admin/owner, see all posts
                     if ($isAdmin) {
-                        return $query;
+                        return $query; // show all posts
                     }
 
-                    // Regular members see:
-                    // - Published posts
-                    // - Their own drafts and pending posts
+                    // Regular users
                     return $query->where(function ($q) {
                         $q->where('status', 'published')
-                            ->orWhere(function ($q) {
-                                $q->where('user_id', \Illuminate\Support\Facades\Auth::id())
-                                    ->whereIn('status', ['draft', 'pending']);
-                            });
+                          ->orWhere(function ($q) {
+                              $q->where('user_id', Auth::id())
+                                ->whereIn('status', ['draft', 'pending']);
+                          });
                     });
                 })
                 ->latest()

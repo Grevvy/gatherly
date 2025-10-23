@@ -410,6 +410,27 @@
                     </p>
                 </div>
             </div>
+            @if (!empty($community->tags))
+    <div class="mt-4 border-t border-gray-300 pt-3">
+        <h4 class="text-gray-700 font-semibold flex items-center gap-2">
+            <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 7l9 9 9-9" />
+            </svg>
+            Tags
+        </h4>
+        <div class="flex flex-wrap gap-2 mt-2">
+            @foreach ($community->tags as $tag)
+                <span
+                    class="px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
+                    {{ ucfirst($tag) }}
+                </span>
+            @endforeach
+        </div>
+    </div>
+@endif
+
         </aside>
 
     @endif

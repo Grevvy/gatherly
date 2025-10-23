@@ -13,6 +13,8 @@ use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Models\Community;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ExploreController;
 
 
 // routes/web.php
@@ -43,12 +45,9 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 // Authenticated routes
 // ------------------
 Route::middleware('auth')->group(function () {
-Route::get('/explore', function () {
-    // Show all public communities (or all if you haven’t added visibility)
-    $communities = Community::where('visibility', 'public')->get();
 
-    return view('explore', compact('communities'));
-})->name('explore');
+    Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
+
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');
@@ -145,5 +144,11 @@ Route::get('/explore', function () {
     Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
-});
+    // Onboarding routes
+   Route::get('/onboarding', [OnboardingController::class, 'show'])->middleware('auth')->name('onboarding');
+   Route::post('/onboarding', [OnboardingController::class, 'save'])->middleware('auth')->name('onboarding.save');
+   });
+
+
+
 

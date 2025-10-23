@@ -19,12 +19,15 @@ class Community extends Model
         'join_policy',  // 'open' | 'request' | 'invite'
         'owner_id',
         'banner_image',
+         'tags',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+         'tags' => 'array',
+
     ];
 
     // Use slug in URLs: route model binding {community:slug}

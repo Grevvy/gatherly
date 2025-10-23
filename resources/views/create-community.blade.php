@@ -67,7 +67,21 @@
                     <option value="invite">Invite Only</option>
                 </select>
             </div>
-
+<!-- Tags -->
+<div class="relative mb-6">
+    <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">
+        Tags (comma-separated)
+    </span>
+    <input
+        name="tags"
+        type="text"
+        placeholder="e.g. music, gaming, movies"
+        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl"
+    >
+    <p class="text-xs text-gray-500 mt-1">
+        Use commas to separate topics — like <em>music, art, travel</em>.
+    </p>
+</div>
         </form>
     </div>
 
