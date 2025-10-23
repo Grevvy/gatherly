@@ -212,10 +212,24 @@
                                             <div>
                                                 <!-- Host Info -->
                                                 <div class="flex items-center gap-2 -mt-2">
+                                                    <!-- Avatar -->
+                                                    @php
+                                                        $avatarUser = $event->owner ?? null;
+                                                    @endphp
+
                                                     <div
-                                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                                        class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                                        @if ($avatarUser && $avatarUser->avatar)
+                                                            <img src="{{ asset('storage/' . $avatarUser->avatar) }}"
+                                                                alt="{{ $avatarUser->name }}'s avatar"
+                                                                class="w-full h-full object-cover">
+                                                        @elseif ($avatarUser)
+                                                            <span
+                                                                class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                                        @endif
                                                     </div>
+
+
                                                     <div>
                                                         <p class="text-sm font-medium text-gray-900">
                                                             {{ $event->owner->name ?? 'Community' }}
@@ -491,9 +505,26 @@
                                             <div>
                                                 <!-- Host Info -->
                                                 <div class="flex items-center gap-2 -mt-2">
+                                                    <!-- Avatar -->
+                                                    @php
+                                                        $user = auth()->user();
+                                                    @endphp
+
+                                                    <!-- Avatar -->
+                                                    @php
+                                                        $avatarUser = $event->owner ?? null;
+                                                    @endphp
+
                                                     <div
-                                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                                        class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                                        @if ($avatarUser && $avatarUser->avatar)
+                                                            <img src="{{ asset('storage/' . $avatarUser->avatar) }}"
+                                                                alt="{{ $avatarUser->name }}'s avatar"
+                                                                class="w-full h-full object-cover">
+                                                        @elseif ($avatarUser)
+                                                            <span
+                                                                class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                                        @endif
                                                     </div>
                                                     <div>
                                                         <p class="text-sm font-medium text-gray-900">

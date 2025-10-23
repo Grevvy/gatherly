@@ -66,10 +66,24 @@
 
                             <div class="flex gap-4 items-start">
                                 <!-- Avatar -->
+                                @php
+                                    $user = auth()->user();
+                                @endphp
+
                                 <div
-                                    class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                    class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
+                                    @if ($user && $user->avatar)
+                                        <img src="{{ asset('storage/' . $user->avatar) }}"
+                                            alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="text-white font-bold text-lg">
+                                            {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
+                                        </span>
+                                    @endif
                                 </div>
+
+
+
 
 
                                 <!-- Form Content -->
@@ -179,72 +193,85 @@
                 @if ($canSeePost)
                     <div class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]"
                         id="post-{{ $post->id }}">
-                        @if ($canModerate || $post->user_id === $userId)
-                            <!-- Dots Dropdown Above -->
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                        {{ strtoupper(substr($post->user->name ?? '', 0, 1)) }}
-                                    </div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                @php
+                                    $postUser = $post->user;
+                                @endphp
 
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">
-                                            {{ $post->user->name ?? 'Unknown' }}
-                                        </p>
-                                        <p class="text-xs text-gray-500">
-                                            Post Creator
-                                        </p>
-                                    </div>
-
+                                <div
+                                    class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                    @if ($postUser && $postUser->avatar)
+                                        <img src="{{ asset('storage/' . $postUser->avatar) }}"
+                                            alt="{{ $postUser->name }}'s avatar" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="text-white font-semibold">
+                                            {{ strtoupper(substr($postUser->name ?? 'U', 0, 1)) }}
+                                        </span>
+                                    @endif
                                 </div>
 
 
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">
+                                        {{ $post->user->name ?? 'Unknown' }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ '@' .
+                                            (\App\Models\User::find($post->user_id)?->username ??
+                                                Str::slug(\App\Models\User::find($post->user_id)?->name ?? 'user')) }}
+                                    </p>
 
-                                @if ($canModerate || $post->user_id === $userId)
-                                    <div class="relative">
-                                        <button onclick="toggleDropdown({{ $post->id }})"
-                                            class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                                            &#x2026;
-                                        </button>
-                                        <div id="dropdown-{{ $post->id }}"
-                                            class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
-                                            @if ($canModerate && $post->status === 'pending')
-                                                <form method="POST"
-                                                    action="{{ route('posts.update', [$community->slug, $post->id]) }}"
-                                                    data-community="{{ $community->slug }}"
-                                                    onsubmit="return handlePostAction(event)">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="published">
-                                                    <input type="hidden" name="content" value="{{ $post->content }}">
-                                                    <button type="submit"
-                                                        class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
-                                                        Publish
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            <button onclick="startEdit({{ $post->id }})"
-                                                class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+
+
+                                </div>
+                            </div>
+
+                            @if ($canModerate || $post->user_id === $userId)
+                                <div class="relative">
+                                    <button onclick="toggleDropdown({{ $post->id }})"
+                                        class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                        &#x2026;
+                                    </button>
+                                    <div id="dropdown-{{ $post->id }}"
+                                        class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
+                                        @if ($canModerate && $post->status === 'pending')
                                             <form method="POST"
-                                                action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
+                                                action="{{ route('posts.update', [$community->slug, $post->id]) }}"
                                                 data-community="{{ $community->slug }}"
                                                 onsubmit="return handlePostAction(event)">
                                                 @csrf
-                                                @method('DELETE')
-                                                <button type="button" onclick="deletePost({{ $post->id }}, this)"
-                                                    class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                    Delete
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="published">
+                                                <input type="hidden" name="content" value="{{ $post->content }}">
+                                                <button type="submit"
+                                                    class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
+                                                    Publish
                                                 </button>
                                             </form>
-                                        </div>
+                                        @endif
+                                        <button onclick="startEdit({{ $post->id }})"
+                                            class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+                                        <form method="POST"
+                                            action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
+                                            data-community="{{ $community->slug }}"
+                                            onsubmit="return handlePostAction(event)">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" onclick="deletePost({{ $post->id }}, this)"
+                                                class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                Delete
+                                            </button>
+                                        </form>
                                     </div>
-                                @endif
-                            </div>
-                        @endif
+                                </div>
+                            @endif
+                        </div>
+
 
                         <div class="post-content relative" id="content-{{ $post->id }}">
-                            <p class="text-gray-700 text-sm mb-2">{{ $post->content }}</p>
+                            <p class="text-black text-sm mb-1 mt-4">{{ $post->content }}</p>
+
 
                             @if ($post->image_path)
                                 <div class="mt-2">

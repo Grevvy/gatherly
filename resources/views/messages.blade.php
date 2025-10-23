@@ -82,9 +82,18 @@
                                         <input type="checkbox" name="participant_ids[]" value="{{ $member->id }}"
                                             class="accent-blue-500 w-4 h-4">
                                         <div
-                                            class="w-7 h-7 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                                            {{ strtoupper(substr($member->name, 0, 1)) }}
+                                            class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
+                                            @if (!empty($member->avatar))
+                                                <img src="{{ asset('storage/' . $member->avatar) }}"
+                                                    alt="{{ $member->name }}'s avatar"
+                                                    class="w-full h-full object-cover">
+                                            @else
+                                                <span class="text-white text-xs font-semibold">
+                                                    {{ strtoupper(substr($member->name, 0, 1)) }}
+                                                </span>
+                                            @endif
                                         </div>
+
                                         <span class="text-sm text-gray-800">{{ $member->name }}</span>
                                     </label>
                                 @endforeach
@@ -244,10 +253,23 @@
 
                                 @if ($message->user_id !== $userId)
                                     <div
-                                        class="w-9 h-9 bg-blue-500 rounded-full flex ml-3 items-center justify-center text-white font-bold text-lg mt-8">
-                                        {{ strtoupper(substr($message->user->name ?? 'U', 0, 1)) }}
+                                        class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300">
+                                        @php
+                                            $sender = $message->user;
+                                        @endphp
+
+                                        @if ($sender && $sender->avatar)
+                                            <img src="{{ asset('storage/' . $sender->avatar) }}"
+                                                alt="{{ $sender->name }}'s avatar"
+                                                class="w-full h-full object-cover">
+                                        @else
+                                            <span class="text-white font-bold text-lg">
+                                                {{ strtoupper(substr($sender->name ?? 'U', 0, 1)) }}
+                                            </span>
+                                        @endif
                                     </div>
                                 @endif
+
 
                                 <div class="max-w-[75%] space-y-1">
                                     @if ($message->user_id !== $userId)
@@ -317,6 +339,44 @@
             const form = document.querySelector('form[action="{{ route('messages.store') }}"]');
             const input = document.getElementById('messageInput');
             const scrollContainer = document.getElementById('message-scroll');
+            if (!scrollContainer) return;
+
+            let lastMessageCount = scrollContainer.querySelectorAll('.flex.group').length;
+
+            // Poll every 3 seconds for new messages
+            setInterval(async () => {
+                try {
+                    const response = await fetch(window.location.href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const text = await response.text();
+
+                    // Parse only the message section from the new HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(text, 'text/html');
+                    const newMessages = doc.querySelectorAll('#message-scroll .flex.group');
+
+                    if (newMessages.length > lastMessageCount) {
+                        const diff = newMessages.length - lastMessageCount;
+                        const newEls = Array.from(newMessages).slice(-diff);
+
+                        newEls.forEach(el => {
+                            scrollContainer.appendChild(el);
+                            el.classList.add('fade-in');
+                        });
+
+                        lastMessageCount = newMessages.length;
+                        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    }
+                } catch (e) {
+                    console.error('Polling error:', e);
+                }
+            }, 3000);
+
+
+
 
             if (form) {
                 form.addEventListener('submit', async (e) => {

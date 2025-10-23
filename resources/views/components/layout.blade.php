@@ -182,9 +182,21 @@
                     <!-- User Menu -->
                     <div class="relative">
                         <button id="user-menu-btn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
+                            <!-- Avatar -->
+                            @php
+                                $user = auth()->user();
+                            @endphp
+
+
                             <div
-                                class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, length: 1)) }}
+                                class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                @if ($user->avatar)
+                                    <img src="{{ asset('storage/' . $user->avatar) }}"
+                                        alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                @else
+                                    <span
+                                        class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                @endif
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
                         </button>
