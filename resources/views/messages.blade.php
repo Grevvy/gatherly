@@ -341,7 +341,13 @@
             const scrollContainer = document.getElementById('message-scroll');
             if (!scrollContainer) return;
 
-            let lastMessageCount = scrollContainer.querySelectorAll('.flex.group').length;
+            let renderedMessageIds = new Set();
+
+            // Initialize with existing messages
+            scrollContainer.querySelectorAll('.flex.group[data-id]').forEach(el => {
+                const msgId = el.getAttribute('data-id');
+                if (msgId) renderedMessageIds.add(msgId);
+            });
 
             // Poll every 3 seconds for new messages
             setInterval(async () => {
@@ -352,35 +358,28 @@
                         }
                     });
                     const text = await response.text();
-
-                    // Parse only the message section from the new HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(text, 'text/html');
-                    const newMessages = doc.querySelectorAll('#message-scroll .flex.group');
+                    const newMessages = doc.querySelectorAll('#message-scroll .flex.group[data-id]');
 
-                    if (newMessages.length > lastMessageCount) {
-                        const diff = newMessages.length - lastMessageCount;
-                        const newEls = Array.from(newMessages).slice(-diff);
-
-                        newEls.forEach(el => {
+                    newMessages.forEach(el => {
+                        const msgId = el.getAttribute('data-id');
+                        if (msgId && !renderedMessageIds.has(msgId)) {
                             scrollContainer.appendChild(el);
                             el.classList.add('fade-in');
-                        });
+                            renderedMessageIds.add(msgId);
+                        }
+                    });
 
-                        lastMessageCount = newMessages.length;
-                        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-                    }
+                    scrollContainer.scrollTop = scrollContainer.scrollHeight;
                 } catch (e) {
                     console.error('Polling error:', e);
                 }
             }, 3000);
 
-
-
-
             if (form) {
                 form.addEventListener('submit', async (e) => {
-                    e.preventDefault(); // stop full reload
+                    e.preventDefault();
 
                     const formData = new FormData(form);
                     const token = form.querySelector('input[name="_token"]').value;
@@ -391,7 +390,7 @@
                         const response = await fetch(form.action, {
                             method: "POST",
                             headers: {
-                                "X-CSRF-TOKEN": token,
+                                "X-CSRF-TOKEN": token
                             },
                             body: formData,
                         });
@@ -399,20 +398,13 @@
                         if (!response.ok) throw new Error("Failed to send message");
 
                         let newId = null;
-                        if (response.redirected) {
-                            const url = new URL(response.url);
-
-                        }
-
                         const html = await response.text();
                         const match = html.match(/\/messages\/(\d+)/);
-                        if (match) {
-                            newId = match[1];
-                        }
-
+                        if (match) newId = match[1];
 
                         const newMsg = document.createElement("div");
                         newMsg.className = "flex justify-end group items-start gap-2 fade-in";
+                        if (newId) newMsg.setAttribute("data-id", newId);
                         newMsg.innerHTML = `
 <form method="POST" action="/messages/${newId ?? 'temp'}" 
     data-id="${newId ?? ''}"
@@ -429,28 +421,24 @@
         </svg>
     </button>
 </form>
-
-
-    <div class="max-w-[75%] space-y-1">
-        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl rounded-br-none flex justify-end mr-2 px-4 py-2 shadow-sm text-sm transition-transform hover:scale-[1.02] duration-150 mt-1">
-            ${body.replace(/\n/g, "<br>")}
-        </div>
-        <div class="text-[9px] text-gray-400 text-right mr-2">
-            ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-        </div>
+<div class="max-w-[75%] space-y-1">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl rounded-br-none flex justify-end mr-2 px-4 py-2 shadow-sm text-sm transition-transform hover:scale-[1.02] duration-150 mt-1">
+        ${body.replace(/\n/g, "<br>")}
     </div>
+    <div class="text-[9px] text-gray-400 text-right mr-2">
+        ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+    </div>
+</div>
 `;
 
-
                         scrollContainer.appendChild(newMsg);
+                        if (newId) renderedMessageIds.add(newId);
 
-                        // clear text area and scroll to bottom
                         input.value = "";
                         updateCharCount();
                         setTimeout(() => {
                             scrollContainer.scrollTop = scrollContainer.scrollHeight;
                         }, 100);
-
                     } catch (error) {
                         console.error(error);
                         showToastify("Failed to send message.", "error");
@@ -461,14 +449,11 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const container = document.getElementById('message-scroll');
-
             if (container) {
-                // Wait for messages to render, then scroll
                 setTimeout(() => {
                     container.scrollTop = container.scrollHeight;
-                }, 100); // slight delay ensures content is painted
+                }, 100);
             }
-
 
             const searchInput = document.getElementById('searchInput');
             const items = document.querySelectorAll('#listContainer a');
