@@ -153,13 +153,13 @@
                     <div id="upcoming-view" class="space-y-6">
                         @if ($visibleUpcomingEvents->isEmpty())
                             <div
-                                class="bg-white rounded-2xl shadow-md border border-gray-200 p-8 w-full max-w-5xl h-64 mx-auto flex flex-col items-center justify-center text-gray-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-gray-400"
+                                class=" p-8 w-full max-w-5xl h-64 mx-auto flex flex-col items-center justify-center text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-400"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
-                                <p class="text-gray-500 text-sm">No upcoming events — maybe create one?</p>
+                                <p class="text-gray-500 text-md text-center">No upcoming events — maybe create one?</p>
                             </div>
                         @else
                             @foreach ($visibleUpcomingEvents as $event)
@@ -434,13 +434,13 @@
                     <div id="attending-view" class="hidden space-y-6">
                         @if ($attendingEvents->isEmpty())
                             <div
-                                class="bg-white rounded-2xl shadow-md border border-gray-200 p-8 w-full max-w-5xl h-64 mx-auto flex flex-col items-center justify-center text-gray-500">
+                                class=" p-8 w-full max-w-5xl h-64 mx-auto flex flex-col items-center justify-center text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-400"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                 </svg>
-                                <p class="text-gray-500 text-sm text-center">You're not attending any events yet.</p>
+                                <p class="text-gray-500 text-md text-center">You're not attending any events yet.</p>
                             </div>
                         @else
                             @foreach ($attendingEvents as $event)
