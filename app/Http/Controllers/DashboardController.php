@@ -21,7 +21,7 @@ class DashboardController extends \Illuminate\Routing\Controller
         $posts = collect();
         if ($community) {
             $posts = \App\Models\Post::where('community_id', $community->id)
-                ->with(['user:id,name'])
+                ->with(['user:id,name,avatar'])
                 ->when(!\Illuminate\Support\Facades\Auth::user()->isSiteAdmin(), function ($query) use ($community) {
                     // Check if user is a community moderator/admin/owner
                     $isAdmin = \App\Models\CommunityMembership::where('community_id', $community->id)
