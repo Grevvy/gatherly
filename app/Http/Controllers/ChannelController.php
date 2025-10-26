@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use App\Events\ChannelCreated;
+use App\Events\ChannelDeleted;
 
 class ChannelController extends BaseController
 {
@@ -22,7 +24,14 @@ class ChannelController extends BaseController
             'name' => ['required', 'string', 'max:255'],
         ]);
 
-        $community->channels()->create($validated);
+        $channel = $community->channels()->create($validated);
+
+        // Broadcast to community members that a channel was created
+        try {
+            event(new ChannelCreated($channel));
+        } catch (\Throwable $e) {
+            // do not fail the request if broadcasting fails
+        }
 
         return back()->with('success', 'Channel created successfully.');
     }
@@ -41,10 +50,19 @@ class ChannelController extends BaseController
     {
         $this->authorize('delete', $channel);
 
+        $channelId = $channel->id;
+        $communityId = $channel->community_id;
+        $slug = $channel->community->slug;
+
         $channel->delete();
 
+        try {
+            event(new ChannelDeleted($communityId, $channelId));
+        } catch (\Throwable $e) {
+        }
+
         return redirect()
-            ->to('/communities/' . $channel->community->slug)
+            ->to('/communities/' . $slug)
             ->with('success', 'Channel deleted successfully.');
     }
 }

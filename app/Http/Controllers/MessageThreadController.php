@@ -11,6 +11,8 @@ use Illuminate\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
+use App\Events\ThreadCreated;
+use App\Events\ThreadDeleted;
 
 class MessageThreadController extends BaseController
 {
@@ -35,7 +37,7 @@ class MessageThreadController extends BaseController
             ]);
         }
 
-        $thread = $community->messageThreads()->create();
+    $thread = $community->messageThreads()->create();
         
         // Add the current user and selected participants
         $participants = array_unique(array_merge(
@@ -44,6 +46,13 @@ class MessageThreadController extends BaseController
         ));
         
         $thread->participants()->attach($participants);
+
+        // Broadcast new thread to community members
+        try {
+            event(new ThreadCreated($thread));
+        } catch (\Throwable $e) {
+            // ignore broadcast errors
+        }
 
         return redirect()->route('messages', [
         'tab' => 'direct',
@@ -70,10 +79,19 @@ class MessageThreadController extends BaseController
     {
         $this->authorize('delete', $thread);
 
+        $threadId = $thread->id;
+        $communityId = $thread->community_id;
+        $slug = $thread->community->slug;
+
         $thread->delete();
 
+        try {
+            event(new ThreadDeleted($communityId, $threadId));
+        } catch (\Throwable $e) {
+        }
+
         return redirect()
-            ->to('/communities/' . $thread->community->slug)
+            ->to('/communities/' . $slug)
             ->with('success', 'Conversation deleted.');
     }
 }

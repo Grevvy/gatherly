@@ -1,3 +1,5 @@
+import './bootstrap';
+
 function initPasswordToggle() {
   const passwordField = document.getElementById("password")
   const toggleBtn = document.getElementById("togglePassword")
