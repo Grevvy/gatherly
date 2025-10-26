@@ -47,6 +47,9 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 Route::middleware('auth')->group(function () {
 
     Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
+    
+    // Welcome
+    Route::get('/welcome', fn () => view('community-welcome'))->name('community-welcome');
 
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -76,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/create-event', function () {
         return view('create-event');
     })->name(name: 'create-event');
+    
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

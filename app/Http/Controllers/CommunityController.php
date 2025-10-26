@@ -127,8 +127,12 @@ public function store(Request $request)
             'banner_image' => ['sometimes','nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
             'visibility'   => ['sometimes','in:public,private'],
             'join_policy'  => ['sometimes','in:open,request,invite'],
+            'tags'         => ['sometimes','nullable','string'],
         ]);
 
+            if (array_key_exists('tags', $data) && !empty($data['tags'])) {
+        $data['tags'] = array_map('trim', explode(',', strtolower($data['tags'])));
+    }
         // If a new banner is uploaded, remove old local file then store new one
         if ($request->hasFile('banner_image')) {
             if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {

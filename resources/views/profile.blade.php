@@ -6,7 +6,7 @@
             <div class="w-full flex justify-start mb-6">
                 <a href="{{ url()->previous() }}"
                     class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 underline transition">
-                    ← Back to Community
+                    ← Go Back
                 </a>
             </div>
 

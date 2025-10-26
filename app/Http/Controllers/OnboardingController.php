@@ -23,7 +23,7 @@ class OnboardingController extends Controller
         $user->save();
 
         return redirect()
-            ->route('explore')
+            ->route('community-welcome')
             ->with('success', 'Your interests have been saved!');
     }
 }
