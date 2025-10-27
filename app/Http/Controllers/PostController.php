@@ -206,4 +206,26 @@ class PostController extends Controller
 
         return response()->json($post->fresh());
     }
+    public function toggleLike($communitySlug, $postId)
+{
+    $user = auth()->user();
+    $post = \App\Models\Post::findOrFail($postId);
+
+    // If already liked → unlike
+    $existing = $post->likes()->where('user_id', $user->id)->first();
+    if ($existing) {
+        $existing->delete();
+        $liked = false;
+    } else {
+        $post->likes()->create(['user_id' => $user->id]);
+        $liked = true;
+    }
+
+    // Return JSON so we don’t redirect
+    return response()->json([
+        'liked' => $liked,
+        'like_count' => $post->likes()->count()
+    ]);
+}
+
 }

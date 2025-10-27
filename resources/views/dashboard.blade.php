@@ -24,6 +24,7 @@
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
         <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
 
+
             <style>
                 body {
                     scroll-behavior: smooth;
@@ -286,6 +287,57 @@
                                     • <span class="text-xs text-gray-400 mt-9 italic">(edited)</span>
                                 @endif
                             </div>
+                      <div class="flex items-center gap-5 mt-4 text-sm">
+    <!-- ❤️ Like Button -->
+    <button onclick="toggleLike({{ $post->id }}, '{{ $community->slug }}')" 
+            id="like-btn-{{ $post->id }}"
+            class="flex items-center gap-2 group transition">
+        <div
+            class="w-8 h-8 rounded-full flex items-center justify-center bg-pink-50 border border-pink-200 text-pink-500 hover:bg-pink-100 hover:scale-105 transition">
+            <i class="fa-solid fa-heart group-hover:scale-110 transition-transform duration-200"></i>
+        </div>
+        <span id="like-count-{{ $post->id }}" class="text-gray-600 group-hover:text-pink-600">
+            {{ $post->likes->count() }}
+        </span>
+    </button>
+
+    <!-- 💬 Reply Button -->
+    <button onclick="toggleCommentBox({{ $post->id }})" 
+            class="flex items-center gap-2 group transition">
+        <div
+            class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-500 hover:bg-blue-100 hover:scale-105 transition">
+            <i class="fa-regular fa-comment group-hover:scale-110 transition-transform duration-200"></i>
+        </div>
+        <span class="text-gray-600 group-hover:text-blue-600">Reply</span>
+    </button>
+</div>
+     
+
+<!-- Comment box -->
+<div id="comment-box-{{ $post->id }}" class="hidden mt-4 animate-fadeIn">
+    <form onsubmit="return postComment(event, {{ $post->id }}, '{{ $community->slug }}')" 
+          class="flex gap-3 items-center">
+        <input type="text" name="content" placeholder="Write a cute reply..."
+            class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none" required>
+        <button type="submit"
+            class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 transition">
+            Send
+        </button>
+    </form>
+
+    <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
+        @foreach ($post->comments as $comment)
+            <div class="flex items-start gap-2">
+                <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                    {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                </div>
+                <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                    <strong>{{ $comment->user->name }}:</strong> {{ $comment->content }}
+                </p>
+            </div>
+        @endforeach
+    </div>
+</div>
 
                             @php
                                 $statusStyles = [
@@ -297,7 +349,8 @@
                                 $status = strtolower($post->status);
                             @endphp
 
-                            <div class="absolute bottom-2 right-2 text-xs">
+                                <div class="absolute top-2 right-3 text-xs">
+
                                 <span
                                     class="inline-block px-2 py-0.5 rounded font-medium {{ $statusStyles[$status] ?? 'bg-gray-100 text-gray-700' }}">
                                     {{ ucfirst($status) }}
@@ -881,7 +934,55 @@
             lastCroppedImageUrl = null;
             currentFile = null;
         };
+        async function toggleLike(postId, slug) {
+    const res = await fetch(`/communities/${slug}/posts/${postId}/like`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    });
+    const data = await res.json();
+    document.getElementById(`like-count-${postId}`).textContent = data.like_count;
+}
+
+function toggleCommentBox(postId) {
+    const box = document.getElementById(`comment-box-${postId}`);
+    box.classList.toggle('hidden');
+}
+
+async function postComment(e, postId, slug) {
+    e.preventDefault();
+    const content = e.target.content.value.trim();
+    if (!content) return;
+
+    const res = await fetch(`/communities/${slug}/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        const list = document.getElementById(`comments-list-${postId}`);
+list.innerHTML += `
+    <div class="flex items-start gap-2 animate-fadeIn">
+        <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+            ${data.comment.user.charAt(0).toUpperCase()}
+        </div>
+        <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+            <strong>${data.comment.user}:</strong> ${data.comment.content}
+        </p>
+    </div>
+`;
+        e.target.reset();
+    }
+    return false;
+}
+
     </script>
+
+    
 
 
 </x-layout>

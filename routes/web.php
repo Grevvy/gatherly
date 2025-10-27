@@ -145,5 +145,15 @@ Route::get('/explore', function () {
     Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
-});
 
+    // Likes
+    Route::post('/communities/{community:slug}/posts/{post}/like', [PostController::class, 'toggleLike'])
+        ->name('posts.like');
+
+    // Replies (Comments)
+    Route::post('/communities/{community:slug}/posts/{post}/replies', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.replies.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/replies/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.replies.destroy');
+    Route::post('/communities/{community:slug}/posts/{post}/comment', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.comment.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/comment/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.comment.destroy');
+
+});
