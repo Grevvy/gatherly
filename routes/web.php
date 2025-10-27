@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
@@ -78,9 +79,10 @@ Route::get('/explore', function () {
         return view('create-event');
     })->name(name: 'create-event');
 
-        Route::get('/photo-gallery', function () {
-        return view('photo-gallery');
-    })->name(name: 'photo-gallery');
+        // Photo Gallery routes
+        Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+        Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+        Route::delete('/photos/{photo}', [PhotoController::class, 'destroy'])->name('photos.destroy');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

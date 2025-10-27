@@ -72,6 +72,14 @@ class Community extends Model
         return $this->hasMany(MessageThread::class);
     }
 
+    /**
+     * Get all photos in this community
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class);
+    }
+
     // Helpers
     public function scopePublic($q)
     {

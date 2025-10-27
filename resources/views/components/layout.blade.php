@@ -134,8 +134,8 @@
                         Members
                     </a>
 
-                    <a href="{{ $slug ? '/photo-gallery?community=' . $slug : '/dashboard' }}"
-                        class="py-3 {{ request()->is('photo-gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    <a href="{{ $slug ? '/photos?community=' . $slug : '/dashboard' }}"
+                        class="py-3 {{ request()->is('photos') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                         Photo Gallery
                     </a>
                     <a href="/explore"
