@@ -81,8 +81,11 @@ Route::get('/explore', function () {
 
         // Photo Gallery routes
         Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+        Route::get('/photos/upload', [PhotoController::class, 'create'])->name('photos.create');
         Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
         Route::delete('/photos/{photo}', [PhotoController::class, 'destroy'])->name('photos.destroy');
+        Route::post('/photos/{photo}/approve', [PhotoController::class, 'approve'])->name('photos.approve');
+        Route::post('/photos/{photo}/reject', [PhotoController::class, 'reject'])->name('photos.reject');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Channel;
+use App\Models\Community;
 use App\Models\Message;
 use App\Models\MessageThread;
 use App\Models\Photo;
@@ -20,12 +21,11 @@ class AuthServiceProvider extends ServiceProvider
         Message::class => MessagePolicy::class,
         MessageThread::class => MessageThreadPolicy::class,
         Photo::class => PhotoPolicy::class,
+        Community::class => PhotoPolicy::class, // Add policy for Community model
     ];
 
     public function boot(): void
     {
         $this->registerPolicies();
-
-        Gate::define('upload-photo', [PhotoPolicy::class, 'upload']);
     }
 }

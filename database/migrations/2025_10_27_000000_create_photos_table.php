@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('community_id')->constrained()->cascadeOnDelete();
             $table->string('image_path');
             $table->text('caption')->nullable();
+            $table->string('status')->default('pending'); // pending, approved, rejected
             $table->timestamps();
         });
     }

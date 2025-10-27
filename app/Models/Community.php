@@ -25,6 +25,7 @@ class Community extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'owner_id' => 'integer',
     ];
 
     // Use slug in URLs: route model binding {community:slug}
