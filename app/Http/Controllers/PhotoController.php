@@ -150,7 +150,9 @@ class PhotoController extends Controller
 
         $photo->save();
 
-        return back()->with('success', 'Photo uploaded successfully!');
+        return redirect()
+            ->route('photos.index', ['community' => $community->slug])
+            ->with('success', 'Photo uploaded successfully!');
     }
 
     /**
