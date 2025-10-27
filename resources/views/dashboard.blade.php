@@ -193,7 +193,8 @@
                 @endphp
                 @if ($canSeePost)
                     <div class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]"
-                        id="post-{{ $post->id }}">
+                        id="post-{{ $post->id }}"
+                        data-can-moderate="{{ $canModerate ? 'true' : 'false' }}">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-3">
                                 @php
@@ -327,13 +328,27 @@
 
     <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
         @foreach ($post->comments as $comment)
-            <div class="flex items-start gap-2">
-                <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                    {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+            <div class="flex items-start gap-2" data-comment-id="{{ $comment->id }}">
+                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                    @if ($comment->user->avatar)
+                        <img src="{{ asset('storage/' . $comment->user->avatar) }}" alt="{{ $comment->user->name }}'s avatar" class="w-full h-full object-cover">
+                    @else
+                        <span class="text-white font-semibold text-xs">
+                            {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                        </span>
+                    @endif
                 </div>
-                <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
-                    <strong>{{ $comment->user->name }}:</strong> {{ $comment->content }}
-                </p>
+                <div class="flex-1 flex items-start justify-between gap-2">
+                    <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                        <strong>{{ $comment->user->name }}:</strong> {{ $comment->content }}
+                    </p>
+                    @if ($comment->user_id === auth()->id() || $canModerate)
+                        <button onclick="deleteComment({{ $comment->id }}, {{ $post->id }}, '{{ $community->slug }}')" 
+                                class="text-red-500 hover:text-red-600 transition">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    @endif
+                </div>
             </div>
         @endforeach
     </div>
@@ -948,6 +963,44 @@ function toggleCommentBox(postId) {
     box.classList.toggle('hidden');
 }
 
+async function deleteComment(commentId, postId, slug) {
+    showConfirmToast(
+        'Are you sure you want to delete this comment?',
+        async () => {
+            const res = await fetch(`/communities/${slug}/posts/${postId}/comment/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                try {
+                    // Find and remove the comment element
+                    const commentList = document.getElementById(`comments-list-${postId}`);
+                    const commentElement = commentList.querySelector(`[data-comment-id="${commentId}"]`);
+                    if (commentElement) {
+                        // Add fade-out animation
+                        commentElement.style.transition = 'opacity 0.2s ease-out';
+                        commentElement.style.opacity = '0';
+                        setTimeout(() => {
+                            commentElement.remove();
+                        }, 200);
+                        showToastify('Comment deleted successfully.', 'success');
+                    }
+                } catch (err) {
+                    console.error('Error removing comment from UI:', err);
+                }
+            } else {
+                showToastify('Failed to delete comment.', 'error');
+            }
+        },
+        'bg-red-400 hover:bg-red-500',
+        'Delete'
+    );
+}
+
 async function postComment(e, postId, slug) {
     e.preventDefault();
     const content = e.target.content.value.trim();
@@ -965,14 +1018,29 @@ async function postComment(e, postId, slug) {
 
     if (data.success) {
         const list = document.getElementById(`comments-list-${postId}`);
-list.innerHTML += `
-    <div class="flex items-start gap-2 animate-fadeIn">
-        <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-            ${data.comment.user.charAt(0).toUpperCase()}
+        // Get canModerate value from the post's container
+        const postContainer = document.getElementById(`post-${postId}`);
+        const canModerate = postContainer.querySelector('[data-can-moderate="true"]') !== null;
+        
+        list.innerHTML += `
+    <div class="flex items-start gap-2 animate-fadeIn" data-comment-id="${data.comment.id}">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+            ${data.comment.avatar 
+                ? `<img src="/storage/${data.comment.avatar}" alt="${data.comment.user}'s avatar" class="w-full h-full object-cover">`
+                : `<span class="text-white font-semibold text-xs">${data.comment.user.charAt(0).toUpperCase()}</span>`
+            }
         </div>
-        <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
-            <strong>${data.comment.user}:</strong> ${data.comment.content}
-        </p>
+        <div class="flex-1 flex items-start justify-between gap-2">
+            <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <strong>${data.comment.user}:</strong> ${data.comment.content}
+            </p>
+            ${(data.comment.is_author || canModerate) ? `
+                <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                        class="text-red-500 hover:text-red-600 transition">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            ` : ''}
+        </div>
     </div>
 `;
         e.target.reset();
