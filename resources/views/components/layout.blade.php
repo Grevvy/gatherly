@@ -10,6 +10,8 @@
     <meta charset="UTF-8">
     <title>{{ $title ?? 'Gatherly' }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
@@ -109,9 +111,13 @@
                     @php $slug = request('community'); @endphp
 
                     <a href="/dashboard{{ $slug ? '?community=' . $slug : '' }}"
-                        class="py-3 {{ request()->is('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        class="py-3 
+    {{ request()->is('dashboard') && $slug
+        ? 'border-b-2 border-blue-600 text-blue-600 font-medium'
+        : 'text-gray-600 hover:text-gray-800' }}">
                         Feed
                     </a>
+
 
                     <a href="{{ $slug ? '/events?community=' . $slug : '/dashboard' }}"
                         class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
@@ -176,9 +182,21 @@
                     <!-- User Menu -->
                     <div class="relative">
                         <button id="user-menu-btn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
+                            <!-- Avatar -->
+                            @php
+                                $user = auth()->user();
+                            @endphp
+
+
                             <div
-                                class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, length: 1)) }}
+                                class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                @if ($user->avatar)
+                                    <img src="{{ asset('storage/' . $user->avatar) }}"
+                                        alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                @else
+                                    <span
+                                        class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                @endif
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
                         </button>
