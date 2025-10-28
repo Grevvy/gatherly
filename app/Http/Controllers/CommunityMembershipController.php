@@ -5,6 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Community;
 use App\Models\CommunityMembership;
+use App\Notifications\MemberBanned;
+use App\Notifications\MemberJoined;
+use App\Notifications\MemberLeft;
+use App\Notifications\MemberRemoved;
+use App\Notifications\MembershipApproved;
+use App\Notifications\MembershipRoleChanged;
+use App\Notifications\MembershipRequested;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +77,23 @@ class CommunityMembershipController extends Controller
             'status'       => $status,
         ]);
 
+        $membership->loadMissing('user:id,name,avatar', 'community:id,name,slug');
+        $notifier = app(NotificationService::class);
+
+        if ($status === 'pending') {
+            $notifier->notifyCommunityModerators(
+                $community,
+                new MembershipRequested($membership),
+                $uid
+            );
+        } else {
+            $notifier->notifyCommunityModerators(
+                $community,
+                new MemberJoined($membership),
+                $uid
+            );
+        }
+
         return response()->json($membership, 201);
     }
 
@@ -80,6 +105,13 @@ class CommunityMembershipController extends Controller
         CommunityMembership::where('community_id', $community->id)
             ->where('user_id', $uid)
             ->delete();
+
+        $user = Auth::user();
+        app(NotificationService::class)->notifyCommunityModerators(
+            $community,
+            new MemberLeft($community, $user),
+            $uid
+        );
 
         if (request()->wantsJson()) {
             return response()->json(['message' => 'Left community']);
@@ -99,9 +131,20 @@ class CommunityMembershipController extends Controller
             ->firstOrFail();
 
         $m->update(['status' => 'active']);
+        $m->loadMissing('user:id,name,avatar', 'community:id,name,slug');
+
+        app(NotificationService::class)->notifyCommunityModerators(
+            $community,
+            new MemberJoined($m),
+            $m->user_id
+        );
+
+        if ($m->user) {
+            $m->user->notify(new MembershipApproved($m));
+        }
         
         if ($request->wantsJson()) {
-            return response()->json($m->fresh());
+            return response()->json($m);
         }
         
         return redirect()->route('members', ['community' => $community->slug])
@@ -148,28 +191,54 @@ class CommunityMembershipController extends Controller
             'role'    => ['required','in:owner,admin,moderator,member'],
         ]);
 
-        return DB::transaction(function () use ($community, $data) {
+        $changes = DB::transaction(function () use ($community, $data) {
+            $changes = [];
+
             $membership = CommunityMembership::where('community_id', $community->id)
                 ->where('user_id', $data['user_id'])
                 ->where('status', 'active')
                 ->firstOrFail();
 
-            if ($data['role'] === 'owner') {
-                $oldOwnerId = $community->owner_id;
+            $oldRole = $membership->role;
+
+            if ($data['role'] === 'owner' && $membership->user_id !== $community->owner_id) {
+                $previousOwnerId = $community->owner_id;
                 $community->update(['owner_id' => $membership->user_id]);
 
-                CommunityMembership::updateOrCreate(
-                    ['community_id' => $community->id, 'user_id' => $oldOwnerId],
+                $demoted = CommunityMembership::updateOrCreate(
+                    ['community_id' => $community->id, 'user_id' => $previousOwnerId],
                     ['role' => 'admin', 'status' => 'active']
                 );
 
                 $membership->update(['role' => 'owner']);
+                $changes[] = ['membership' => $membership->fresh(['user', 'community']), 'old' => $oldRole];
+
+                if ($demoted && $demoted->user_id !== $membership->user_id) {
+                    $changes[] = ['membership' => $demoted->fresh(['user', 'community']), 'old' => 'owner'];
+                }
             } else {
                 $membership->update(['role' => $data['role']]);
+                $membership->load('user', 'community');
+                if ($oldRole !== $membership->role) {
+                    $changes[] = ['membership' => $membership, 'old' => $oldRole];
+                }
             }
 
-            return response()->json($membership->fresh());
+            return $changes;
         });
+
+        foreach ($changes as $change) {
+            $memberModel = $change['membership'];
+            $oldRole = $change['old'] ?? null;
+
+            if ($memberModel?->user) {
+                $memberModel->user->notify(new MembershipRoleChanged($memberModel, $oldRole));
+            }
+        }
+
+        $updatedMembership = $changes[0]['membership'] ?? null;
+
+        return response()->json($updatedMembership);
     }
 
     public function ban(Request $request, Community $community)
@@ -182,7 +251,13 @@ class CommunityMembershipController extends Controller
             ->firstOrFail();
 
         $m->update(['status' => 'banned', 'role' => 'member']);
-        return response()->json($m->fresh());
+        $m->loadMissing('user:id,name', 'community:id,name,slug');
+
+        if ($m->user) {
+            $m->user->notify(new MemberBanned($m));
+        }
+
+        return response()->json($m);
     }
 
     public function remove(Community $community, int $userId)
@@ -194,6 +269,17 @@ class CommunityMembershipController extends Controller
         CommunityMembership::where('community_id', $community->id)
             ->where('user_id', $userId)
             ->delete();
+
+        $user = \App\Models\User::find($userId);
+        if ($user) {
+            $user->notify(new MemberRemoved($community));
+        }
+
+        app(NotificationService::class)->notifyCommunityModerators(
+            $community,
+            new MemberLeft($community, $user),
+            null
+        );
 
         return response()->json(['message' => 'Member removed']);
     }

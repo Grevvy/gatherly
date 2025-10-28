@@ -12,6 +12,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\NotificationController;
 use App\Models\Community;
 
 
@@ -67,7 +68,16 @@ Route::get('/explore', function () {
     Route::delete('/threads/{thread}', [MessageThreadController::class, 'destroy'])->name('threads.destroy');
     
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/feed', [MessageController::class, 'feed'])->name('messages.feed');
     Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // Notifications
+    Route::get('/notifications/center', [NotificationController::class, 'page'])->name('notifications.center');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->whereUuid('notification')
+        ->name('notifications.read');
 
     // Community routes
     Route::get('/community-edit', function () {
@@ -146,4 +156,3 @@ Route::get('/explore', function () {
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
 });
-

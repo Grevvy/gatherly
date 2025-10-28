@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Community;
 use App\Models\CommunityMembership;
+use App\Notifications\PostPublished;
+use App\Notifications\PostPendingApproval;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -101,6 +104,22 @@ class PostController extends Controller
 
         $post->save();
 
+        if ($post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post),
+                $post->user_id
+            );
+        } else {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
+
         // Return response based on request type
         if ($request->wantsJson()) {
             return response()->json([
@@ -130,6 +149,8 @@ class PostController extends Controller
     public function update(Request $request, Community $community, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
+
+        $originalStatus = $post->status;
 
         $data = $request->validate([
             'content' => ['sometimes', 'string', 'max:1000'],
@@ -162,6 +183,23 @@ class PostController extends Controller
         }
 
         $post->update($data);
+        $post->refresh();
+
+        if ($originalStatus !== 'published' && $post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post),
+                $post->user_id
+            );
+        } elseif ($originalStatus !== 'pending' && $post->status === 'pending') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
 
         return response()->json([
             'message' => 'Post updated successfully',
@@ -197,6 +235,14 @@ class PostController extends Controller
                 'status' => 'published',
                 'published_at' => now(),
             ]);
+
+            $post->refresh();
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post),
+                $post->user_id
+            );
         } else {
             $post->update([
                 'status' => 'rejected',

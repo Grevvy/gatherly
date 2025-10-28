@@ -225,7 +225,7 @@
                                                                 class="w-full h-full object-cover">
                                                         @elseif ($avatarUser)
                                                             <span
-                                                                class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                                                class="text-white font-semibold">{{ strtoupper(substr($avatarUser->name, 0, 1)) }}</span>
                                                         @endif
                                                     </div>
 
@@ -1023,6 +1023,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
                     },
                     credentials: 'same-origin',
@@ -1038,7 +1039,6 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
-                    // Refresh the page when the RSVP is successful
                     window.location.reload();
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
@@ -1048,8 +1048,6 @@
                     const msg = data?.message ?? 'Failed to update RSVP.';
                     showToastify(msg, 'error');
                 }
-
-                setTimeout(() => window.location.reload(), 1500);
 
             } catch (err) {
                 console.error(err);
