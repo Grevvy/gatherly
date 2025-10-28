@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
@@ -88,6 +89,14 @@ Route::get('/explore', function () {
     Route::get('/create-event', function () {
         return view('create-event');
     })->name(name: 'create-event');
+
+        // Photo Gallery routes
+        Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+        Route::get('/photos/upload', [PhotoController::class, 'create'])->name('photos.create');
+        Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+        Route::delete('/photos/{photo}', [PhotoController::class, 'destroy'])->name('photos.destroy');
+        Route::post('/photos/{photo}/approve', [PhotoController::class, 'approve'])->name('photos.approve');
+        Route::post('/photos/{photo}/reject', [PhotoController::class, 'reject'])->name('photos.reject');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');

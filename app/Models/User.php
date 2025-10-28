@@ -82,4 +82,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Comment::class);
     }
+
+    /**
+     * Get all photos uploaded by the user
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class);
+    }
 }
