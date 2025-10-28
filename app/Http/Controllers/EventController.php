@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\EventAttendee;
 use App\Notifications\EventPublished;
+use App\Notifications\EventPendingApproval;
 use App\Notifications\EventRsvpUpdated;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -195,13 +196,22 @@ class EventController extends Controller
 
         $event = Event::create($data);
 
-        if ($event->status === 'published' && $event->community_id) {
+        if ($event->community_id) {
             $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
-            app(NotificationService::class)->notifyCommunityMembers(
-                $event->community,
-                new EventPublished($event),
-                Auth::id()
-            );
+            
+            if ($event->status === 'published') {
+                app(NotificationService::class)->notifyCommunityMembers(
+                    $event->community,
+                    new EventPublished($event)
+                );
+            } else if ($event->status === 'draft') {
+                // Notify moderators about the pending event
+                app(NotificationService::class)->notifyCommunityModerators(
+                    $event->community,
+                    new EventPendingApproval($event),
+                    Auth::id()
+                );
+            }
         }
 
         // Return with owner relation so front-end can display Hosted by <name>
@@ -303,8 +313,17 @@ class EventController extends Controller
         $event->status = 'published';
         $event->published_at = now();
         $event->save();
+        $event->refresh();
 
-        return response()->json($event->fresh());
+        if ($event->community_id) {
+            $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
+            app(NotificationService::class)->notifyCommunityMembers(
+                $event->community,
+                new EventPublished($event)
+            );
+        }
+
+        return response()->json($event);
     }
 
     // RSVP: accept/decline/waitlist

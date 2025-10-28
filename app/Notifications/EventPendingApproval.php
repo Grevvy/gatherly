@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
-class EventPublished extends Notification
+class EventPendingApproval extends Notification
 {
     use Queueable;
 
@@ -27,14 +27,14 @@ class EventPublished extends Notification
     public function toDatabase($notifiable): array
     {
         $event = $this->event;
-        $community = $event->community;
         $owner = $event->owner;
+        $community = $event->community;
         $excerpt = Str::limit(trim(strip_tags((string) $event->description)), 140);
 
         return [
-            'type' => 'event_published',
-            'title' => "New event published in {$community?->name}",
-            'body' => $excerpt ?: "A new event '{$event->title}' has been published.",
+            'type' => 'event_pending',
+            'title' => "New event pending in {$community?->name}",
+            'body' => $excerpt ?: "Event '{$event->title}' is awaiting approval.",
             'url' => $community
                 ? url('/events?community=' . $community->slug)
                 : url('/events'),

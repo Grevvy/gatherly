@@ -4,18 +4,40 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
+    protected function transformNotification(DatabaseNotification $notification): array
+    {
+        return [
+            'id' => $notification->id,
+            'type' => $notification->data['type'] ?? 'notification',
+            'title' => $notification->data['title'] ?? null,
+            'body' => $notification->data['body'] ?? null,
+            'url' => $notification->data['url'] ?? null,
+            'read_at' => $notification->read_at,
+            'created_at' => $notification->created_at,
+            'data' => $notification->data,  // Include all data for meta information
+        ];
+    }
     /**
      * Display the notifications center page.
      */
     public function page()
     {
-        $notifications = Auth::user()
+        $paginator = Auth::user()
             ->notifications()
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+        
+        // Transform the items in the paginator
+        $transformedItems = $paginator->getCollection()->map(function ($notification) {
+            return $this->transformNotification($notification);
+        });
+        
+        // Put the transformed items back into the paginator
+        $notifications = $paginator->setCollection($transformedItems);
 
         $unreadCount = Auth::user()
             ->unreadNotifications()
@@ -37,15 +59,7 @@ class NotificationController extends Controller
             ->take($limit)
             ->get()
             ->map(function ($notification) {
-                return [
-                    'id' => $notification->id,
-                    'type' => $notification->data['type'] ?? 'notification',
-                    'title' => $notification->data['title'] ?? null,
-                    'body' => $notification->data['body'] ?? null,
-                    'url' => $notification->data['url'] ?? null,
-                    'read_at' => $notification->read_at,
-                    'created_at' => $notification->created_at,
-                ];
+                return $this->transformNotification($notification);
             });
 
         $unreadCount = Auth::user()

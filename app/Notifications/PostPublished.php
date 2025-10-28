@@ -34,7 +34,7 @@ class PostPublished extends Notification
         return [
             'type' => 'post',
             'title' => "{$author?->name} posted in {$community?->name}",
-            'body' => $excerpt,
+            'body' => $excerpt ?: "A new post has been published.",
             'url' => url('/dashboard?community=' . $community?->slug),
             'post_id' => $post->id,
             'community_id' => $community?->id,
