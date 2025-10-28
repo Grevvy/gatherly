@@ -106,13 +106,14 @@ class PostController extends Controller
 
         if ($post->status === 'published') {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post),
-                $post->user_id
+                new PostPublished($post)
             );
         } else {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Only notify moderators about pending posts
             app(NotificationService::class)->notifyCommunityModerators(
                 $post->community,
                 new PostPendingApproval($post),
@@ -187,10 +188,10 @@ class PostController extends Controller
 
         if ($originalStatus !== 'published' && $post->status === 'published') {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post),
-                $post->user_id
+                new PostPublished($post)
             );
         } elseif ($originalStatus !== 'pending' && $post->status === 'pending') {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
@@ -238,10 +239,10 @@ class PostController extends Controller
 
             $post->refresh();
             $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post),
-                $post->user_id
+                new PostPublished($post)
             );
         } else {
             $post->update([
