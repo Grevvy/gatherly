@@ -8,6 +8,8 @@ use App\Models\Comment;
 use App\Models\Community;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CommunityMembership;
+use App\Notifications\PostReplied;
+use Illuminate\Support\Facades\Notification;
 
 class CommentController extends Controller
 {
@@ -17,11 +19,34 @@ class CommentController extends Controller
             'content' => 'required|string|max:1000',
         ]);
 
+        $post = Post::findOrFail($postId);
+        $community = Community::where('slug', $communitySlug)->firstOrFail();
+
         $comment = Comment::create([
-            'post_id' => $postId,
+            'post_id' => $post->id,
             'user_id' => Auth::id(),
-            'content' => $request->content,
+            'content' => $request->input('content'),
         ]);
+
+        // Load necessary relationships for notification
+        $comment->load('user');
+        $post->load('community', 'user');
+
+        // Get all unique users to notify (post author and other commenters)
+        $usersToNotify = $post->comments()
+            ->where('user_id', '!=', Auth::id()) // Don't notify the commenter
+            ->with('user')
+            ->get()
+            ->pluck('user')
+            ->unique('id');
+
+        // Add the post author if they haven't commented and aren't the current commenter
+        if ($post->user_id !== Auth::id() && !$usersToNotify->contains('id', $post->user_id)) {
+            $usersToNotify->push($post->user);
+        }
+
+        // Send notifications
+        Notification::send($usersToNotify, new PostReplied($post, $comment, Auth::user()));
 
         return response()->json([
             'success' => true,

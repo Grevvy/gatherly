@@ -513,14 +513,18 @@ class EventController extends Controller
         $notification = new EventRsvpUpdated($event, $user, $status, $context);
         $service = app(NotificationService::class);
 
+        // Always notify the event owner if it's not their own RSVP
+        if ($event->owner && $event->owner_id !== $user->id) {
+            $event->owner->notify($notification);
+        }
+        
+        // Additionally notify community moderators if it's a community event
         if ($event->community) {
             $service->notifyCommunityModerators(
                 $event->community,
                 $notification,
                 $user->id
             );
-        } elseif ($event->owner && $event->owner_id !== $user->id) {
-            $event->owner->notify($notification);
         }
     }
 }

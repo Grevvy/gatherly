@@ -28,26 +28,24 @@ class EventRsvpUpdated extends Notification
     public function toDatabase($notifiable): array
     {
         $statusLabel = match ($this->status) {
-            'accepted' => 'accepted',
-            'waitlist' => 'joined the waitlist',
-            'declined' => 'declined',
-            default => $this->status,
+            'accepted' => 'is attending',
+            'waitlist' => 'joined the waitlist for',
+            'declined' => 'cannot attend',
+            default => 'updated their RSVP for',
         };
 
-        $title = "{$this->attendee->name} {$statusLabel} for {$this->event->title}";
-
-        $body = match ($this->status) {
-            'accepted' => "{$this->attendee->name} is attending.",
-            'waitlist' => "{$this->attendee->name} is on the waitlist." . ($this->context['waitlist_position'] ?? null ? " Position {$this->context['waitlist_position']}." : ''),
-            'declined' => "{$this->attendee->name} declined the invite.",
-            default => "{$this->attendee->name} updated their RSVP.",
-        };
+        $title = "{$this->attendee->name} {$statusLabel} your event";
+        
+        $body = $this->event->title;
+        if ($this->status === 'waitlist' && isset($this->context['waitlist_position'])) {
+            $body .= " (Waitlist position: #{$this->context['waitlist_position']})";
+        }
 
         return [
             'type' => 'event_rsvp',
             'title' => $title,
             'body' => $body,
-            'url' => route('event.details', $this->event),
+            'url' => url("/events/{$this->event->id}/details")
         ];
     }
 }

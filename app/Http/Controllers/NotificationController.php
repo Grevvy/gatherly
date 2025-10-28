@@ -17,8 +17,7 @@ class NotificationController extends Controller
             'body' => $notification->data['body'] ?? null,
             'url' => $notification->data['url'] ?? null,
             'read_at' => $notification->read_at,
-            'created_at' => $notification->created_at,
-            'data' => $notification->data,  // Include all data for meta information
+            'created_at' => $notification->created_at
         ];
     }
     /**

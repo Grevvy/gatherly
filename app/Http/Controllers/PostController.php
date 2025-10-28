@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Community;
 use App\Models\CommunityMembership;
+use App\Models\Like;
 use App\Notifications\PostPublished;
 use App\Notifications\PostPendingApproval;
+use App\Notifications\PostLiked;
+use App\Notifications\PostReplied;
 use App\Services\NotificationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -253,26 +256,29 @@ class PostController extends Controller
 
         return response()->json($post->fresh());
     }
-    public function toggleLike($communitySlug, $postId)
-{
-    $user = auth()->user();
-    $post = \App\Models\Post::findOrFail($postId);
+    public function toggleLike(Community $community, Post $post): JsonResponse
+    {
+        $user = Auth::user();
 
-    // If already liked → unlike
-    $existing = $post->likes()->where('user_id', $user->id)->first();
-    if ($existing) {
-        $existing->delete();
-        $liked = false;
-    } else {
-        $post->likes()->create(['user_id' => $user->id]);
-        $liked = true;
-    }
+        // If already liked → unlike
+        $existing = $post->likes()->where('user_id', $user->id)->first();
+        if ($existing) {
+            $existing->delete();
+            $liked = false;
+        } else {
+            $post->likes()->create(['user_id' => $user->id]);
+            $liked = true;
 
-    // Return JSON so we don’t redirect
-    return response()->json([
-        'liked' => $liked,
-        'like_count' => $post->likes()->count()
-    ]);
-}
+            // Only notify on like, not unlike
+            if ($post->user_id !== $user->id) { // Don't notify if liking own post
+                $post->loadMissing('community'); // Ensure community is loaded for notification URL
+                $post->user->notify(new PostLiked($post, $user));
+            }
+        }
 
-}
+        // Return JSON response
+        return response()->json([
+            'liked' => $liked,
+            'like_count' => $post->likes()->count()
+        ]);
+    }}
