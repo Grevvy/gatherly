@@ -28,10 +28,16 @@
                         <span class="h-2 w-2 rounded-full bg-white/90 animate-pulse"></span>
                         {{ $unreadCount }} unread
                     </span>
-                    <button id="notify-mark-all"
-                        class="px-4 py-2 text-sm font-semibold text-blue-600 bg-white border border-blue-100 rounded-xl shadow-md shadow-blue-500/10 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition">
-                        Mark all read
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button id="notify-mark-all"
+                            class="px-4 py-2 text-sm font-semibold text-blue-600 bg-white border border-blue-100 rounded-xl shadow-md shadow-blue-500/10 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition">
+                            Mark all read
+                        </button>
+                        <button id="notify-clear-all"
+                            class="px-4 py-2 text-sm font-semibold text-red-600 bg-white border border-red-100 rounded-xl shadow-md shadow-red-500/10 hover:shadow-red-500/30 hover:-translate-y-0.5 transition">
+                            Clear all
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -214,6 +220,43 @@
                     markNotification(id, btn);
                 });
             });
+
+            const clearAll = async () => {
+                if (!csrfToken) return;
+
+                // Use the existing showConfirmToast function from layout.blade.php
+                showConfirmToast(
+                    'Are you sure you want to clear all notifications? This action cannot be undone.',
+                    async () => {
+                        try {
+                            const res = await fetch('/notifications/clear-all', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                credentials: 'same-origin'
+                            });
+
+                            if (res.ok) {
+                                showToastify('All notifications have been cleared successfully.', 'success');
+                                // Short delay to show the success message before reload
+                                setTimeout(() => window.location.reload(), 1500);
+                            } else {
+                                showToastify('Failed to clear notifications.', 'error');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showToastify('Failed to clear notifications.', 'error');
+                        }
+                    },
+                    'bg-red-500 hover:bg-red-600',
+                    'Clear'
+                );
+            };
+
+            document.getElementById('notify-clear-all')?.addEventListener('click', clearAll);
 
             markAllBtn?.addEventListener('click', async () => {
                 if (!csrfToken) return;

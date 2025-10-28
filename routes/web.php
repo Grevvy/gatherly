@@ -75,6 +75,7 @@ Route::get('/explore', function () {
     Route::get('/notifications/center', [NotificationController::class, 'page'])->name('notifications.center');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clearAll');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
         ->whereUuid('notification')
         ->name('notifications.read');

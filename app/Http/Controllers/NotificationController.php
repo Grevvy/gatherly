@@ -110,4 +110,17 @@ class NotificationController extends Controller
             'unread_count' => 0,
         ]);
     }
+
+    /**
+     * Clear all notifications for the user.
+     */
+    public function clearAll()
+    {
+        Auth::user()->notifications()->delete();
+
+        return response()->json([
+            'message' => 'All notifications cleared',
+            'unread_count' => 0,
+        ]);
+    }
 }

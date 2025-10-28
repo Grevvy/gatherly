@@ -176,11 +176,18 @@
                             class="hidden absolute right-0 mt-1 w-72 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
                             <div class="flex items-center justify-between p-3 border-b border-gray-100">
                                 <span class="text-sm font-semibold text-gray-700">Notifications</span>
-                                <button id="notif-mark-all"
-                                    class="hidden text-xs font-medium text-blue-600 hover:text-blue-800 focus:outline-none"
-                                    type="button">
-                                    Mark all read
-                                </button>
+                                <div class="flex items-center gap-3">
+                                    <button id="notif-mark-all"
+                                        class="hidden text-xs font-medium text-blue-600 hover:text-blue-800 focus:outline-none"
+                                        type="button">
+                                        Mark all read
+                                    </button>
+                                    <button id="notif-clear-all"
+                                        class="text-xs font-medium text-red-600 hover:text-red-800 focus:outline-none"
+                                        type="button">
+                                        Clear all
+                                    </button>
+                                </div>
                             </div>
                             <div id="notif-loading"
                                 class="hidden p-3 text-sm text-gray-500 text-center border-b border-gray-50">
@@ -753,6 +760,38 @@
                 }
             };
 
+            const clearAllNotifications = async () => {
+                if (!csrfToken) {
+                    showToastify('Unable to clear notifications right now.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/notifications/clear-all', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to clear notifications');
+                    }
+
+                    // Clear notifications from UI
+                    cachedNotifications = [];
+                    renderNotifications([]);
+                    updateNotifBadge(0);
+                    showToastify('All notifications cleared successfully', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToastify('Could not clear notifications.', 'error');
+                }
+            };
+
             const markAllNotifications = async () => {
                 if (!csrfToken) {
                     showToastify('Unable to update notifications right now.', 'error');
@@ -853,6 +892,17 @@
             notifMarkAll?.addEventListener('click', (event) => {
                 event.preventDefault();
                 markAllNotifications();
+            });
+
+            const notifClearAll = document.getElementById('notif-clear-all');
+            notifClearAll?.addEventListener('click', (event) => {
+                event.preventDefault();
+                showConfirmToast(
+                    'Are you sure you want to clear all notifications? This action cannot be undone.',
+                    clearAllNotifications,
+                    'bg-red-500 hover:bg-red-600',
+                    'Clear'
+                );
             });
 
             fetchNotifications({ silent: true });
