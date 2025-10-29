@@ -20,7 +20,13 @@ class PostReplied extends Notification implements ShouldQueue
         public Post $post,
         public Comment $comment,
         public User $commenter
-    ) {}
+    ) {
+        $this->post->loadMissing([
+            'community:id,name,slug',
+            'user:id,name'
+        ]);
+        $this->comment->loadMissing('user:id,name');
+    }
 
     /**
      * Get the notification's delivery channels.
@@ -42,15 +48,19 @@ class PostReplied extends Notification implements ShouldQueue
         $isAuthor = $notifiable->id === $this->post->user_id;
         
         return [
+            'type' => 'post_replied',
             'title' => $isAuthor 
                 ? "{$this->commenter->name} replied to your post"
                 : "{$this->commenter->name} also replied to this post",
             'body' => $this->truncateContent($this->comment->content),
-            'type' => 'post_replied',
-            'url' => url("/dashboard") . "?community=" . $this->post->community->slug,
-            'meta' => [
-                'community_slug' => $this->post->community->slug
-            ]
+            'url' => url('/dashboard?community=' . $this->post->community->slug),
+            'post_id' => $this->post->id,
+            'community_id' => $this->post->community->id,
+            'community_slug' => $this->post->community->slug,
+            'community_name' => $this->post->community->name,
+            'comment_id' => $this->comment->id,
+            'commenter_id' => $this->commenter->id,
+            'commenter_name' => $this->commenter->name
         ];
     }
 
