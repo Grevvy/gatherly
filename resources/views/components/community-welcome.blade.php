@@ -312,9 +312,7 @@
                         </li>
                         <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
                                 aria-hidden="true"></i><span>Upload images and browse them in a clean grid</span></li>
-                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
-                                aria-hidden="true"></i><span>Share albums and keep your best moments together</span>
-                        </li>
+
                     </ul>
                 </div>
             </div>
@@ -332,7 +330,7 @@
                     </div>
                     <h3 class="font-semibold text-gray-900">Create your community</h3>
                     <p class="text-sm text-gray-600 mt-1">Name your community, add a description and photo, then set
-                        your visibility, who can join and add tags.</p>
+                        your visibility, who can join, and add tags.</p>
                 </div>
                 <div
                     class="rounded-2xl border border-gray-100 bg-white/70 backdrop-blur p-5 shadow-sm hover:shadow-md transition">
@@ -354,34 +352,6 @@
                     <p class="text-sm text-gray-600 mt-1">Create channels, start threads, post, and plan events — all
                         in one
                         place.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Closing CTA -->
-        <section class="mt-10">
-            <div
-                class="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="text-white">
-                        <h3 class="text-xl md:text-2xl font-extrabold">Ready to bring your people together?</h3>
-                        <p class="text-white/90 text-sm md:text-base">Create your community now — it’s free and takes
-                            less than a minute.</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <a href="{{ route('create-community') }}"
-                            class="inline-flex items-center gap-2 bg-white text-blue-700 px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:shadow transition">
-                            <i class="fas fa-plus"></i>
-                            Create Community
-                        </a>
-                        <a href="{{ route('explore') }}"
-                            class="inline-flex items-center gap-2 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-semibold ring-1 ring-white/30 hover:bg-white/10 transition">
-                            <i class="fas fa-compass"></i>
-                            Explore first
-                        </a>
-                    </div>
                 </div>
             </div>
         </section>
