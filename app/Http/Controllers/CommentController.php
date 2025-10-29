@@ -29,8 +29,12 @@ class CommentController extends Controller
         ]);
 
         // Load necessary relationships for notification
-        $comment->load('user');
-        $post->load('community', 'user');
+        $comment->load(['user:id,name,avatar']);
+        $post->load([
+            'community:id,name,slug',
+            'user:id,name',
+            'comments.user:id,name'
+        ]);
 
         // Get all unique users to notify (post author and other commenters)
         $usersToNotify = $post->comments()
