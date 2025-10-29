@@ -271,8 +271,12 @@ class PostController extends Controller
 
             // Only notify post author when someone else likes their post
             if ($post->user_id !== $user->id) {
-                $post->loadMissing('community:id,name,slug');
-                $post->user->notify(new PostLiked($post, $user));
+                $post->loadMissing(['community:id,name,slug', 'user:id,name']);
+                app(NotificationService::class)->notifyCommunityMembers(
+                    $post->community,
+                    new PostLiked($post, $user),
+                    $user->id // Exclude the liker
+                );
             }
         }
 

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Comment;
 use App\Models\Community;
-use Illuminate\Support\Facades\Auth;
 use App\Models\CommunityMembership;
 use App\Notifications\PostReplied;
-use Illuminate\Support\Facades\Notification;
+use App\Services\NotificationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
@@ -28,12 +28,16 @@ class CommentController extends Controller
             'content' => $request->input('content'),
         ]);
 
-        // Load essential relationships
+        // Load essential relationships for notification
         $post->loadMissing(['community:id,name,slug', 'user:id,name']);
 
-        // Send notification to post author only if they're not the commenter
+        // Notify post author through community notification service
         if ($post->user_id !== Auth::id()) {
-            $post->user->notify(new PostReplied($post, $comment, Auth::user()));
+            app(NotificationService::class)->notifyCommunityMembers(
+                $community,
+                new PostReplied($post, $comment, Auth::user()),
+                Auth::id() // Exclude the commenter
+            );
         }
 
         return response()->json([
