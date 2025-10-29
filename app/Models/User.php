@@ -90,30 +90,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Photo::class);
     }
-
-    /**
-     * Get the URL for the user's avatar
-     */
-    public function getAvatarUrlAttribute(): ?string
-    {
-        if (!$this->avatar) {
-            return null;
-        }
-        
-        // Use the public disk configuration URL
-        return config('filesystems.disks.public.url') . '/' . $this->avatar;
-    }
-
-    /**
-     * Get the URL for the user's banner
-     */
-    public function getBannerUrlAttribute(): ?string
-    {
-        if (!$this->banner) {
-            return null;
-        }
-        
-        // Use the public disk configuration URL
-        return config('filesystems.disks.public.url') . '/' . $this->banner;
-    }
 }

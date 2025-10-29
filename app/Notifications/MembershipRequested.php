@@ -40,7 +40,7 @@ class MembershipRequested extends Notification
             'membership_id' => $membership->id,
             'applicant_id' => $applicant?->id,
             'applicant_name' => $applicant?->name,
-            'applicant_avatar' => $applicant?->avatar_url,
+            'applicant_avatar' => $applicant?->avatar ? asset('storage/' . $applicant->avatar) : null,
         ];
     }
 }

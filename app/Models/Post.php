@@ -104,16 +104,4 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class);
     }
-
-    /**
-     * Get the URL for the post's image
-     */
-    public function getImageUrlAttribute(): ?string
-    {
-        if (!$this->image_path) {
-            return null;
-        }
-        
-        return config('filesystems.disks.public.url') . '/' . $this->image_path;
-    }
 }

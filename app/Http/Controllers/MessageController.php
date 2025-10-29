@@ -71,7 +71,9 @@ class MessageController extends BaseController
                     'user' => [
                         'id' => $message->user?->id,
                         'name' => $message->user?->name,
-                        'avatar' => $message->user?->avatar_url,
+                        'avatar' => $message->user?->avatar
+                            ? asset('storage/' . $message->user->avatar)
+                            : null,
                     ],
                 ],
             ], 201);
@@ -134,7 +136,9 @@ class MessageController extends BaseController
                     'user' => [
                         'id' => $message->user?->id,
                         'name' => $message->user?->name,
-                        'avatar' => $message->user?->avatar_url,
+                        'avatar' => $message->user?->avatar
+                            ? asset('storage/' . $message->user->avatar)
+                            : null,
                     ],
                 ];
             }),
