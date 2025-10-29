@@ -144,8 +144,8 @@
                             class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                             Members
                         </a>
-                        <a href="/gallery?community={{ $community->slug }}"
-                            class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                        <a href="/photos?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('photos') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
                             Photo Gallery
                         </a>
 
