@@ -94,7 +94,8 @@
 
             <!-- Forgot password -->
             <div class="text-center mt-4">
-                <a href="#" class="text-blue-700 text-sm hover:underline">Forgot password?</a>
+                <a href="{{ route('password.request') }}" class="text-blue-700 text-sm hover:underline">Forgot
+                    password?</a>
             </div>
 
             <!-- Divider -->

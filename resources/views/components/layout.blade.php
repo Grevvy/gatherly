@@ -466,17 +466,38 @@
         }
 
         function showToastify(message, type = 'info', duration = 4000) {
+            // Choose colors with good contrast
+            const styles = {
+                success: {
+                    background: '#22c55e',
+                    color: '#052e16'
+                }, // green-500 bg, dark-green text
+                error: {
+                    background: '#ef4444',
+                    color: '#fff'
+                }, // red-500 bg, white text
+                confirm: {
+                    background: '#fef3c7',
+                    color: '#92400e'
+                }, // amber-100 bg, amber-800 text
+                info: {
+                    background: '#e5e7eb',
+                    color: '#111827'
+                } // gray-200 bg, gray-900 text
+            };
+            const s = styles[type] || styles.info;
             Toastify({
                 text: message,
                 duration: duration,
                 close: true,
                 gravity: "top",
                 position: "right",
-                backgroundColor: type === 'success' ? "#4ade80" : // Tailwind green-400
-                    type === 'error' ? "#f87171" : // Tailwind red-400
-                    type === 'confirm' ? "#ffffff" : // White for confirm
-                    "#e5e7eb", // Tailwind gray-200
-                stopOnFocus: true
+                stopOnFocus: true,
+                style: {
+                    background: s.background,
+                    color: s.color,
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.10)'
+                }
             }).showToast();
         }
 

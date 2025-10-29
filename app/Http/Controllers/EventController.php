@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventAttendee;
+use App\Mail\EventRSVPConfirmation;
+use App\Mail\EventWaitlistConfirmation;
+use App\Mail\EventWaitlistPromotion;
 use App\Notifications\EventPublished;
 use App\Notifications\EventPendingApproval;
 use App\Notifications\EventRsvpUpdated;
@@ -11,6 +14,8 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class EventController extends Controller
@@ -406,8 +411,65 @@ class EventController extends Controller
 
             $this->notifyEventRsvp($event, $att, $waitlisted ? 'waitlist' : 'accepted', $context);
 
+            // Send transactional email to the attendee; allow safe fallback to the same authenticated user
+            try {
+                $att->loadMissing('user:id,name,email');
+                $event->loadMissing('community:id,name', 'owner:id,name');
+                $recipientEmail = $att->user?->email;
+                if (!$recipientEmail && Auth::id() === $att->user_id) {
+                    $recipientEmail = Auth::user()?->email;
+                }
+                if ($recipientEmail) {
+                    if ($waitlisted) {
+                        $pos = (int)($result['waitlist_position'] ?? 1);
+                        $size = (int)($result['waitlist_size'] ?? 1);
+                        Log::info('RSVP email: waitlist confirmation', [
+                            'event_id' => $event->id,
+                            'user_id' => $att->user->id ?? Auth::id(),
+                            'email' => $recipientEmail,
+                            'position' => $pos,
+                            'size' => $size,
+                        ]);
+                        $userForMail = $att->user ?? (Auth::id() === $att->user_id ? Auth::user() : null);
+                        if ($userForMail) {
+                            Mail::to($recipientEmail)->send(new EventWaitlistConfirmation($event, $userForMail, $pos, $size));
+                        }
+                    } else {
+                        Log::info('RSVP email: accepted confirmation', [
+                            'event_id' => $event->id,
+                            'user_id' => $att->user->id ?? Auth::id(),
+                            'email' => $recipientEmail,
+                        ]);
+                        $userForMail = $att->user ?? (Auth::id() === $att->user_id ? Auth::user() : null);
+                        if ($userForMail) {
+                            Mail::to($recipientEmail)->send(new EventRSVPConfirmation($event, $userForMail));
+                        }
+                    }
+                } else {
+                    Log::warning('RSVP email: missing user email', [
+                        'event_id' => $event->id,
+                        'user_id' => $att->user->id ?? Auth::id(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // Swallow email errors so RSVP flow isn't blocked
+                Log::error('RSVP email send failed', [
+                    'event_id' => $event->id,
+                    'user_id' => $att->user->id ?? null,
+                    'message' => $e->getMessage(),
+                ]);
+                report($e);
+            }
+
             if ($waitlisted) {
-                return response()->json(array_merge($att->toArray(), ['placed_on_waitlist' => true]), 202);
+                return response()->json(array_merge(
+                    $att->toArray(),
+                    [
+                        'placed_on_waitlist' => true,
+                        'waitlist_position' => $result['waitlist_position'] ?? null,
+                        'waitlist_size' => $result['waitlist_size'] ?? null,
+                    ]
+                ), 202);
             }
 
             return response()->json($att);
@@ -451,11 +513,58 @@ class EventController extends Controller
                 'waitlist_size' => $result['waitlist_size'] ?? null,
             ]);
 
-            return response()->json(array_merge($result['att']->toArray(), ['waitlist_position' => $result['waitlist_position']]), 202);
+            // Send waitlist confirmation email to the attendee; allow safe fallback to the same authenticated user
+            try {
+                $att = $result['att'];
+                $att->loadMissing('user:id,name,email');
+                $event->loadMissing('community:id,name', 'owner:id,name');
+                $recipientEmail = $att->user?->email;
+                if (!$recipientEmail && Auth::id() === $att->user_id) {
+                    $recipientEmail = Auth::user()?->email;
+                }
+                if ($recipientEmail) {
+                    Log::info('RSVP email: waitlist (explicit status)', [
+                        'event_id' => $event->id,
+                        'user_id' => $att->user->id ?? Auth::id(),
+                        'email' => $recipientEmail,
+                        'position' => (int)$result['waitlist_position'],
+                        'size' => (int)($result['waitlist_size'] ?? $result['waitlist_position']),
+                    ]);
+                    $userForMail = $att->user ?? (Auth::id() === $att->user_id ? Auth::user() : null);
+                    if ($userForMail) {
+                        Mail::to($recipientEmail)->send(new EventWaitlistConfirmation(
+                            $event,
+                            $userForMail,
+                            (int)$result['waitlist_position'],
+                            (int)($result['waitlist_size'] ?? $result['waitlist_position'])
+                        ));
+                    }
+                } else {
+                    Log::warning('RSVP email: missing user email (explicit waitlist)', [
+                        'event_id' => $event->id,
+                        'user_id' => $att->user->id ?? Auth::id(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                Log::error('RSVP email send failed (explicit waitlist)', [
+                    'event_id' => $event->id,
+                    'user_id' => $att->user->id ?? null,
+                    'message' => $e->getMessage(),
+                ]);
+                report($e);
+            }
+
+            return response()->json(array_merge(
+                $result['att']->toArray(),
+                [
+                    'waitlist_position' => $result['waitlist_position'],
+                    'waitlist_size' => $result['waitlist_size'] ?? null,
+                ]
+            ), 202);
         }
 
         if ($data['status'] === 'declined') {
-            $att = DB::transaction(function () use ($event, $userId) {
+            $txResult = DB::transaction(function () use ($event, $userId) {
                 $existing = EventAttendee::where('event_id', $event->id)
                     ->where('user_id', $userId)
                     ->lockForUpdate()
@@ -468,6 +577,7 @@ class EventController extends Controller
                     ['status' => 'declined', 'role' => 'attendee']
                 );
 
+                $promoted = null;
                 if ($wasAccepted && $event->capacity !== null) {
                     $next = EventAttendee::where('event_id', $event->id)
                         ->where('status', 'waitlist')
@@ -477,13 +587,44 @@ class EventController extends Controller
 
                     if ($next) {
                         $next->update(['status' => 'accepted']);
+                        $promoted = $next;
                     }
                 }
 
-                return $updated;
+                return ['updated' => $updated, 'promoted' => $promoted];
             });
 
+            /** @var \App\Models\EventAttendee $att */
+            $att = $txResult['updated'];
+            /** @var \App\Models\EventAttendee|null $promoted */
+            $promoted = $txResult['promoted'];
+
             $this->notifyEventRsvp($event, $att, 'declined');
+
+            // If a waitlisted attendee was promoted due to this decline, email them
+            if ($promoted) {
+                try {
+                    $promoted->loadMissing('user:id,name,email');
+                    $event->loadMissing('community:id,name', 'owner:id,name');
+                    if ($promoted->user?->email) {
+                        Log::info('RSVP email: waitlist promotion', [
+                            'event_id' => $event->id,
+                            'user_id' => $promoted->user->id,
+                            'email' => $promoted->user->email,
+                        ]);
+                        Mail::to($promoted->user->email)->send(new EventWaitlistPromotion($event, $promoted->user));
+                    }
+                    // Optionally, also notify in-app about their acceptance
+                    $this->notifyEventRsvp($event, $promoted, 'accepted');
+                } catch (\Throwable $e) {
+                    Log::error('RSVP email send failed (promotion)', [
+                        'event_id' => $event->id,
+                        'user_id' => $promoted->user->id ?? null,
+                        'message' => $e->getMessage(),
+                    ]);
+                    report($e);
+                }
+            }
 
             return response()->json($att);
         }

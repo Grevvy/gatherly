@@ -58,9 +58,10 @@
 
         return false;
     });
+    // Only show events the user is actually attending (accepted), not waitlisted
     $attendingEvents = $visibleUpcomingEvents->filter(
         fn($event) => $event->attendees->contains(
-            fn($att) => $att->user_id === auth()->id() && in_array($att->status, ['accepted', 'waitlist']),
+            fn($att) => $att->user_id === auth()->id() && $att->status === 'accepted',
         ),
     );
     $eventsToShow = $activeNestedTab === 'Attending' ? $attendingEvents : $visibleUpcomingEvents;
@@ -410,20 +411,33 @@
                                             <div class="flex gap-3 w-full">
 
                                                 @php
+                                                    // Treat only 'accepted' as attending; show explicit waitlisted state
                                                     $isAttending = $event->attendees->contains(
                                                         fn($att) => $att->user_id === auth()->id() &&
                                                             $att->status === 'accepted',
                                                     );
+                                                    $isWaitlisted = $event->attendees->contains(
+                                                        fn($att) => $att->user_id === auth()->id() &&
+                                                            $att->status === 'waitlist',
+                                                    );
                                                 @endphp
                                                 <button
                                                     class="flex-1 px-4 py-2 rounded-full text-sm font-medium shadow-md transition-all duration-300 
-                          {{ $isAttending
+                          {{ $isAttending || $isWaitlisted
                               ? 'bg-gray-200 text-gray-400 cursor-default'
                               : 'bg-gradient-to-r from-blue-400 to-sky-500 text-white hover:shadow-lg hover:scale-[1.02]' }}"
-                                                    @if (!$isAttending) onclick="sendRSVP({{ $event->id }}, 'accepted', this)" @endif
-                                                    @if ($isAttending) disabled @endif>
-                                                    {{ $isAttending ? 'Attending' : 'RSVP to Event' }}
+                                                    @if (!($isAttending || $isWaitlisted)) onclick="sendRSVP({{ $event->id }}, 'accepted', this)" @endif
+                                                    @if ($isAttending || $isWaitlisted) disabled @endif>
+                                                    {{ $isAttending ? 'Attending' : ($isWaitlisted ? 'Waitlisted' : 'RSVP to Event') }}
                                                 </button>
+
+                                                @if ($isWaitlisted)
+                                                    <button type="button" data-role="unrsvp"
+                                                        onclick="sendRSVP({{ $event->id }}, 'declined', this)"
+                                                        class="flex-1 px-4 py-2 rounded-full border border-blue-200 bg-white/60 backdrop-blur-md text-blue-700 hover:bg-blue-50 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300">
+                                                        Un-RSVP
+                                                    </button>
+                                                @endif
 
 
                                                 <a href="{{ route('event.details', ['event' => $event->id]) }}"
@@ -523,7 +537,7 @@
                                                                 class="w-full h-full object-cover">
                                                         @elseif ($avatarUser)
                                                             <span
-                                                                class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                                                class="text-white font-semibold">{{ strtoupper(substr($avatarUser->name, 0, 1)) }}</span>
                                                         @endif
                                                     </div>
                                                     <div>
@@ -911,14 +925,17 @@
 
                 if (dayEventsList.length) {
                     dayEventsList.forEach(ev => {
-                        const card = document.createElement('div');
-                        card.className = 'border border-gray-200 p-2 shadow-sm';
+                        // Create clickable link card
+                        const card = document.createElement('a');
+                        card.href = `/events/${ev.id}/details`;
+                        card.className =
+                            'block border border-gray-200 p-3 shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-200 cursor-pointer rounded-lg';
 
                         const wrapper = document.createElement('div');
-                        wrapper.className = 'space-y-1 text-sm text-gray-800';
+                        wrapper.className = 'space-y-2 text-sm text-gray-800';
 
                         const title = document.createElement('p');
-                        title.className = 'font-semibold';
+                        title.className = 'font-semibold text-blue-700 hover:text-blue-800';
                         title.textContent = ev.title;
 
                         const timeRow = document.createElement('div');
@@ -945,6 +962,29 @@
 
                         const timeText = document.createElement('span');
                         timeText.textContent = `${startTime}${endTime ? ` – ${endTime}` : ''}`;
+
+                        // Add location if available
+                        if (ev.location) {
+                            const locationRow = document.createElement('div');
+                            locationRow.className = 'flex items-center gap-1 text-gray-600 text-xs';
+
+                            const locationIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            locationIcon.setAttribute('class', 'h-3 w-3 text-gray-500');
+                            locationIcon.setAttribute('fill', 'none');
+                            locationIcon.setAttribute('viewBox', '0 0 24 24');
+                            locationIcon.setAttribute('stroke', 'currentColor');
+                            locationIcon.setAttribute('stroke-width', '2');
+                            locationIcon.innerHTML =
+                                `<path stroke-linecap="round" stroke-linejoin="round" d="M12 11a3 3 0 100-6 3 3 0 000 6z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z" />`;
+
+                            const locationText = document.createElement('span');
+                            locationText.textContent = ev.location;
+                            locationText.className = 'truncate';
+
+                            locationRow.appendChild(locationIcon);
+                            locationRow.appendChild(locationText);
+                            wrapper.appendChild(locationRow);
+                        }
 
                         timeRow.appendChild(clockIcon);
                         timeRow.appendChild(timeText);
@@ -1039,11 +1079,61 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
-                    window.location.reload();
+                    // If this was an Un-RSVP action from waitlist, update UI without reload
+                    if (status === 'declined' && button) {
+                        const container = button.parentElement; // .flex.gap-3.w-full
+                        if (container) {
+                            // Find the primary RSVP button in the same container (exclude this un-RSVP button)
+                            const primaryBtn = [...container.querySelectorAll('button')]
+                                .find(b => b !== button);
+                            if (primaryBtn) {
+                                // Restore primary button to RSVP state
+                                primaryBtn.disabled = false;
+                                primaryBtn.textContent = 'RSVP to Event';
+                                primaryBtn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-default');
+                                primaryBtn.classList.add('bg-gradient-to-r', 'from-blue-400', 'to-sky-500',
+                                    'text-white', 'hover:shadow-lg', 'hover:scale-[1.02]');
+                                primaryBtn.setAttribute('onclick', `sendRSVP(${eventId}, 'accepted', this)`);
+                            }
+                            // Remove the un-RSVP button
+                            button.remove();
+                        }
+                    } else {
+                        // Accepted flow or other success: keep current behavior
+                        window.location.reload();
+                    }
                 } else if (res.status === 202) {
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';
-                    showToastify(`Added to waitlist: #${pos} of ${size}`, 'confirm');
+                    showToastify(`Added to waitlist: #${pos} of ${size}. We emailed your waitlist confirmation.`,
+                        'confirm');
+
+                    // Update the UI to reflect waitlisted state without reload
+                    if (button) {
+                        // Update primary button appearance and disable it
+                        button.disabled = true;
+                        button.textContent = 'Waitlisted';
+                        // remove RSVP gradient classes if present
+                        button.classList.remove('bg-gradient-to-r', 'from-blue-400', 'to-sky-500', 'text-white',
+                            'hover:shadow-lg', 'hover:scale-[1.02]');
+                        // add disabled/neutral classes
+                        button.classList.add('bg-gray-200', 'text-gray-400', 'cursor-default');
+                        // prevent further inline onclick attempts
+                        button.removeAttribute('onclick');
+
+                        // Add an Un-RSVP button next to it (to leave the waitlist)
+                        const container = button.parentElement; // .flex.gap-3.w-full
+                        if (container && !container.querySelector('[data-role="unrsvp"]')) {
+                            const unBtn = document.createElement('button');
+                            unBtn.type = 'button';
+                            unBtn.dataset.role = 'unrsvp';
+                            unBtn.className =
+                                'flex-1 px-4 py-2 rounded-full border border-blue-200 bg-white/60 backdrop-blur-md text-blue-700 hover:bg-blue-50 text-sm font-medium shadow-sm hover:shadow-md transition-all duration-300';
+                            unBtn.textContent = 'Un-RSVP';
+                            unBtn.onclick = () => sendRSVP(eventId, 'declined', unBtn);
+                            container.insertBefore(unBtn, container.lastElementChild); // before "View Details" link
+                        }
+                    }
                 } else {
                     const msg = data?.message ?? 'Failed to update RSVP.';
                     showToastify(msg, 'error');
@@ -1054,7 +1144,12 @@
                 showToastify('Failed to RSVP due to a network error.', 'error');
                 if (!navigator.onLine) showToastify('You appear to be offline.', 'error');
             } finally {
-                if (button) button.disabled = false;
+                // Keep disabled state for waitlisted main button; otherwise re-enable
+                if (button) {
+                    if (!(status === 'accepted' && button.textContent === 'Waitlisted')) {
+                        button.disabled = false;
+                    }
+                }
             }
         }
 

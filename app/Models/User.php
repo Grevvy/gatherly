@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\GatherlyResetPassword;
 
 class User extends Authenticatable
 {
@@ -89,5 +90,13 @@ class User extends Authenticatable
     public function photos(): HasMany
     {
         return $this->hasMany(Photo::class);
+    }
+
+    /**
+     * Send the password reset notification with Gatherly branding.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new GatherlyResetPassword($token));
     }
 }
