@@ -29,6 +29,7 @@ class User extends Authenticatable
         'location',
         'website',
         'avatar',
+        'interests',
     ];
 
     /**
