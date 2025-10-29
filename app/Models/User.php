@@ -39,19 +39,11 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'interests' => 'array',
+    ];
 
     // Helper: whether the user is a site admin (global)
     public function isSiteAdmin(): bool
@@ -65,6 +57,14 @@ class User extends Authenticatable
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
+    }
+
+    /**
+     * Get user memberships in communities
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(\App\Models\CommunityMembership::class, 'user_id');
     }
 
     /**

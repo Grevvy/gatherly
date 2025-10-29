@@ -19,6 +19,7 @@ class Community extends Model
         'join_policy',  // 'open' | 'request' | 'invite'
         'owner_id',
         'banner_image',
+         'tags',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class Community extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
         'owner_id' => 'integer',
+        'tags' => 'array',
     ];
 
     // Use slug in URLs: route model binding {community:slug}

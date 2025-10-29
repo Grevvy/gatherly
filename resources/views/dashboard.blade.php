@@ -22,7 +22,7 @@
 
 <x-layout :title="'Dashboard - Gatherly'" :community="$community" :communities="$communities">
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
-        <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <main class="{{ $community ? 'max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6' : 'w-full px-0' }}">
 
 
             <style>
@@ -140,36 +140,9 @@
 
                     </div>
                 @else
-                    <div class="ml-72 px-4">
-                        <div
-                            class="max-w-3xl mx-auto flex flex-col items-center justify-center h-[50vh] text-center animate-fade-in">
-                            <div class="flex items-center gap-4 mb-6">
-                                <h1
-                                    class="text-4xl sm:text-3xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 drop-shadow transition-transform duration-300 hover:scale-105 whitespace-nowrap">
-                                    Welcome to Gatherly
-                                </h1>
-                                <i class="fas fa-star text-purple-600 text-4xl drop-shadow-md"></i>
-
-                            </div>
-
-                            <p class="text-gray-600 mb-10 text-sm sm:text-base md:text-lg tracking-wide">
-                                Let’s get started!
-                            </p>
-
-                            <div class="flex flex-row gap-4 justify-center">
-                                <a href="{{ route('create-community') }}"
-                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:brightness-110 hover:scale-105 transition-all duration-200">
-                                    Create a Community
-                                </a>
-
-                                <a href="{{ route('explore') }}"
-                                    class="bg-white text-blue-600 border border-blue-200 px-6 py-3 rounded-xl font-semibold shadow hover:bg-blue-50 hover:scale-105 transition-all duration-200">
-                                    Explore Communities
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
+                    <section class="col-span-3 w-full">
+                        <x-community-welcome />
+                    </section>
 
     </div>
     @endif
@@ -515,6 +488,25 @@
                     </p>
                 </div>
             </div>
+            @if (!empty($community->tags))
+                <div class="mt-4 border-t border-gray-300 pt-3">
+                    <h4 class="text-gray-700 font-semibold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9 9 9-9" />
+                        </svg>
+                        Tags
+                    </h4>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @foreach ($community->tags as $tag)
+                            <span
+                                class="px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
+                                {{ ucfirst($tag) }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
         </aside>
 
     @endif

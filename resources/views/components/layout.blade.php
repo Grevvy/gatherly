@@ -26,14 +26,31 @@
         <aside
             class="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-100 shadow-[0_8px_24px_rgba(0,0,0,0.05)] p-5 flex flex-col">
 
-            <div class="flex items-center gap-2 mb-6">
-                <img src="{{ asset('images/gatherly-logo.png') }}" alt="Gatherly Logo"
-                    class="w-8 h-8 rounded-lg shadow-sm object-contain">
-                <h1
-                    class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight">
-                    Gatherly
-                </h1>
+            <!-- Logo -->
+            <div class="flex flex-wrap items-center gap-2 mb-6 w-full overflow-hidden">
+
+                <a href="{{ route('community-welcome') }}"
+                    class="inline-flex items-center gap-2 mb-6 hover:opacity-90 transition">
+                    <img src="{{ asset('images/gatherly-logo.png') }}" alt="Gatherly Logo"
+                        class="w-8 h-8 rounded-lg shadow-sm object-contain">
+                    <h1
+                        class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight">
+                        Gatherly
+                    </h1>
+                </a>
+
             </div>
+
+            <!-- Explore Link -->
+            <nav class="mb-6">
+                <a href="{{ route('explore') }}"
+                    class="block w-full text-center px-3 py-1.5 rounded-lg text-sm font-medium transition-all
+           border {{ request()->is('explore')
+               ? 'border-blue-500 text-blue-700 shadow-sm'
+               : 'border-gray-200 text-blue-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 hover:shadow' }}">
+                    <i class="fas fa-compass text-blue-700"></i> Explore Communities
+                </a>
+            </nav>
 
             <!-- Search -->
             <div class="mb-6 relative">
@@ -106,51 +123,40 @@
         <!-- Main Dashboard -->
         <main class="flex-1 flex flex-col bg-gray-50">
             <!-- Top Tabs -->
+            <!-- Top Bar -->
             <div class="flex items-center justify-between bg-white border-b px-6 relative">
-                <div class="flex space-x-6">
-                    @php $slug = request('community'); @endphp
+                <!-- Left: Tabs (only if community exists) -->
+                @if (!empty($community))
+                    <div class="flex space-x-6">
+                        <a href="/dashboard?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('dashboard') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                            Feed
+                        </a>
+                        <a href="/events?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                            Events
+                        </a>
+                        <a href="/messages?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                            Messages
+                        </a>
+                        <a href="/members?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                            Members
+                        </a>
+                        <a href="/gallery?community={{ $community->slug }}"
+                            class="py-3 {{ request()->is('gallery') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                            Photo Gallery
+                        </a>
 
-                    <a href="/dashboard{{ $slug ? '?community=' . $slug : '' }}"
-                        class="py-3 
-    {{ request()->is('dashboard') && $slug
-        ? 'border-b-2 border-blue-600 text-blue-600 font-medium'
-        : 'text-gray-600 hover:text-gray-800' }}">
-                        Feed
-                    </a>
+                    </div>
+                @endif
 
-
-                    <a href="{{ $slug ? '/events?community=' . $slug : '/dashboard' }}"
-                        class="py-3 {{ request()->is('events') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Events
-                    </a>
-
-                    <a href="{{ $slug ? '/messages?community=' . $slug : '/dashboard' }}"
-                        class="py-3 {{ request()->is('messages') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Messages
-                    </a>
-
-                    <a href="{{ $slug ? '/members?community=' . $slug : '/dashboard' }}"
-                        class="py-3 {{ request()->is('members') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Members
-                    </a>
-
-                    <a href="{{ $slug ? '/photos?community=' . $slug : '/dashboard' }}"
-                        class="py-3 {{ request()->is('photos') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Photo Gallery
-                    </a>
-                    <a href="/explore"
-                        class="py-3 {{ request()->is('explore') ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
-                        Explore
-                    </a>
-
-                </div>
-
-                <div class="flex items-center gap-4">
-
+                <!-- Right: Calendar, Notifications, User Menu -->
+                <div class="flex items-center gap-4 ml-auto">
                     <!-- Calendar Icon -->
                     <div class="relative">
                         @php $slug = $community?->slug ?? request('community'); @endphp
-
 
                         @if ($slug)
                             <a href="{{ route('events', ['community' => $slug, 'tab' => 'calendar']) }}"
@@ -172,7 +178,6 @@
                             <span id="notif-badge"
                                 class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-semibold flex items-center justify-center"></span>
                         </button>
-
                         <div id="notif-dropdown"
                             class="hidden absolute right-0 mt-1 w-56 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
                             <div class="flex items-center justify-between p-3 border-b border-gray-100">
@@ -213,7 +218,7 @@
                         </div>
                     </div>
 
-                    <!-- User Menu -->
+                    <!-- User Menu / Logout -->
                     <div class="relative">
                         <button id="user-menu-btn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
                             <!-- Avatar -->
@@ -263,6 +268,8 @@
                     </div>
                 </div>
             </div>
+
+
 
             <!-- Community Banner -->
             @if ($community)
