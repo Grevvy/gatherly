@@ -42,22 +42,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'interests' => 'array', 
+        'interests' => 'array',
     ];
-
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
 
     // Helper: whether the user is a site admin (global)
     public function isSiteAdmin(): bool
@@ -72,9 +58,36 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
-    public function memberships()
-{
-    return $this->hasMany(\App\Models\CommunityMembership::class, 'user_id');
-}
 
+    /**
+     * Get user memberships in communities
+     */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(\App\Models\CommunityMembership::class, 'user_id');
+    }
+
+    /**
+     * Get all likes created by the user
+     */
+    public function likes(): HasMany
+    {
+        return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Get all comments created by the user
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get all photos uploaded by the user
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class);
+    }
 }

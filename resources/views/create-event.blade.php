@@ -65,7 +65,7 @@
                 <div class="relative">
                     <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Start Time</span>
                     <input type="datetime-local" name="starts_at"
-                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent" required />
+                        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl" required />
                 </div>
                 <div class="relative">
                     <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">End Time</span>

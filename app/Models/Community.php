@@ -26,8 +26,8 @@ class Community extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
-         'tags' => 'array',
-
+        'owner_id' => 'integer',
+        'tags' => 'array',
     ];
 
     // Use slug in URLs: route model binding {community:slug}
@@ -73,6 +73,14 @@ class Community extends Model
     public function messageThreads(): HasMany
     {
         return $this->hasMany(MessageThread::class);
+    }
+
+    /**
+     * Get all photos in this community
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class);
     }
 
     // Helpers

@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\EventAttendee;
+use App\Notifications\EventPublished;
+use App\Notifications\EventPendingApproval;
+use App\Notifications\EventRsvpUpdated;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -191,6 +195,25 @@ class EventController extends Controller
         }
 
         $event = Event::create($data);
+
+        if ($event->community_id) {
+            $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
+            
+            if ($event->status === 'published') {
+                app(NotificationService::class)->notifyCommunityMembers(
+                    $event->community,
+                    new EventPublished($event)
+                );
+            } else if ($event->status === 'draft') {
+                // Notify moderators about the pending event
+                app(NotificationService::class)->notifyCommunityModerators(
+                    $event->community,
+                    new EventPendingApproval($event),
+                    Auth::id()
+                );
+            }
+        }
+
         // Return with owner relation so front-end can display Hosted by <name>
         return response()->json($event->load(['owner:id,name']), 201);
     }
@@ -232,8 +255,21 @@ class EventController extends Controller
             }
         }
 
+        $originalStatus = $event->status;
+
         $event->update($data);
-        return response()->json($event->fresh());
+        $event->refresh();
+
+        if ($originalStatus !== 'published' && $event->status === 'published' && $event->community_id) {
+            $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
+            app(NotificationService::class)->notifyCommunityMembers(
+                $event->community,
+                new EventPublished($event),
+                $event->owner_id
+            );
+        }
+
+        return response()->json($event);
     }
 
     public function destroy(Event $event)
@@ -277,8 +313,17 @@ class EventController extends Controller
         $event->status = 'published';
         $event->published_at = now();
         $event->save();
+        $event->refresh();
 
-        return response()->json($event->fresh());
+        if ($event->community_id) {
+            $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
+            app(NotificationService::class)->notifyCommunityMembers(
+                $event->community,
+                new EventPublished($event)
+            );
+        }
+
+        return response()->json($event);
     }
 
     // RSVP: accept/decline/waitlist
@@ -288,20 +333,16 @@ class EventController extends Controller
             'status' => ['required','in:accepted,declined,waitlist']
         ]);
 
-        // Do not allow RSVP on drafts or non-published events
         if ($event->status !== 'published') {
             return response()->json(['message' => 'Cannot RSVP to an event that is not published.'], 403);
         }
 
         $userId = Auth::id();
 
-        // Handle accepted / waitlist / declined with transactional safety.
         if ($data['status'] === 'accepted') {
             $result = DB::transaction(function () use ($event, $userId) {
-                // Lock the event row to stabilize capacity reads/updates
                 $ev = Event::where('id', $event->id)->lockForUpdate()->first();
 
-                // unlimited capacity
                 if ($ev->capacity === null) {
                     $att = EventAttendee::updateOrCreate(
                         ['event_id' => $ev->id, 'user_id' => $userId],
@@ -310,9 +351,6 @@ class EventController extends Controller
                     return ['att' => $att, 'waitlisted' => false];
                 }
 
-                // Count accepted attendees under lock
-                // Postgres doesn't allow FOR UPDATE with aggregate functions
-                // select the matching rows with FOR UPDATE and count them in PHP
                 $acceptedRows = DB::table('event_attendees')
                     ->where('event_id', $ev->id)
                     ->where('status', 'accepted')
@@ -328,13 +366,11 @@ class EventController extends Controller
                     return ['att' => $att, 'waitlisted' => false];
                 }
 
-                // No capacity -> place on waitlist
                 $att = EventAttendee::updateOrCreate(
                     ['event_id' => $ev->id, 'user_id' => $userId],
                     ['status' => 'waitlist', 'role' => 'attendee']
                 );
 
-                // Compute waitlist position (order by created_at, tie-break by id)
                 $positionRows = DB::table('event_attendees')
                     ->where('event_id', $ev->id)
                     ->where('status', 'waitlist')
@@ -363,9 +399,17 @@ class EventController extends Controller
 
             $att = $result['att'];
             $waitlisted = $result['waitlisted'];
+            $context = $waitlisted ? [
+                'waitlist_position' => $result['waitlist_position'] ?? null,
+                'waitlist_size' => $result['waitlist_size'] ?? null,
+            ] : [];
+
+            $this->notifyEventRsvp($event, $att, $waitlisted ? 'waitlist' : 'accepted', $context);
+
             if ($waitlisted) {
                 return response()->json(array_merge($att->toArray(), ['placed_on_waitlist' => true]), 202);
             }
+
             return response()->json($att);
         }
 
@@ -402,13 +446,16 @@ class EventController extends Controller
                 return ['att' => $att, 'waitlist_position' => $position + 1, 'waitlist_size' => $total];
             });
 
+            $this->notifyEventRsvp($event, $result['att'], 'waitlist', [
+                'waitlist_position' => $result['waitlist_position'],
+                'waitlist_size' => $result['waitlist_size'] ?? null,
+            ]);
+
             return response()->json(array_merge($result['att']->toArray(), ['waitlist_position' => $result['waitlist_position']]), 202);
         }
 
-        // Decline: if the attendee was accepted, free a slot and promote the earliest waitlisted user.
         if ($data['status'] === 'declined') {
             $att = DB::transaction(function () use ($event, $userId) {
-                // Lock the attendee row if exists
                 $existing = EventAttendee::where('event_id', $event->id)
                     ->where('user_id', $userId)
                     ->lockForUpdate()
@@ -421,7 +468,6 @@ class EventController extends Controller
                     ['status' => 'declined', 'role' => 'attendee']
                 );
 
-                // If they were accepted and the event has capacity, promote the next waitlisted user
                 if ($wasAccepted && $event->capacity !== null) {
                     $next = EventAttendee::where('event_id', $event->id)
                         ->where('status', 'waitlist')
@@ -429,18 +475,19 @@ class EventController extends Controller
                         ->lockForUpdate()
                         ->first();
 
-                            if ($next) {
-                                $next->update(['status' => 'accepted']);
-                            }
+                    if ($next) {
+                        $next->update(['status' => 'accepted']);
+                    }
                 }
 
                 return $updated;
             });
 
+            $this->notifyEventRsvp($event, $att, 'declined');
+
             return response()->json($att);
         }
 
-        // Fallback (shouldn't happen due to validation)
         return response()->json(['message' => 'Invalid RSVP status'], 422);
     }
 
@@ -450,5 +497,34 @@ class EventController extends Controller
         $this->authorizeCheckin($event);
         $attendee->update(['checked_in' => true]);
         return response()->json($attendee);
+    }
+
+    protected function notifyEventRsvp(Event $event, EventAttendee $attendee, string $status, array $context = []): void
+    {
+        $attendee->loadMissing('user:id,name,avatar');
+        $user = $attendee->user;
+
+        if (! $user) {
+            return;
+        }
+
+        $event->loadMissing('community:id,name,slug', 'owner:id,name');
+
+        $notification = new EventRsvpUpdated($event, $user, $status, $context);
+        $service = app(NotificationService::class);
+
+        // Always notify the event owner if it's not their own RSVP
+        if ($event->owner && $event->owner_id !== $user->id) {
+            $event->owner->notify($notification);
+        }
+        
+        // Additionally notify community moderators if it's a community event
+        if ($event->community) {
+            $service->notifyCommunityModerators(
+                $event->community,
+                $notification,
+                $user->id
+            );
+        }
     }
 }

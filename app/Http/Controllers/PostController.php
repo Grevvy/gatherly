@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Community;
 use App\Models\CommunityMembership;
+use App\Models\Like;
+use App\Notifications\PostPublished;
+use App\Notifications\PostPendingApproval;
+use App\Notifications\PostLiked;
+use App\Notifications\PostReplied;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -83,6 +89,7 @@ class PostController extends Controller
         $post->content = $validated['content'];
         $post->user_id = Auth::id();
         $post->community_id = $community->id;
+        $post->content_updated_at = now(); // Set initial content timestamp
         
         // Use policy to check if post can be auto-published
         if (Auth::user()->can('autoPublish', $post)) {
@@ -100,6 +107,23 @@ class PostController extends Controller
         }
 
         $post->save();
+
+        if ($post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
+        } else {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Only notify moderators about pending posts
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
 
         // Return response based on request type
         if ($request->wantsJson()) {
@@ -131,10 +155,13 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
+        $originalStatus = $post->status;
+
         $data = $request->validate([
             'content' => ['sometimes', 'string', 'max:1000'],
             'status' => ['sometimes', 'in:draft,pending,published'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'], // 5MB max
+            'remove_image' => ['sometimes', 'boolean'],
         ]);
 
         // If changing to pending and user is moderator/admin/owner, auto-publish
@@ -152,16 +179,60 @@ class PostController extends Controller
             }
         }
 
-        // Handle image upload if present
-        if ($request->hasFile('image')) {
+        // Track if content was actually modified
+        $contentChanged = false;
+        
+        // Check if content was changed
+        if (isset($data['content']) && $data['content'] !== $post->content) {
+            $contentChanged = true;
+        }
+
+        // Handle image removal if requested
+        if ($request->filled('remove_image') && $request->remove_image) {
+            if ($post->image_path) {
+                Storage::disk('public')->delete($post->image_path);
+                $contentChanged = true; // Image removal is a content change
+            }
+            $data['image_path'] = null;
+        }
+        // Handle new image upload if present
+        elseif ($request->hasFile('image')) {
             // Delete old image if it exists
             if ($post->image_path) {
                 Storage::disk('public')->delete($post->image_path);
             }
             $data['image_path'] = $request->file('image')->store('post-images', 'public');
+            $contentChanged = true; // Image change is a content change
+        }
+
+        // Only update content_updated_at if content actually changed
+        if ($contentChanged) {
+            $data['content_updated_at'] = now();
+        }
+
+        // Set published_at when status changes to published (but this isn't a content change)
+        if (isset($data['status']) && $data['status'] === 'published' && $originalStatus !== 'published') {
+            $data['published_at'] = now();
         }
 
         $post->update($data);
+        $post->refresh();
+
+        if ($originalStatus !== 'published' && $post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
+        } elseif ($originalStatus !== 'pending' && $post->status === 'pending') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
 
         return response()->json([
             'message' => 'Post updated successfully',
@@ -197,6 +268,14 @@ class PostController extends Controller
                 'status' => 'published',
                 'published_at' => now(),
             ]);
+
+            $post->refresh();
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
         } else {
             $post->update([
                 'status' => 'rejected',
@@ -206,4 +285,33 @@ class PostController extends Controller
 
         return response()->json($post->fresh());
     }
-}
+    public function toggleLike(Community $community, Post $post): JsonResponse
+    {
+        $user = Auth::user();
+
+        // If already liked → unlike
+        $existing = $post->likes()->where('user_id', $user->id)->first();
+        if ($existing) {
+            $existing->delete();
+            $liked = false;
+        } else {
+            $post->likes()->create(['user_id' => $user->id]);
+            $liked = true;
+
+            // Only notify post author when someone else likes their post
+            if ($post->user_id !== $user->id) {
+                $post->loadMissing(['community:id,name,slug', 'user:id,name']);
+                app(NotificationService::class)->notifyCommunityMembers(
+                    $post->community,
+                    new PostLiked($post, $user),
+                    $user->id // Exclude the liker
+                );
+            }
+        }
+
+        // Return JSON response
+        return response()->json([
+            'liked' => $liked,
+            'like_count' => $post->likes()->count()
+        ]);
+    }}

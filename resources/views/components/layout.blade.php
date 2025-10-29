@@ -155,14 +155,17 @@
                 <!-- Right: Calendar, Notifications, User Menu -->
                 <div class="flex items-center gap-4 ml-auto">
                     <!-- Calendar Icon -->
-                    <div class="relative mt-2">
-                        @if (!empty($community))
-                            <a href="{{ route('events', ['community' => $community->slug, 'tab' => 'calendar']) }}"
-                                class="p-2 hover:bg-gray-100 block rounded-lg cursor-pointer">
+                    <div class="relative">
+                        @php $slug = $community?->slug ?? request('community'); @endphp
+
+                        @if ($slug)
+                            <a href="{{ route('events', ['community' => $slug, 'tab' => 'calendar']) }}"
+                                class="py-3 px-2 hover:bg-gray-100 block rounded-lg cursor-pointer transition">
                                 <i data-lucide="calendar-days" class="w-5 h-5 text-gray-600"></i>
                             </a>
                         @else
-                            <span class="p-2 block text-gray-400 opacity-50" title="Select a community first">
+                            <span class="py-3 px-2 block text-gray-400 opacity-50 transition"
+                                title="Select a community first">
                                 <i data-lucide="calendar" class="w-5 h-5"></i>
                             </span>
                         @endif
@@ -170,14 +173,47 @@
 
                     <!-- Notification Bell -->
                     <div class="relative">
-                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2 rounded-lg">
+                        <button id="notif-btn" class="py-3 px-2 hover:bg-gray-100 relative rounded-lg transition">
                             <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
+                            <span id="notif-badge"
+                                class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-semibold flex items-center justify-center"></span>
                         </button>
                         <div id="notif-dropdown"
-                            class="hidden absolute right-0 mt-0.99 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
-                            <div class="p-3 text-sm text-gray-700 border-b font-semibold">Notifications</div>
-                            <div class="max-h-60 overflow-y-auto divide-y divide-gray-100">
-                                <div class="p-3 text-sm text-gray-500 text-center">No notifications</div>
+                            class="hidden absolute right-0 mt-1 w-56 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
+                            <div class="flex items-center justify-between p-3 border-b border-gray-100">
+                                <span class="text-sm font-semibold text-gray-700">Notifications</span>
+                                <div class="flex items-center gap-3">
+                                    <button id="notif-mark-all"
+                                        class="hidden text-xs font-medium text-blue-600 hover:text-blue-800 focus:outline-none"
+                                        type="button">
+                                        Mark all read
+                                    </button>
+                                    <button id="notif-clear-all"
+                                        class="text-xs font-medium text-red-600 hover:text-red-800 focus:outline-none"
+                                        type="button">
+                                        Clear all
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="notif-loading"
+                                class="hidden p-3 text-sm text-gray-500 text-center border-b border-gray-50">
+                                Loading notifications…
+                            </div>
+                            <div id="notif-error"
+                                class="hidden p-3 text-sm text-red-500 text-center border-b border-red-100 bg-red-50">
+                                Unable to load notifications.
+                            </div>
+                            <div id="notif-empty" class="p-3 text-sm text-gray-500 text-center">
+                                No notifications yet.
+                            </div>
+                            <div id="notif-list"
+                                class="hidden max-h-72 overflow-y-auto divide-y divide-gray-100 bg-white"></div>
+                            <div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex justify-end">
+                                <a href="{{ route('notifications.center') }}"
+                                    class="text-xs font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-1">
+                                    View all notifications
+                                    <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -185,32 +221,49 @@
                     <!-- User Menu / Logout -->
                     <div class="relative">
                         <button id="user-menu-btn" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
+                            <!-- Avatar -->
+                            @php
+                                $user = auth()->user();
+                            @endphp
+
+
                             <div
-                                class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                @if ($user->avatar)
+                                    <img src="{{ asset('storage/' . $user->avatar) }}"
+                                        alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                @else
+                                    <span
+                                        class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                @endif
                             </div>
                             <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
                         </button>
 
                         <div id="user-menu-dropdown"
-                            class="hidden absolute right-0 mt-0 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
-                            <div class="p-3">
-                                <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
+                            class="hidden absolute right-0 mt-0 w-56 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
+                            <div class="p-3 border-b border-gray-100">
+                                <p class="text-sm font-semibold text-gray-700">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
                             </div>
-                            <a href="{{ route('profile.show') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
-                                View Profile
-                            </a>
+                            <div class="divide-y divide-gray-100">
+                                <!--  View Profile link -->
+                                <a href="{{ route('profile.show') }}"
+                                    class="block px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
+                                    View Profile
+                                </a>
 
-                            <form method="POST" action="{{ route('logout') }}" class="p-2">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full text-sm text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md">
-                                    Logout
-                                </button>
-                            </form>
+                                <div class="p-2">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full text-sm text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -506,44 +559,395 @@
             const setupDropdown = (btnId, menuId) => {
                 const btn = document.getElementById(btnId);
                 const menu = document.getElementById(menuId);
-                let isLockedOpen = false; // track click-to-stay state
 
                 if (!btn || !menu) return;
 
-                // Toggle on click (lock open)
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    isLockedOpen = !isLockedOpen;
-                    menu.classList.toggle("hidden", !isLockedOpen);
+                // Create a container div to help with hover detection
+                const container = document.createElement('div');
+                container.className = 'relative';
+                btn.parentNode.insertBefore(container, btn);
+                container.appendChild(btn);
+                container.appendChild(menu);
+
+                let hoverTimeout;
+
+                // Show on hover with a small delay
+                container.addEventListener("mouseenter", () => {
+                    clearTimeout(hoverTimeout);
+                    menu.classList.remove("hidden");
                 });
 
-                // Show on hover (only if not locked open)
-                btn.addEventListener("mouseenter", () => {
-                    if (!isLockedOpen) menu.classList.remove("hidden");
-                });
-                btn.addEventListener("mouseleave", () => {
-                    if (!isLockedOpen) menu.classList.add("hidden");
-                });
-
-                // Also handle hovering over the menu itself
-                menu.addEventListener("mouseenter", () => {
-                    if (!isLockedOpen) menu.classList.remove("hidden");
-                });
-                menu.addEventListener("mouseleave", () => {
-                    if (!isLockedOpen) menu.classList.add("hidden");
-                });
-
-                // Close if clicked outside
-                document.addEventListener("click", (e) => {
-                    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                // Hide on mouse leave with a delay (to make it easier to reach the menu)
+                container.addEventListener("mouseleave", () => {
+                    hoverTimeout = setTimeout(() => {
                         menu.classList.add("hidden");
-                        isLockedOpen = false;
+                    }, 100); // Small delay to make it less finicky
+                });
+
+                // Clicking outside closes
+                document.addEventListener("click", (e) => {
+                    if (!container.contains(e.target)) {
+                        menu.classList.add("hidden");
                     }
                 });
             };
 
             setupDropdown("notif-btn", "notif-dropdown");
             setupDropdown("user-menu-btn", "user-menu-dropdown");
+
+            const notifBtn = document.getElementById('notif-btn');
+            const notifBadge = document.getElementById('notif-badge');
+            const notifList = document.getElementById('notif-list');
+            const notifEmpty = document.getElementById('notif-empty');
+            const notifError = document.getElementById('notif-error');
+            const notifLoading = document.getElementById('notif-loading');
+            const notifMarkAll = document.getElementById('notif-mark-all');
+            const csrfToken = document.getElementById('csrf-token')?.value || '';
+            const readInFlight = new Set();
+            let hasLoadedNotifications = false;
+            let isLoadingNotifications = false;
+            let cachedNotifications = [];
+            const notifPollInterval = 5000;
+            let notifPollTimer = null;
+
+            const updateNotifBadge = (count = 0) => {
+                if (!notifBadge) return;
+                if (count > 0) {
+                    notifBadge.textContent = count > 99 ? '99+' : String(count);
+                    notifBadge.classList.remove('hidden');
+                } else {
+                    notifBadge.textContent = '';
+                    notifBadge.classList.add('hidden');
+                }
+            };
+
+            const updateMarkAllVisibility = () => {
+                if (!notifMarkAll) return;
+                const hasUnread = cachedNotifications.some(item => !item?.read_at);
+                if (hasUnread) {
+                    notifMarkAll.classList.remove('hidden');
+                } else {
+                    notifMarkAll.classList.add('hidden');
+                }
+            };
+
+            const markNotificationNodeAsRead = (id) => {
+                if (!notifList || !id) return;
+                const node = notifList.querySelector(`[data-notification-id="${id}"]`);
+                if (!node) return;
+                node.classList.remove('bg-blue-50');
+                node.querySelector('[data-role="notif-indicator"]')?.remove();
+                node.dataset.readState = 'read';
+            };
+
+            const formatTimeAgo = (isoString) => {
+                if (!isoString) return '';
+                const timestamp = new Date(isoString).getTime();
+                if (Number.isNaN(timestamp)) return '';
+                const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+                if (seconds < 60) return 'just now';
+                if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+                if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+                if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+                return new Date(isoString).toLocaleDateString();
+            };
+
+            const renderNotifications = (items = []) => {
+                if (!notifList || !notifEmpty) return;
+                cachedNotifications = Array.isArray(items) ? [...items] : [];
+                notifList.innerHTML = '';
+
+                if (!cachedNotifications.length) {
+                    notifList.classList.add('hidden');
+                    notifEmpty.classList.remove('hidden');
+                    updateMarkAllVisibility();
+                    return;
+                }
+
+                notifEmpty.classList.add('hidden');
+                notifList.classList.remove('hidden');
+
+                cachedNotifications.forEach(item => {
+                    const wrapper = document.createElement(item?.url ? 'a' : 'div');
+                    wrapper.className = 'block px-3 py-3 hover:bg-gray-50 transition';
+                    if (item?.url) {
+                        wrapper.href = item.url;
+                    }
+                    if (!item?.read_at) {
+                        wrapper.classList.add('bg-blue-50');
+                    }
+                    wrapper.dataset.notificationId = item?.id || '';
+                    wrapper.dataset.readState = item?.read_at ? 'read' : 'unread';
+
+                    const header = document.createElement('div');
+                    header.className = 'flex items-start justify-between gap-2';
+
+                    const title = document.createElement('p');
+                    title.className = 'text-sm font-semibold text-gray-800';
+                    title.textContent = item?.title || 'Notification';
+                    header.appendChild(title);
+
+                    const meta = document.createElement('div');
+                    meta.className = 'flex items-center gap-2';
+
+                    if (!item?.read_at) {
+                        const indicator = document.createElement('span');
+                        indicator.className = 'inline-block w-2 h-2 rounded-full bg-blue-500';
+                        indicator.dataset.role = 'notif-indicator';
+                        meta.appendChild(indicator);
+                    }
+
+                    const timeLabel = document.createElement('span');
+                    timeLabel.className = 'text-xs text-gray-400 whitespace-nowrap';
+                    timeLabel.textContent = formatTimeAgo(item?.created_at);
+                    meta.appendChild(timeLabel);
+
+                    header.appendChild(meta);
+                    wrapper.appendChild(header);
+
+                    if (item?.body) {
+                        const body = document.createElement('p');
+                        body.className = 'mt-1 text-sm text-gray-600 leading-snug';
+                        body.textContent = item.body;
+                        wrapper.appendChild(body);
+                    }
+
+                    if (item?.url) {
+                        const cta = document.createElement('span');
+                        cta.className = 'mt-2 inline-block text-xs font-medium text-blue-600';
+                        cta.textContent = 'View';
+                        wrapper.appendChild(cta);
+                    }
+
+                    wrapper.addEventListener('click', () => {
+                        if (wrapper.dataset.readState === 'read') return;
+
+                        markNotificationNodeAsRead(item?.id);
+                        if (item) {
+                            item.read_at = new Date().toISOString();
+                        }
+                        updateMarkAllVisibility();
+                        markNotificationAsRead(item?.id);
+                    });
+
+                    notifList.appendChild(wrapper);
+                });
+
+                updateMarkAllVisibility();
+            };
+
+            const markNotificationAsRead = async (id) => {
+                if (!id || readInFlight.has(id) || !csrfToken) return;
+                readInFlight.add(id);
+
+                try {
+                    const response = await fetch(`/notifications/${id}/read`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({}),
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to mark notification as read');
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    cachedNotifications = cachedNotifications.map(item =>
+                        item?.id === id ? {
+                            ...item,
+                            read_at: item?.read_at ?? new Date().toISOString()
+                        } : item
+                    );
+                    updateNotifBadge(payload?.unread_count ?? cachedNotifications.filter(item => !item
+                        ?.read_at).length);
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    readInFlight.delete(id);
+                    updateMarkAllVisibility();
+                }
+            };
+
+            const clearAllNotifications = async () => {
+                if (!csrfToken) {
+                    showToastify('Unable to clear notifications right now.', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/notifications/clear-all', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to clear notifications');
+                    }
+
+                    // Clear notifications from UI
+                    cachedNotifications = [];
+                    renderNotifications([]);
+                    updateNotifBadge(0);
+                    showToastify('All notifications cleared successfully', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToastify('Could not clear notifications.', 'error');
+                }
+            };
+
+            const markAllNotifications = async () => {
+                if (!csrfToken) {
+                    showToastify('Unable to update notifications right now.', 'error');
+                    return;
+                }
+                notifMarkAll?.setAttribute('disabled', 'disabled');
+
+                try {
+                    const response = await fetch('/notifications/read-all', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({}),
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to mark all notifications as read');
+                    }
+
+                    cachedNotifications = cachedNotifications.map(item => ({
+                        ...item,
+                        read_at: item?.read_at ?? new Date().toISOString()
+                    }));
+                    renderNotifications(cachedNotifications);
+                    updateNotifBadge(0);
+                } catch (err) {
+                    console.error(err);
+                    showToastify('Could not mark notifications as read.', 'error');
+                } finally {
+                    notifMarkAll?.removeAttribute('disabled');
+                }
+            };
+
+            const fetchNotifications = async ({
+                force = false,
+                silent = false
+            } = {}) => {
+                if (isLoadingNotifications) return;
+                if (hasLoadedNotifications && !force) return;
+
+                isLoadingNotifications = true;
+
+                if (!silent) {
+                    notifError?.classList.add('hidden');
+                    notifEmpty?.classList.add('hidden');
+                    notifList?.classList.add('hidden');
+                    notifLoading?.classList.remove('hidden');
+                }
+
+                try {
+                    const response = await fetch('/notifications?limit=15', {
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to load notifications');
+                    }
+
+                    const payload = await response.json();
+                    updateNotifBadge(payload?.unread_count ?? 0);
+                    renderNotifications(payload?.notifications ?? []);
+                    hasLoadedNotifications = true;
+                } catch (err) {
+                    console.error(err);
+                    if (!silent && notifError) {
+                        notifError.textContent = 'Unable to load notifications. Please try again.';
+                        notifError.classList.remove('hidden');
+                        notifLoading?.classList.add('hidden');
+                    }
+                } finally {
+                    if (!silent) {
+                        notifLoading?.classList.add('hidden');
+                    }
+                    isLoadingNotifications = false;
+                }
+            };
+
+            const startNotificationPolling = () => {
+                if (notifPollTimer) {
+                    clearInterval(notifPollTimer);
+                    notifPollTimer = null;
+                }
+
+                notifPollTimer = setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        fetchNotifications({
+                            force: true,
+                            silent: true
+                        });
+                    }
+                }, notifPollInterval);
+                fetchNotifications({
+                    force: true,
+                    silent: true
+                });
+            };
+
+            notifBtn?.addEventListener('click', () => {
+                fetchNotifications({
+                    force: true
+                });
+            });
+
+            notifMarkAll?.addEventListener('click', (event) => {
+                event.preventDefault();
+                markAllNotifications();
+            });
+
+            const notifClearAll = document.getElementById('notif-clear-all');
+            notifClearAll?.addEventListener('click', (event) => {
+                event.preventDefault();
+                showConfirmToast(
+                    'Are you sure you want to clear all notifications? This action cannot be undone.',
+                    clearAllNotifications,
+                    'bg-red-500 hover:bg-red-600',
+                    'Clear'
+                );
+            });
+
+            fetchNotifications({
+                silent: true
+            });
+            startNotificationPolling();
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    fetchNotifications({
+                        force: true,
+                        silent: true
+                    });
+                    startNotificationPolling();
+                } else if (notifPollTimer) {
+                    clearInterval(notifPollTimer);
+                    notifPollTimer = null;
+                }
+            });
 
             // Sidebar search (filter existing list)
             const searchBox = document.getElementById("search-box");

@@ -24,6 +24,7 @@
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
         <main class="{{ $community ? 'max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6' : 'w-full px-0' }}">
 
+
             <style>
                 body {
                     scroll-behavior: smooth;
@@ -66,10 +67,24 @@
 
                             <div class="flex gap-4 items-start">
                                 <!-- Avatar -->
+                                @php
+                                    $user = auth()->user();
+                                @endphp
+
                                 <div
-                                    class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                                    class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
+                                    @if ($user && $user->avatar)
+                                        <img src="{{ asset('storage/' . $user->avatar) }}"
+                                            alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="text-white font-bold text-lg">
+                                            {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
+                                        </span>
+                                    @endif
                                 </div>
+
+
+
 
 
                                 <!-- Form Content -->
@@ -151,73 +166,86 @@
                 @endphp
                 @if ($canSeePost)
                     <div class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]"
-                        id="post-{{ $post->id }}">
-                        @if ($canModerate || $post->user_id === $userId)
-                            <!-- Dots Dropdown Above -->
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                        {{ strtoupper(substr($post->user->name ?? '', 0, 1)) }}
-                                    </div>
+                        id="post-{{ $post->id }}" data-can-moderate="{{ $canModerate ? 'true' : 'false' }}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-3">
+                                @php
+                                    $postUser = $post->user;
+                                @endphp
 
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800">
-                                            {{ $post->user->name ?? 'Unknown' }}
-                                        </p>
-                                        <p class="text-xs text-gray-500">
-                                            Post Creator
-                                        </p>
-                                    </div>
-
+                                <div
+                                    class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                    @if ($postUser && $postUser->avatar)
+                                        <img src="{{ asset('storage/' . $postUser->avatar) }}"
+                                            alt="{{ $postUser->name }}'s avatar" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="text-white font-semibold">
+                                            {{ strtoupper(substr($postUser->name ?? 'U', 0, 1)) }}
+                                        </span>
+                                    @endif
                                 </div>
 
 
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">
+                                        {{ $post->user->name ?? 'Unknown' }}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ '@' .
+                                            (\App\Models\User::find($post->user_id)?->username ??
+                                                Str::slug(\App\Models\User::find($post->user_id)?->name ?? 'user')) }}
+                                    </p>
 
-                                @if ($canModerate || $post->user_id === $userId)
-                                    <div class="relative">
-                                        <button onclick="toggleDropdown({{ $post->id }})"
-                                            class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                                            &#x2026;
-                                        </button>
-                                        <div id="dropdown-{{ $post->id }}"
-                                            class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
-                                            @if ($canModerate && $post->status === 'pending')
-                                                <form method="POST"
-                                                    action="{{ route('posts.update', [$community->slug, $post->id]) }}"
-                                                    data-community="{{ $community->slug }}"
-                                                    onsubmit="return handlePostAction(event)">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="published">
-                                                    <input type="hidden" name="content" value="{{ $post->content }}">
-                                                    <button type="submit"
-                                                        class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
-                                                        Publish
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            <button onclick="startEdit({{ $post->id }})"
-                                                class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+
+
+                                </div>
+                            </div>
+
+                            @if ($canModerate || $post->user_id === $userId)
+                                <div class="relative">
+                                    <button onclick="toggleDropdown({{ $post->id }})"
+                                        class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                        &#x2026;
+                                    </button>
+                                    <div id="dropdown-{{ $post->id }}"
+                                        class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
+                                        @if ($canModerate && $post->status === 'pending')
                                             <form method="POST"
-                                                action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
+                                                action="{{ route('posts.update', [$community->slug, $post->id]) }}"
                                                 data-community="{{ $community->slug }}"
                                                 onsubmit="return handlePostAction(event)">
                                                 @csrf
-                                                @method('DELETE')
-                                                <button type="button" onclick="deletePost({{ $post->id }}, this)"
-                                                    class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                    Delete
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="published">
+                                                <input type="hidden" name="content" value="{{ $post->content }}">
+                                                <button type="submit"
+                                                    class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
+                                                    Publish
                                                 </button>
                                             </form>
-                                        </div>
+                                        @endif
+                                        <button onclick="startEdit({{ $post->id }})"
+                                            class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
+                                        <form method="POST"
+                                            action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
+                                            data-community="{{ $community->slug }}"
+                                            onsubmit="return handlePostAction(event)">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" onclick="deletePost({{ $post->id }}, this)"
+                                                class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                Delete
+                                            </button>
+                                        </form>
                                     </div>
-                                @endif
-                            </div>
-                        @endif
+                                </div>
+                            @endif
+                        </div>
+
 
                         <div class="post-content relative" id="content-{{ $post->id }}">
-                            <p class="text-gray-700 text-sm mb-2">{{ $post->content }}</p>
+                            <p class="text-black text-sm mb-1 mt-4">{{ $post->content }}</p>
+
 
                             @if ($post->image_path)
                                 <div class="mt-2">
@@ -228,9 +256,85 @@
 
                             <div class="text-xs text-gray-400 mt-9">
                                 Posted {{ $post->created_at->diffForHumans() }}
-                                @if ($post->updated_at > $post->created_at)
+                                @if ($post->content_updated_at && $post->content_updated_at > $post->created_at)
                                     • <span class="text-xs text-gray-400 mt-9 italic">(edited)</span>
                                 @endif
+                            </div>
+                            <div class="flex items-center gap-5 mt-4 text-sm">
+                                <!-- ❤️ Like Button -->
+                                <button onclick="toggleLike({{ $post->id }}, '{{ $community->slug }}')"
+                                    id="like-btn-{{ $post->id }}"
+                                    class="flex items-center gap-2 group transition">
+                                    <div
+                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-pink-50 border border-pink-200 text-pink-500 hover:bg-pink-100 hover:scale-105 transition">
+                                        <i
+                                            class="fa-solid fa-heart group-hover:scale-110 transition-transform duration-200"></i>
+                                    </div>
+                                    <span id="like-count-{{ $post->id }}"
+                                        class="text-gray-600 group-hover:text-pink-600">
+                                        {{ $post->likes->count() }}
+                                    </span>
+                                </button>
+
+                                <!-- 💬 Reply Button -->
+                                <button onclick="toggleCommentBox({{ $post->id }})"
+                                    class="flex items-center gap-2 group transition">
+                                    <div
+                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-500 hover:bg-blue-100 hover:scale-105 transition">
+                                        <i
+                                            class="fa-regular fa-comment group-hover:scale-110 transition-transform duration-200"></i>
+                                    </div>
+                                    <span class="text-gray-600 group-hover:text-blue-600">Reply</span>
+                                </button>
+                            </div>
+
+
+                            <!-- Comment box -->
+                            <div id="comment-box-{{ $post->id }}" class="hidden mt-4 animate-fadeIn">
+                                <form
+                                    onsubmit="return postComment(event, {{ $post->id }}, '{{ $community->slug }}')"
+                                    class="flex gap-3 items-center">
+                                    <input type="text" name="content" placeholder="Write a reply..."
+                                        class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                        required>
+                                    <button type="submit"
+                                        class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 transition">
+                                        Send
+                                    </button>
+                                </form>
+
+                                <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
+                                    @foreach ($post->comments as $comment)
+                                        <div class="flex items-start gap-2" data-comment-id="{{ $comment->id }}">
+                                            <div
+                                                class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                                @if ($comment->user->avatar)
+                                                    <img src="{{ asset('storage/' . $comment->user->avatar) }}"
+                                                        alt="{{ $comment->user->name }}'s avatar"
+                                                        class="w-full h-full object-cover">
+                                                @else
+                                                    <span class="text-white font-semibold text-xs">
+                                                        {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="flex-1 flex items-start justify-between gap-2">
+                                                <p
+                                                    class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                                                    <strong>{{ $comment->user->name }}:</strong>
+                                                    {{ $comment->content }}
+                                                </p>
+                                                @if ($comment->user_id === auth()->id() || $canModerate)
+                                                    <button
+                                                        onclick="deleteComment({{ $comment->id }}, {{ $post->id }}, '{{ $community->slug }}')"
+                                                        class="text-red-500 hover:text-red-600 transition">
+                                                        <i class="fas fa-trash-alt text-xs"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
 
                             @php
@@ -243,7 +347,8 @@
                                 $status = strtolower($post->status);
                             @endphp
 
-                            <div class="absolute bottom-2 right-2 text-xs">
+                            <div class="absolute top-2 right-3 text-xs">
+
                                 <span
                                     class="inline-block px-2 py-0.5 rounded font-medium {{ $statusStyles[$status] ?? 'bg-gray-100 text-gray-700' }}">
                                     {{ ucfirst($status) }}
@@ -422,6 +527,13 @@
 
         function startEdit(postId) {
             setupEditImagePreview(postId);
+
+            // Check if this image was marked for removal
+            const hiddenFlag = document.getElementById(`remove-image-${postId}`);
+            if (removedImages.has(postId) && hiddenFlag) {
+                hiddenFlag.value = '1';
+            }
+
             cancelAllDropdowns();
             document.getElementById(`content-${postId}`).style.display = 'none';
             document.getElementById(`edit-form-${postId}`).style.display = 'block';
@@ -450,7 +562,11 @@
                     'Accept': 'text/html'
                 },
                 body: formData
-            }).then(() => {
+            }).then((response) => {
+                if (response.ok) {
+                    // Clear any localStorage entries for image removals since the form was successful
+                    localStorage.removeItem('removedImages');
+                }
                 window.location.href = `/dashboard?community=${slug}`;
             }).catch(() => {
                 alert('Something went wrong. Please try again.');
@@ -777,31 +893,6 @@
                     document.getElementById(`edit-photo-upload-${postId}`).files = dt.files;
                 }, 'image/png');
             }
-            window.removeEditPreview = function(postId) {
-                const previewContainer = document.getElementById(`edit-image-preview-${postId}`);
-                const input = document.getElementById(`edit-photo-upload-${postId}`);
-                const hiddenFlag = document.getElementById(`remove-image-${postId}`);
-
-                // Remove preview completely
-                previewContainer.innerHTML = '';
-                if (input) input.value = '';
-
-                // Track this post's image as removed
-                removedImages.add(postId);
-
-                // Mark removal (for future formData)
-                if (hiddenFlag) hiddenFlag.value = '1';
-
-                // Clean up cropper + image state
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-                originalImageSrc = null;
-                lastCropBoxData = null;
-                lastCroppedImageUrl = null;
-                currentFile = null;
-            };
 
         }
 
@@ -809,12 +900,14 @@
             // When page loads, remove any images marked as "removed" before
             const removed = JSON.parse(localStorage.getItem('removedImages') || '[]');
             removed.forEach(id => {
-                const img = document.getElementById(`edit-crop-preview-${id}`);
                 const container = document.getElementById(`edit-image-preview-${id}`);
                 const hiddenFlag = document.getElementById(`remove-image-${id}`);
-                if (img) img.remove();
+
                 if (container) container.innerHTML = '';
                 if (hiddenFlag) hiddenFlag.value = '1';
+
+                // Also add to our Set for consistency
+                removedImages.add(id);
             });
         });
 
@@ -824,10 +917,17 @@
             const input = document.getElementById(`edit-photo-upload-${postId}`);
             const hiddenFlag = document.getElementById(`remove-image-${postId}`);
 
-            previewContainer.innerHTML = '';
+            // Clear the preview container
+            if (previewContainer) previewContainer.innerHTML = '';
+
+            // Clear the file input
             if (input) input.value = '';
 
+            // Set the removal flag to indicate the image should be removed
             if (hiddenFlag) hiddenFlag.value = '1';
+
+            // Track this post's image as removed in our Set
+            removedImages.add(postId);
 
             // Remember removal across reloads
             let removed = JSON.parse(localStorage.getItem('removedImages') || '[]');
@@ -835,18 +935,113 @@
                 removed.push(postId);
                 localStorage.setItem('removedImages', JSON.stringify(removed));
             }
-
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-
-            originalImageSrc = null;
-            lastCropBoxData = null;
-            lastCroppedImageUrl = null;
-            currentFile = null;
         };
+        async function toggleLike(postId, slug) {
+            const res = await fetch(`/communities/${slug}/posts/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+            const data = await res.json();
+            document.getElementById(`like-count-${postId}`).textContent = data.like_count;
+        }
+
+        function toggleCommentBox(postId) {
+            const box = document.getElementById(`comment-box-${postId}`);
+            box.classList.toggle('hidden');
+        }
+
+        async function deleteComment(commentId, postId, slug) {
+            showConfirmToast(
+                'Are you sure you want to delete this comment?',
+                async () => {
+                        const res = await fetch(`/communities/${slug}/posts/${postId}/comment/${commentId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            try {
+                                // Find and remove the comment element
+                                const commentList = document.getElementById(`comments-list-${postId}`);
+                                const commentElement = commentList.querySelector(
+                                    `[data-comment-id="${commentId}"]`);
+                                if (commentElement) {
+                                    // Add fade-out animation
+                                    commentElement.style.transition = 'opacity 0.2s ease-out';
+                                    commentElement.style.opacity = '0';
+                                    setTimeout(() => {
+                                        commentElement.remove();
+                                    }, 200);
+                                    showToastify('Comment deleted successfully.', 'success');
+                                }
+                            } catch (err) {
+                                console.error('Error removing comment from UI:', err);
+                            }
+                        } else {
+                            showToastify('Failed to delete comment.', 'error');
+                        }
+                    },
+                    'bg-red-400 hover:bg-red-500',
+                    'Delete'
+            );
+        }
+
+        async function postComment(e, postId, slug) {
+            e.preventDefault();
+            const content = e.target.content.value.trim();
+            if (!content) return;
+
+            const res = await fetch(`/communities/${slug}/posts/${postId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content
+                })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const list = document.getElementById(`comments-list-${postId}`);
+                // Get canModerate value from the post's container
+                const postContainer = document.getElementById(`post-${postId}`);
+                const canModerate = postContainer.querySelector('[data-can-moderate="true"]') !== null;
+
+                list.innerHTML += `
+    <div class="flex items-start gap-2 animate-fadeIn" data-comment-id="${data.comment.id}">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+            ${data.comment.avatar 
+                ? `<img src="/storage/${data.comment.avatar}" alt="${data.comment.user}'s avatar" class="w-full h-full object-cover">`
+                : `<span class="text-white font-semibold text-xs">${data.comment.user.charAt(0).toUpperCase()}</span>`
+            }
+        </div>
+        <div class="flex-1 flex items-start justify-between gap-2">
+            <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <strong>${data.comment.user}:</strong> ${data.comment.content}
+            </p>
+            ${(data.comment.is_author || canModerate) ? `
+                        <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                                class="text-red-500 hover:text-red-600 transition">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    ` : ''}
+        </div>
+    </div>
+`;
+                e.target.reset();
+            }
+            return false;
+        }
     </script>
+
+
 
 
 </x-layout>
