@@ -148,17 +148,18 @@
                 <div class="flex items-center gap-4">
 
                     <!-- Calendar Icon -->
-                    <div class="relative mt-2">
+                    <div class="relative">
                         @php $slug = $community?->slug ?? request('community'); @endphp
 
 
                         @if ($slug)
                             <a href="{{ route('events', ['community' => $slug, 'tab' => 'calendar']) }}"
-                                class="p-2 hover:bg-gray-100 block rounded-lg cursor-pointer">
+                                class="py-3 px-2 hover:bg-gray-100 block rounded-lg cursor-pointer transition">
                                 <i data-lucide="calendar-days" class="w-5 h-5 text-gray-600"></i>
                             </a>
                         @else
-                            <span class="p-2 block text-gray-400 opacity-50" title="Select a community first">
+                            <span class="py-3 px-2 block text-gray-400 opacity-50 transition"
+                                title="Select a community first">
                                 <i data-lucide="calendar" class="w-5 h-5"></i>
                             </span>
                         @endif
@@ -166,14 +167,14 @@
 
                     <!-- Notification Bell -->
                     <div class="relative">
-                        <button id="notif-btn" class="p-2 hover:bg-gray-100 relative mt-2 rounded-lg transition">
+                        <button id="notif-btn" class="py-3 px-2 hover:bg-gray-100 relative rounded-lg transition">
                             <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
                             <span id="notif-badge"
                                 class="hidden absolute -top-1 -right-1 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-xs font-semibold flex items-center justify-center"></span>
                         </button>
 
                         <div id="notif-dropdown"
-                            class="hidden absolute right-0 mt-1 w-72 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
+                            class="hidden absolute right-0 mt-1 w-56 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
                             <div class="flex items-center justify-between p-3 border-b border-gray-100">
                                 <span class="text-sm font-semibold text-gray-700">Notifications</span>
                                 <div class="flex items-center gap-3">
@@ -235,25 +236,29 @@
                         </button>
 
                         <div id="user-menu-dropdown"
-                            class="hidden absolute right-0 mt-0 w-56 bg-white border shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
-                            <div class="p-3">
-                                <p class="text-sm font-semibold text-gray-800">{{ auth()->user()->name }}</p>
+                            class="hidden absolute right-0 mt-0 w-56 bg-white border shadow-lg rounded-xl z-50 overflow-hidden">
+                            <div class="p-3 border-b border-gray-100">
+                                <p class="text-sm font-semibold text-gray-700">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-gray-500">{{ auth()->user()->email }}</p>
                             </div>
-                            <!--  View Profile link -->
-                            <a href="{{ route('profile.show') }}"
-                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
-                                View Profile
-                            </a>
+                            <div class="divide-y divide-gray-100">
+                                <!--  View Profile link -->
+                                <a href="{{ route('profile.show') }}"
+                                    class="block px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <i data-lucide="user" class="w-4 h-4 inline mr-2 text-gray-500"></i>
+                                    View Profile
+                                </a>
 
-                            <form method="POST" action="{{ route('logout') }}" class="p-2">
-                                @csrf
-                                <button type="submit"
-                                    class="w-full text-sm text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md">
-                                    Logout
-                                </button>
-                            </form>
+                                <div class="p-2">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full text-sm text-left px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition">
+                                            Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -746,9 +751,13 @@
 
                     const payload = await response.json().catch(() => ({}));
                     cachedNotifications = cachedNotifications.map(item =>
-                        item?.id === id ? { ...item, read_at: item?.read_at ?? new Date().toISOString() } : item
+                        item?.id === id ? {
+                            ...item,
+                            read_at: item?.read_at ?? new Date().toISOString()
+                        } : item
                     );
-                    updateNotifBadge(payload?.unread_count ?? cachedNotifications.filter(item => !item?.read_at).length);
+                    updateNotifBadge(payload?.unread_count ?? cachedNotifications.filter(item => !item
+                        ?.read_at).length);
                 } catch (err) {
                     console.error(err);
                 } finally {
@@ -826,7 +835,10 @@
                 }
             };
 
-            const fetchNotifications = async ({ force = false, silent = false } = {}) => {
+            const fetchNotifications = async ({
+                force = false,
+                silent = false
+            } = {}) => {
                 if (isLoadingNotifications) return;
                 if (hasLoadedNotifications && !force) return;
 
@@ -841,7 +853,9 @@
 
                 try {
                     const response = await fetch('/notifications?limit=15', {
-                        headers: { 'Accept': 'application/json' },
+                        headers: {
+                            'Accept': 'application/json'
+                        },
                         credentials: 'same-origin'
                     });
 
@@ -876,14 +890,22 @@
 
                 notifPollTimer = setInterval(() => {
                     if (document.visibilityState === 'visible') {
-                        fetchNotifications({ force: true, silent: true });
+                        fetchNotifications({
+                            force: true,
+                            silent: true
+                        });
                     }
                 }, notifPollInterval);
-                fetchNotifications({ force: true, silent: true });
+                fetchNotifications({
+                    force: true,
+                    silent: true
+                });
             };
 
             notifBtn?.addEventListener('click', () => {
-                fetchNotifications({ force: true });
+                fetchNotifications({
+                    force: true
+                });
             });
 
             notifMarkAll?.addEventListener('click', (event) => {
@@ -902,12 +924,17 @@
                 );
             });
 
-            fetchNotifications({ silent: true });
+            fetchNotifications({
+                silent: true
+            });
             startNotificationPolling();
 
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
-                    fetchNotifications({ force: true, silent: true });
+                    fetchNotifications({
+                        force: true,
+                        silent: true
+                    });
                     startNotificationPolling();
                 } else if (notifPollTimer) {
                     clearInterval(notifPollTimer);

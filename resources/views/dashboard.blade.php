@@ -535,13 +535,13 @@
 
         function startEdit(postId) {
             setupEditImagePreview(postId);
-            
+
             // Check if this image was marked for removal
             const hiddenFlag = document.getElementById(`remove-image-${postId}`);
             if (removedImages.has(postId) && hiddenFlag) {
                 hiddenFlag.value = '1';
             }
-            
+
             cancelAllDropdowns();
             document.getElementById(`content-${postId}`).style.display = 'none';
             document.getElementById(`edit-form-${postId}`).style.display = 'block';
@@ -910,10 +910,10 @@
             removed.forEach(id => {
                 const container = document.getElementById(`edit-image-preview-${id}`);
                 const hiddenFlag = document.getElementById(`remove-image-${id}`);
-                
+
                 if (container) container.innerHTML = '';
                 if (hiddenFlag) hiddenFlag.value = '1';
-                
+
                 // Also add to our Set for consistency
                 removedImages.add(id);
             });
@@ -927,7 +927,7 @@
 
             // Clear the preview container
             if (previewContainer) previewContainer.innerHTML = '';
-            
+
             // Clear the file input
             if (input) input.value = '';
 
@@ -977,7 +977,7 @@
                                 // Find and remove the comment element
                                 const commentList = document.getElementById(`comments-list-${postId}`);
                                 const commentElement = commentList.querySelector(
-                                `[data-comment-id="${commentId}"]`);
+                                    `[data-comment-id="${commentId}"]`);
                                 if (commentElement) {
                                     // Add fade-out animation
                                     commentElement.style.transition = 'opacity 0.2s ease-out';
@@ -1035,11 +1035,11 @@
                 <strong>${data.comment.user}:</strong> ${data.comment.content}
             </p>
             ${(data.comment.is_author || canModerate) ? `
-                    <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
-                            class="text-red-500 hover:text-red-600 transition">
-                        <i class="fas fa-trash-alt text-xs"></i>
-                    </button>
-                ` : ''}
+                        <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                                class="text-red-500 hover:text-red-600 transition">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
+                    ` : ''}
         </div>
     </div>
 `;
