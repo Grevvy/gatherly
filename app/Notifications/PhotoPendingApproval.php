@@ -8,7 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PhotoPendingApproval extends Notification implements ShouldQueue
+class PhotoPendingApproval extends Notification
 {
     use Queueable;
 
@@ -37,13 +37,19 @@ class PhotoPendingApproval extends Notification implements ShouldQueue
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase(object $notifiable): array
     {
         return [
+            'type' => 'photo_pending_approval',
             'title' => "New photo pending approval in {$this->photo->community->name}",
             'body' => "{$this->uploader->name} has uploaded a new photo that requires approval.",
-            'type' => 'photo_pending_approval',
-            'url' => url("/photos") . "?community=" . $this->photo->community->slug . "&filter=pending"
+            'url' => url('/photos?community=' . $this->photo->community->slug . '&filter=pending'),
+            'photo_id' => $this->photo->id,
+            'community_id' => $this->photo->community->id,
+            'community_slug' => $this->photo->community->slug,
+            'community_name' => $this->photo->community->name,
+            'uploader_id' => $this->uploader->id,
+            'uploader_name' => $this->uploader->name
         ];
     }
 }
