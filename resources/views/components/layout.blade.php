@@ -547,38 +547,35 @@
             const setupDropdown = (btnId, menuId) => {
                 const btn = document.getElementById(btnId);
                 const menu = document.getElementById(menuId);
-                let isLockedOpen = false; // track click-to-stay state
 
                 if (!btn || !menu) return;
 
-                // Toggle on click (lock open)
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    isLockedOpen = !isLockedOpen;
-                    menu.classList.toggle("hidden", !isLockedOpen);
+                // Create a container div to help with hover detection
+                const container = document.createElement('div');
+                container.className = 'relative';
+                btn.parentNode.insertBefore(container, btn);
+                container.appendChild(btn);
+                container.appendChild(menu);
+
+                let hoverTimeout;
+
+                // Show on hover with a small delay
+                container.addEventListener("mouseenter", () => {
+                    clearTimeout(hoverTimeout);
+                    menu.classList.remove("hidden");
                 });
 
-                // Show on hover (only if not locked open)
-                btn.addEventListener("mouseenter", () => {
-                    if (!isLockedOpen) menu.classList.remove("hidden");
-                });
-                btn.addEventListener("mouseleave", () => {
-                    if (!isLockedOpen) menu.classList.add("hidden");
-                });
-
-                // Also handle hovering over the menu itself
-                menu.addEventListener("mouseenter", () => {
-                    if (!isLockedOpen) menu.classList.remove("hidden");
-                });
-                menu.addEventListener("mouseleave", () => {
-                    if (!isLockedOpen) menu.classList.add("hidden");
-                });
-
-                // Close if clicked outside
-                document.addEventListener("click", (e) => {
-                    if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                // Hide on mouse leave with a delay (to make it easier to reach the menu)
+                container.addEventListener("mouseleave", () => {
+                    hoverTimeout = setTimeout(() => {
                         menu.classList.add("hidden");
-                        isLockedOpen = false;
+                    }, 100); // Small delay to make it less finicky
+                });
+
+                // Clicking outside closes
+                document.addEventListener("click", (e) => {
+                    if (!container.contains(e.target)) {
+                        menu.classList.add("hidden");
                     }
                 });
             };

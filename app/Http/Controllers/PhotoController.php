@@ -150,6 +150,23 @@ class PhotoController extends Controller
 
         $photo->save();
 
+        // If photo requires approval, notify community owner and moderators
+        if ($status === Photo::STATUS_PENDING) {
+            // Load users with owner/admin/moderator roles
+            $moderators = $community->memberships()
+                ->whereIn('role', ['owner', 'admin', 'moderator'])
+                ->where('status', 'active')
+                ->with('user')
+                ->get()
+                ->pluck('user');
+
+            // Send notification
+            \Illuminate\Support\Facades\Notification::send(
+                $moderators,
+                new \App\Notifications\PhotoPendingApproval($photo, $request->user())
+            );
+        }
+
         return redirect()
             ->route('photos.index', ['community' => $community->slug])
             ->with('success', 'Photo uploaded successfully!');
@@ -183,6 +200,20 @@ class PhotoController extends Controller
     {
         $this->authorize('review', $photo);
         $photo->approve(request()->user());
+
+        // Notify community members that a new photo has been approved
+        $community = $photo->community;
+        $members = $community->memberships()
+            ->where('status', 'active')
+            ->with('user')
+            ->get()
+            ->pluck('user');
+
+        \Illuminate\Support\Facades\Notification::send(
+            $members,
+            new \App\Notifications\PhotoApproved($photo, $photo->user)
+        );
+        
         return back()->with('success', 'Photo approved successfully!');
     }
 

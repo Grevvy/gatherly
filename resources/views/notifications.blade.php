@@ -141,6 +141,21 @@
                                                     Mark as read
                                                 </button>
                                             @endif
+                                            <script>
+                                                document.querySelector('button[data-notification-id="{{ $item["id"] }}"]')?.addEventListener('click', function() {
+                                                    const notifCard = this.closest('[data-notification-card]');
+                                                    if (notifCard) {
+                                                        notifCard.classList.remove('shadow-[0_25px_55px_rgba(37,99,235,0.18)]');
+                                                        notifCard.classList.add('shadow-[0_10px_30px_rgba(15,23,42,0.08)]');
+                                                        notifCard.querySelector('.bg-gradient-to-r').classList.remove('from-blue-500/20', 'via-indigo-500/10');
+                                                        notifCard.querySelector('.bg-gradient-to-r').classList.add('from-slate-200/30', 'via-slate-100/40');
+                                                        const iconDiv = notifCard.querySelector('.rounded-2xl');
+                                                        iconDiv.classList.remove('from-blue-500', 'to-indigo-500');
+                                                        iconDiv.classList.add('from-slate-300', 'to-slate-200');
+                                                        this.remove();
+                                                    }
+                                                });
+                                            </script>
                                         </div>
                                     </div>
                                 </div>
@@ -276,11 +291,27 @@
 
                     if (res.ok) {
                         const payload = await res.json().catch(() => ({}));
-                        document.querySelectorAll('.mark-read-btn').forEach(btn => btn.remove());
+                        // Update UI for all notification cards
                         document.querySelectorAll('[data-notification-card]').forEach(card => {
+                            // Update shadow
                             card.classList.remove('shadow-[0_25px_55px_rgba(37,99,235,0.18)]');
                             card.classList.add('shadow-[0_10px_30px_rgba(15,23,42,0.08)]');
+                            
+                            // Update gradient background
+                            const gradient = card.querySelector('.bg-gradient-to-r');
+                            gradient.classList.remove('from-blue-500/20', 'via-indigo-500/10');
+                            gradient.classList.add('from-slate-200/30', 'via-slate-100/40');
+                            
+                            // Update icon color
+                            const iconDiv = card.querySelector('.rounded-2xl');
+                            iconDiv.classList.remove('from-blue-500', 'to-indigo-500');
+                            iconDiv.classList.add('from-slate-300', 'to-slate-200');
+                            
+                            // Remove mark as read button
+                            card.querySelector('.mark-read-btn')?.remove();
                         });
+
+                        // Update counters and show success message
                         updateCounters(payload.unread_count ?? 0);
                         showToastify('All notifications marked as read.', 'success');
                     } else {

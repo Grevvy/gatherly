@@ -2,6 +2,7 @@
     use App\Models\Community;
 
     $slug = request('community');
+    $photoId = request('photo');
     $community = $slug
         ? Community::with(['owner', 'memberships.user', 'photos.user'])
             ->where('slug', $slug)
@@ -40,7 +41,13 @@
         <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @forelse ($photos ?? [] as $photo)
                 <div
-                    class="relative group w-full max-w-[40rem] h-60 overflow-hidden rounded-2xl shadow-sm border border-gray-200 bg-white transition-transform transform duration-300 ease-out hover:scale-105 hover:z-50 hover:shadow-2xl cursor-pointer">
+                    class="relative group w-full max-w-[40rem] h-60 overflow-hidden rounded-2xl shadow-sm border border-gray-200 bg-white transition-transform transform duration-300 ease-out hover:scale-105 hover:z-50 hover:shadow-2xl cursor-pointer photo-card"
+                    data-photo-id="{{ $photo->id }}"
+                    data-photo-url="{{ $photo->image_url }}"
+                    data-photo-caption="{{ $photo->caption }}"
+                    data-photo-user="{{ $photo->user->name }}"
+                    data-photo-time="{{ $photo->created_at?->diffForHumans() }}"
+                    data-photo-status="{{ $photo->status }}">
 
                     <img src="{{ $photo->image_url ?? 'https://via.placeholder.com/400x300?text=Photo' }}"
                         alt="Community photo"
@@ -110,11 +117,15 @@
 
     </div>
 
+    <!-- Include the photo modal component -->
+    <x-photo-modal />
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Delete photo functionality
             document.querySelectorAll('.delete-photo-btn').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent opening modal when clicking delete
                     const photoId = this.dataset.photoId;
                     
                     showConfirmToast(
@@ -130,7 +141,7 @@
                                 });
 
                                 if (res.ok) {
-                                    const photoCard = document.querySelector(`[data-photo-id="${photoId}"]`).closest('.relative.group');
+                                    const photoCard = document.querySelector(`[data-photo-id="${photoId}"]`).closest('.photo-card');
                                     photoCard.remove();
                                     showToastify('Photo deleted successfully', 'success');
                                 } else {
@@ -148,22 +159,87 @@
                 });
             });
 
+            // Photo modal functionality
+            const photoModal = document.getElementById('photoModal');
+            const modalPhoto = document.getElementById('modalPhoto');
+            const modalPhotoUser = document.getElementById('modalPhotoUser');
+            const modalPhotoTime = document.getElementById('modalPhotoTime');
+            const modalPhotoCaption = document.getElementById('modalPhotoCaption');
+            const prevButton = document.getElementById('prevPhoto');
+            const nextButton = document.getElementById('nextPhoto');
+            let currentPhotoId = null;
+            
+            function showPhoto(photoCard) {
+                const photoId = photoCard.dataset.photoId;
+                const photoUrl = photoCard.dataset.photoUrl;
+                const photoCaption = photoCard.dataset.photoCaption;
+                const photoUser = photoCard.dataset.photoUser;
+                const photoTime = photoCard.dataset.photoTime;
+                
+                modalPhoto.src = photoUrl;
+                modalPhotoUser.textContent = photoUser;
+                modalPhotoTime.textContent = photoTime;
+                modalPhotoCaption.textContent = photoCaption || '';
+                currentPhotoId = photoId;
+                
+                // Update navigation buttons
+                const allPhotos = Array.from(document.querySelectorAll('.photo-card'));
+                const currentIndex = allPhotos.findIndex(card => card.dataset.photoId === photoId);
+                prevButton.disabled = currentIndex === 0;
+                nextButton.disabled = currentIndex === allPhotos.length - 1;
+                
+                photoModal.classList.remove('hidden');
+            }
 
+            // Handle photo clicks
+            document.querySelectorAll('.photo-card').forEach(card => {
+                card.addEventListener('click', () => showPhoto(card));
+            });
 
-            // Modal functionality
-            const modal = document.getElementById('uploadModal');
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.classList.add('hidden');
+            // Close modal
+            document.getElementById('closePhotoModal').addEventListener('click', () => {
+                photoModal.classList.add('hidden');
+            });
+
+            // Navigation
+            prevButton.addEventListener('click', () => {
+                const allPhotos = Array.from(document.querySelectorAll('.photo-card'));
+                const currentIndex = allPhotos.findIndex(card => card.dataset.photoId === currentPhotoId);
+                if (currentIndex > 0) {
+                    showPhoto(allPhotos[currentIndex - 1]);
                 }
             });
 
-            // Escape key to close modal
-            window.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
-                    modal.classList.add('hidden');
+            nextButton.addEventListener('click', () => {
+                const allPhotos = Array.from(document.querySelectorAll('.photo-card'));
+                const currentIndex = allPhotos.findIndex(card => card.dataset.photoId === currentPhotoId);
+                if (currentIndex < allPhotos.length - 1) {
+                    showPhoto(allPhotos[currentIndex + 1]);
                 }
             });
+
+            // Keyboard navigation
+            window.addEventListener('keydown', (e) => {
+                if (photoModal.classList.contains('hidden')) return;
+                
+                if (e.key === 'Escape') {
+                    photoModal.classList.add('hidden');
+                } else if (e.key === 'ArrowLeft' && !prevButton.disabled) {
+                    prevButton.click();
+                } else if (e.key === 'ArrowRight' && !nextButton.disabled) {
+                    nextButton.click();
+                }
+            });
+
+            // Auto-open photo from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const photoParam = urlParams.get('photo');
+            if (photoParam) {
+                const photoCard = document.querySelector(`.photo-card[data-photo-id="${photoParam}"]`);
+                if (photoCard) {
+                    showPhoto(photoCard);
+                }
+            }
 
             // Handle file input change
             const fileInput = document.querySelector('input[type="file"]');
