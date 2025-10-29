@@ -111,6 +111,6 @@ class Photo extends Model
      */
     public function getImageUrlAttribute(): string
     {
-        return asset('storage/' . $this->image_path);
+        return config('filesystems.disks.public.url') . '/' . $this->image_path;
     }
 }

@@ -74,7 +74,7 @@
                                 <div
                                     class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
                                     @if ($user && $user->avatar)
-                                        <img src="{{ asset('storage/' . $user->avatar) }}"
+                                        <img src="{{ $user->avatar_url ?: asset('images/default-avatar.png') }}"
                                             alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-bold text-lg">
@@ -176,7 +176,7 @@
                                 <div
                                     class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                     @if ($postUser && $postUser->avatar)
-                                        <img src="{{ asset('storage/' . $postUser->avatar) }}"
+                                        <img src="{{ $postUser->avatar_url ?: asset('images/default-avatar.png') }}"
                                             alt="{{ $postUser->name }}'s avatar" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-semibold">
@@ -249,7 +249,7 @@
 
                             @if ($post->image_path)
                                 <div class="mt-2">
-                                    <img src="{{ asset('storage/' . $post->image_path) }}"
+                                    <img src="{{ $post->image_url }}"
                                         class="w-full h-auto object-contain rounded border border-gray-300" />
                                 </div>
                             @endif
@@ -309,7 +309,7 @@
                                             <div
                                                 class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                                 @if ($comment->user->avatar)
-                                                    <img src="{{ asset('storage/' . $comment->user->avatar) }}"
+                                                    <img src="{{ $comment->user->avatar_url ?: asset('images/default-avatar.png') }}"
                                                         alt="{{ $comment->user->name }}'s avatar"
                                                         class="w-full h-full object-cover">
                                                 @else
@@ -375,7 +375,7 @@
                                     class="relative w-full max-w-xs mt-2">
                                     @if ($post->image_path)
                                         <img id="edit-crop-preview-{{ $post->id }}"
-                                            src="{{ asset('storage/' . $post->image_path) }}"
+                                            src="{{ $post->image_url }}"
                                             class="rounded border object-contain w-full max-h-60 shadow" />
                                         <button type="button" onclick="startEditCrop({{ $post->id }})"
                                             class="absolute top-1 left-1 bg-white text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center shadow hover:bg-blue-50 transition rounded-full"

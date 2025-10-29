@@ -40,7 +40,7 @@ class MemberJoined extends Notification
             'membership_id' => $membership->id,
             'member_id' => $member?->id,
             'member_name' => $member?->name,
-            'member_avatar' => $member?->avatar ? asset('storage/' . $member->avatar) : null,
+            'member_avatar' => $member?->avatar_url,
         ];
     }
 }

@@ -104,4 +104,16 @@ class Community extends Model
             }
         });
     }
+
+    /**
+     * Get the URL for the community's banner image
+     */
+    public function getBannerUrlAttribute(): ?string
+    {
+        if (!$this->banner_image) {
+            return null;
+        }
+        
+        return config('filesystems.disks.public.url') . '/' . $this->banner_image;
+    }
 }

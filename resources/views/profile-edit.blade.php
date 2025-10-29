@@ -25,7 +25,7 @@
                     <div class="flex flex-col items-center gap-3">
                         <div class="relative">
                             @if (Auth::user()->avatar)
-                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="Avatar"
+                                <img src="{{ Auth::user()->avatar_url ?: asset('images/default-avatar.png') }}" alt="Avatar"
                                     class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md">
                             @else
                                 <div

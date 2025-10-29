@@ -39,12 +39,19 @@ return [
         ],
 
         'public' => [
-            'driver' => 'local',
+            'driver' => env('FILESYSTEM_DRIVER', 'local'),
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('FILESYSTEM_DRIVER') === 's3' ? env('AWS_URL') : env('APP_URL').'/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+            // Cloud storage configuration (when FILESYSTEM_DRIVER=s3)
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET', 'public'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
         ],
 
         's3' => [
