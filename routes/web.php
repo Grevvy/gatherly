@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\NotificationController;
 use App\Models\Community;
 
 
@@ -67,7 +69,17 @@ Route::get('/explore', function () {
     Route::delete('/threads/{thread}', [MessageThreadController::class, 'destroy'])->name('threads.destroy');
     
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/feed', [MessageController::class, 'feed'])->name('messages.feed');
     Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // Notifications
+    Route::get('/notifications/center', [NotificationController::class, 'page'])->name('notifications.center');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clearAll');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->whereUuid('notification')
+        ->name('notifications.read');
 
     // Community routes
     Route::get('/community-edit', function () {
@@ -77,6 +89,14 @@ Route::get('/explore', function () {
     Route::get('/create-event', function () {
         return view('create-event');
     })->name(name: 'create-event');
+
+        // Photo Gallery routes
+        Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+        Route::get('/photos/upload', [PhotoController::class, 'create'])->name('photos.create');
+        Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+        Route::delete('/photos/{photo}', [PhotoController::class, 'destroy'])->name('photos.destroy');
+        Route::post('/photos/{photo}/approve', [PhotoController::class, 'approve'])->name('photos.approve');
+        Route::post('/photos/{photo}/reject', [PhotoController::class, 'reject'])->name('photos.reject');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -145,5 +165,14 @@ Route::get('/explore', function () {
     Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
-});
 
+    // Likes
+    Route::post('/communities/{community:slug}/posts/{post}/like', [PostController::class, 'toggleLike'])
+        ->name('posts.like');
+
+    // Replies (Comments)
+    Route::post('/communities/{community:slug}/posts/{post}/replies', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.replies.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/replies/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.replies.destroy');
+    Route::post('/communities/{community:slug}/posts/{post}/comment', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.comment.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/comment/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.comment.destroy');
+});

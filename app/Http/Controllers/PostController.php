@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\Community;
 use App\Models\CommunityMembership;
+use App\Models\Like;
+use App\Notifications\PostPublished;
+use App\Notifications\PostPendingApproval;
+use App\Notifications\PostLiked;
+use App\Notifications\PostReplied;
+use App\Services\NotificationService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -101,6 +107,23 @@ class PostController extends Controller
 
         $post->save();
 
+        if ($post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
+        } else {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Only notify moderators about pending posts
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
+
         // Return response based on request type
         if ($request->wantsJson()) {
             return response()->json([
@@ -130,6 +153,8 @@ class PostController extends Controller
     public function update(Request $request, Community $community, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
+
+        $originalStatus = $post->status;
 
         $data = $request->validate([
             'content' => ['sometimes', 'string', 'max:1000'],
@@ -162,6 +187,23 @@ class PostController extends Controller
         }
 
         $post->update($data);
+        $post->refresh();
+
+        if ($originalStatus !== 'published' && $post->status === 'published') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
+        } elseif ($originalStatus !== 'pending' && $post->status === 'pending') {
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            app(NotificationService::class)->notifyCommunityModerators(
+                $post->community,
+                new PostPendingApproval($post),
+                $post->user_id
+            );
+        }
 
         return response()->json([
             'message' => 'Post updated successfully',
@@ -197,6 +239,14 @@ class PostController extends Controller
                 'status' => 'published',
                 'published_at' => now(),
             ]);
+
+            $post->refresh();
+            $post->loadMissing('community:id,name,slug', 'user:id,name');
+            // Notify all community members including the author about the published post
+            app(NotificationService::class)->notifyCommunityMembers(
+                $post->community,
+                new PostPublished($post)
+            );
         } else {
             $post->update([
                 'status' => 'rejected',
@@ -206,4 +256,29 @@ class PostController extends Controller
 
         return response()->json($post->fresh());
     }
-}
+    public function toggleLike(Community $community, Post $post): JsonResponse
+    {
+        $user = Auth::user();
+
+        // If already liked → unlike
+        $existing = $post->likes()->where('user_id', $user->id)->first();
+        if ($existing) {
+            $existing->delete();
+            $liked = false;
+        } else {
+            $post->likes()->create(['user_id' => $user->id]);
+            $liked = true;
+
+            // Only notify on like, not unlike
+            if ($post->user_id !== $user->id) { // Don't notify if liking own post
+                $post->loadMissing('community'); // Ensure community is loaded for notification URL
+                $post->user->notify(new PostLiked($post, $user));
+            }
+        }
+
+        // Return JSON response
+        return response()->json([
+            'liked' => $liked,
+            'like_count' => $post->likes()->count()
+        ]);
+    }}
