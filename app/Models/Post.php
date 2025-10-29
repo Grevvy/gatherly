@@ -19,10 +19,12 @@ class Post extends Model
         'user_id',
         'community_id',
         'image_path',
+        'content_updated_at',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'content_updated_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

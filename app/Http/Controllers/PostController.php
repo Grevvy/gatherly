@@ -89,6 +89,7 @@ class PostController extends Controller
         $post->content = $validated['content'];
         $post->user_id = Auth::id();
         $post->community_id = $community->id;
+        $post->content_updated_at = now(); // Set initial content timestamp
         
         // Use policy to check if post can be auto-published
         if (Auth::user()->can('autoPublish', $post)) {
@@ -160,6 +161,7 @@ class PostController extends Controller
             'content' => ['sometimes', 'string', 'max:1000'],
             'status' => ['sometimes', 'in:draft,pending,published'],
             'image' => ['sometimes', 'nullable', 'image', 'max:5120'], // 5MB max
+            'remove_image' => ['sometimes', 'boolean'],
         ]);
 
         // If changing to pending and user is moderator/admin/owner, auto-publish
@@ -177,13 +179,40 @@ class PostController extends Controller
             }
         }
 
-        // Handle image upload if present
-        if ($request->hasFile('image')) {
+        // Track if content was actually modified
+        $contentChanged = false;
+        
+        // Check if content was changed
+        if (isset($data['content']) && $data['content'] !== $post->content) {
+            $contentChanged = true;
+        }
+
+        // Handle image removal if requested
+        if ($request->filled('remove_image') && $request->remove_image) {
+            if ($post->image_path) {
+                Storage::disk('public')->delete($post->image_path);
+                $contentChanged = true; // Image removal is a content change
+            }
+            $data['image_path'] = null;
+        }
+        // Handle new image upload if present
+        elseif ($request->hasFile('image')) {
             // Delete old image if it exists
             if ($post->image_path) {
                 Storage::disk('public')->delete($post->image_path);
             }
             $data['image_path'] = $request->file('image')->store('post-images', 'public');
+            $contentChanged = true; // Image change is a content change
+        }
+
+        // Only update content_updated_at if content actually changed
+        if ($contentChanged) {
+            $data['content_updated_at'] = now();
+        }
+
+        // Set published_at when status changes to published (but this isn't a content change)
+        if (isset($data['status']) && $data['status'] === 'published' && $originalStatus !== 'published') {
+            $data['published_at'] = now();
         }
 
         $post->update($data);
