@@ -28,29 +28,13 @@ class CommentController extends Controller
             'content' => $request->input('content'),
         ]);
 
-        // Load necessary relationships for notification
-        $comment->load(['user:id,name,avatar']);
-        $post->load([
-            'community:id,name,slug',
-            'user:id,name',
-            'comments.user:id,name'
-        ]);
+        // Load essential relationships
+        $post->loadMissing(['community:id,name,slug', 'user:id,name']);
 
-        // Get all unique users to notify (post author and other commenters)
-        $usersToNotify = $post->comments()
-            ->where('user_id', '!=', Auth::id()) // Don't notify the commenter
-            ->with('user')
-            ->get()
-            ->pluck('user')
-            ->unique('id');
-
-        // Add the post author if they haven't commented and aren't the current commenter
-        if ($post->user_id !== Auth::id() && !$usersToNotify->contains('id', $post->user_id)) {
-            $usersToNotify->push($post->user);
+        // Send notification to post author only if they're not the commenter
+        if ($post->user_id !== Auth::id()) {
+            $post->user->notify(new PostReplied($post, $comment, Auth::user()));
         }
-
-        // Send notifications
-        Notification::send($usersToNotify, new PostReplied($post, $comment, Auth::user()));
 
         return response()->json([
             'success' => true,

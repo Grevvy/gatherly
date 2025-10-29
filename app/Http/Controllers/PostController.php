@@ -269,10 +269,9 @@ class PostController extends Controller
             $post->likes()->create(['user_id' => $user->id]);
             $liked = true;
 
-            // Only notify on like, not unlike
-            if ($post->user_id !== $user->id) { // Don't notify if liking own post
-                // Ensure community and user are loaded for the notification
-                $post->loadMissing(['community:id,name,slug', 'user:id,name']);
+            // Only notify post author when someone else likes their post
+            if ($post->user_id !== $user->id) {
+                $post->loadMissing('community:id,name,slug');
                 $post->user->notify(new PostLiked($post, $user));
             }
         }
