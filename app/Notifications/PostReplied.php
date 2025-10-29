@@ -9,7 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class PostReplied extends Notification implements ShouldQueue
+class PostReplied extends Notification
 {
     use Queueable;
 
@@ -43,7 +43,7 @@ class PostReplied extends Notification implements ShouldQueue
      *
      * @return array<string, mixed>
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase(object $notifiable): array
     {
         $isAuthor = $notifiable->id === $this->post->user_id;
         
