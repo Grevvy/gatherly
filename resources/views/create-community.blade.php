@@ -14,14 +14,6 @@
         <form id="create-community-form" method="POST" action="/communities" enctype="multipart/form-data">
             @csrf
 
-            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit"
-                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
-                    Create a New Community
-                </button>
-                <a href="{{ route('dashboard') }}" class="text-gray-600 underline text-sm">Cancel</a>
-            </div>
-
             <!-- Name -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community Name</span>
@@ -94,6 +86,13 @@
                 <p class="text-xs text-gray-500 mt-2">
                     Select all topics that match this community.
                 </p>
+            </div>
+            <div class="flex justify-between mt-8 pt-4 border-t border-gray-200">
+                <a href="{{ route('dashboard') }}" class="text-gray-600 underline text-sm">Cancel</a>
+                <button type="submit"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                    Create a New Community
+                </button>
             </div>
         </form>
     </div>
