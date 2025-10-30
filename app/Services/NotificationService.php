@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Community;
+use App\Models\CommunityMembership;
 use App\Models\MessageThread;
 use Illuminate\Notifications\Notification as BaseNotification;
 use Illuminate\Support\Collection;
@@ -13,7 +14,8 @@ class NotificationService
     public function notifyCommunityMembers(
         Community $community,
         BaseNotification $notification,
-        ?int $excludeUserId = null
+        ?int $excludeUserId = null,
+        ?string $category = null
     ): void {
         $recipients = $community->members()
             ->wherePivot('status', 'active')
@@ -24,7 +26,13 @@ class NotificationService
             $recipients->push($community->owner);
         }
 
-        $this->dispatch($recipients, $notification);
+        $collection = $recipients->unique('id');
+
+        if ($category) {
+            $collection = $collection->filter(fn ($user) => $this->allowsCategory($user, $category));
+        }
+
+        $this->dispatch($collection, $notification);
     }
 
     public function notifyThreadParticipants(
@@ -42,7 +50,8 @@ class NotificationService
     public function notifyCommunityModerators(
         Community $community,
         BaseNotification $notification,
-        ?int $excludeUserId = null
+        ?int $excludeUserId = null,
+        ?string $category = null
     ): void {
         $recipients = $community->members()
             ->wherePivot('status', 'active')
@@ -54,7 +63,13 @@ class NotificationService
             $recipients->push($community->owner);
         }
 
-        $this->dispatch($recipients, $notification);
+        $collection = $recipients->unique('id');
+
+        if ($category) {
+            $collection = $collection->filter(fn ($user) => $this->allowsCategory($user, $category));
+        }
+
+        $this->dispatch($collection, $notification);
     }
 
     public function dispatch(iterable $recipients, BaseNotification $notification): void
@@ -63,12 +78,31 @@ class NotificationService
             ? $recipients
             : collect($recipients);
 
-        $unique = $collection->unique('id')->filter();
+        $unique = $collection->unique('id')->filter(function ($user) {
+            $until = $user->notifications_snoozed_until ?? null;
+
+            if ($until instanceof \Illuminate\Support\Carbon) {
+                return ! $until->isFuture();
+            }
+
+            return empty($until);
+        });
 
         if ($unique->isEmpty()) {
             return;
         }
 
         Notification::send($unique, $notification);
+    }
+
+    private function allowsCategory($user, string $category): bool
+    {
+        $prefs = $user->pivot?->notification_preferences ?? [];
+        $allowed = array_merge(
+            CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES,
+            is_array($prefs) ? $prefs : []
+        );
+
+        return $allowed[$category] ?? true;
     }
 }

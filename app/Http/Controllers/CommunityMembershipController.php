@@ -75,6 +75,7 @@ class CommunityMembershipController extends Controller
             'user_id'      => $uid,
             'role'         => 'member',
             'status'       => $status,
+            'notification_preferences' => CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES,
         ]);
 
         $membership->loadMissing('user:id,name,avatar', 'community:id,name,slug');
@@ -84,13 +85,15 @@ class CommunityMembershipController extends Controller
             $notifier->notifyCommunityModerators(
                 $community,
                 new MembershipRequested($membership),
-                $uid
+                $uid,
+                'memberships'
             );
         } else {
             $notifier->notifyCommunityModerators(
                 $community,
                 new MemberJoined($membership),
-                $uid
+                $uid,
+                'memberships'
             );
         }
 
@@ -110,7 +113,8 @@ class CommunityMembershipController extends Controller
         app(NotificationService::class)->notifyCommunityModerators(
             $community,
             new MemberLeft($community, $user),
-            $uid
+            $uid,
+            'memberships'
         );
 
         if (request()->wantsJson()) {
@@ -136,7 +140,8 @@ class CommunityMembershipController extends Controller
         app(NotificationService::class)->notifyCommunityModerators(
             $community,
             new MemberJoined($m),
-            $m->user_id
+            $m->user_id,
+            'memberships'
         );
 
         if ($m->user) {
@@ -179,6 +184,11 @@ class CommunityMembershipController extends Controller
             ['role' => 'member', 'status' => 'pending']
         );
 
+        if ($membership->wasRecentlyCreated && empty($membership->notification_preferences)) {
+            $membership->notification_preferences = CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES;
+            $membership->save();
+        }
+
         return response()->json($membership, 201);
     }
 
@@ -209,6 +219,10 @@ class CommunityMembershipController extends Controller
                     ['community_id' => $community->id, 'user_id' => $previousOwnerId],
                     ['role' => 'admin', 'status' => 'active']
                 );
+                if ($demoted->wasRecentlyCreated && empty($demoted->notification_preferences)) {
+                    $demoted->notification_preferences = CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES;
+                    $demoted->save();
+                }
 
                 $membership->update(['role' => 'owner']);
                 $changes[] = ['membership' => $membership->fresh(['user', 'community']), 'old' => $oldRole];
@@ -278,7 +292,8 @@ class CommunityMembershipController extends Controller
         app(NotificationService::class)->notifyCommunityModerators(
             $community,
             new MemberLeft($community, $user),
-            null
+            null,
+            'memberships'
         );
 
         return response()->json(['message' => 'Member removed']);

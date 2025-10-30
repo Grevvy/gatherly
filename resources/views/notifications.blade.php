@@ -12,6 +12,32 @@
         <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-sky-500/10 blur-3xl transform scale-110"></div>
 
         <div class="relative max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
+            @php
+                $isSnoozed = $snoozedUntil && $snoozedUntil->isFuture();
+                $snoozeHuman = $isSnoozed ? $snoozedUntil->diffForHumans() : null;
+            @endphp
+
+            @php
+                $preferenceOptions = [
+                    'posts' => [
+                        'label' => 'Posts',
+                        'on_classes' => 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-transparent shadow-md',
+                    ],
+                    'events' => [
+                        'label' => 'Events',
+                        'on_classes' => 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white border-transparent shadow-md',
+                    ],
+                    'photos' => [
+                        'label' => 'Photos',
+                        'on_classes' => 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white border-transparent shadow-md',
+                    ],
+                    'memberships' => [
+                        'label' => 'Members',
+                        'on_classes' => 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-transparent shadow-md',
+                    ],
+                ];
+            @endphp
+
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
@@ -39,6 +65,90 @@
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <div class="bg-white/90 border border-blue-100 rounded-3xl shadow-[0_15px_45px_rgba(37,99,235,0.08)] p-6 sm:p-8 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            Notification Preferences
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Choose what you’d like to hear about from each community.
+                        </p>
+                        <p data-snooze-info
+                            class="text-xs text-amber-600 font-medium mt-2 {{ $isSnoozed ? '' : 'hidden' }}">
+                            @if ($isSnoozed && $snoozeHuman)
+                                Snoozed until {{ $snoozedUntil->format('M j, g:i A') }} ({{ $snoozeHuman }}).
+                            @else
+                                Snoozed for 24 hours.
+                            @endif
+                        </p>
+                    </div>
+                    <button id="notif-snooze-toggle"
+                        data-state="{{ $isSnoozed ? 'on' : 'off' }}"
+                        data-on-classes="bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50"
+                        data-off-classes="bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition
+                            {{ $isSnoozed
+                                ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50'
+                                : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50' }}">
+                        <i data-lucide="{{ $isSnoozed ? 'bell-off' : 'bell-minus' }}" class="w-3.5 h-3.5"></i>
+                        <span>{{ $isSnoozed ? 'Resume notifications' : 'Snooze all for 24h' }}</span>
+                    </button>
+                </div>
+
+                <p data-pref-status
+                    class="text-xs font-medium text-gray-400 transition-opacity duration-200 opacity-0">
+                    Preferences updated.
+                </p>
+
+                @if ($preferenceMemberships->isNotEmpty())
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach ($preferenceMemberships as $membership)
+                            <div class="border border-gray-100 rounded-2xl p-5 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <h3 class="text-base font-semibold text-gray-900">
+                                            {{ $membership['community_name'] }}
+                                        </h3>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Toggle the updates you want from this community.
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide rounded-full bg-slate-100 text-slate-500">
+                                        {{ ucfirst($membership['role']) }}
+                                    </span>
+                                </div>
+                                <div class="mt-4 flex flex-wrap items-center gap-3">
+                                    @foreach ($preferenceOptions as $key => $option)
+                                        @php
+                                            $enabled = $membership['preferences'][$key] ?? true;
+                                        @endphp
+                                        <button type="button"
+                                            data-pref-toggle
+                                            data-community="{{ $membership['community_slug'] }}"
+                                            data-key="{{ $key }}"
+                                            data-enabled="{{ $enabled ? '1' : '0' }}"
+                                            data-on-classes="{{ $option['on_classes'] }}"
+                                            data-off-classes="bg-gray-100 text-gray-600 border-gray-200 hover:border-gray-300"
+                                            class="pref-toggle inline-flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition
+                                                {{ $enabled ? $option['on_classes'] : 'bg-gray-100 text-gray-600 border-gray-200 hover:border-gray-300' }}">
+                                            <span class="uppercase tracking-wide text-[11px] font-semibold">{{ $option['label'] }}</span>
+                                            <span data-state-text class="text-xs font-medium">
+                                                {{ $enabled ? 'On' : 'Muted' }}
+                                            </span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-sm text-gray-500">
+                        Join a community to manage notification preferences.
+                    </p>
+                @endif
             </div>
 
             @if ($notifications->isEmpty())
@@ -195,6 +305,183 @@
                     }
                 }
             };
+
+            const snoozeBtn = document.getElementById('notif-snooze-toggle');
+            const inlineStatus = document.querySelector('[data-pref-status]');
+            let statusTimer = null;
+
+            const showInlineStatus = (message, tone = 'info') => {
+                if (!inlineStatus) {
+                    return;
+                }
+
+                inlineStatus.textContent = message;
+                inlineStatus.classList.remove('text-gray-400', 'text-emerald-600', 'text-amber-600', 'text-rose-600');
+
+                const toneClass = {
+                    info: 'text-gray-400',
+                    success: 'text-emerald-600',
+                    warning: 'text-amber-600',
+                    error: 'text-rose-600',
+                }[tone] ?? 'text-gray-400';
+
+                inlineStatus.classList.add(toneClass);
+                inlineStatus.classList.remove('opacity-0');
+                inlineStatus.classList.add('opacity-100');
+
+                if (statusTimer) {
+                    clearTimeout(statusTimer);
+                }
+                statusTimer = setTimeout(() => {
+                    inlineStatus.classList.remove('opacity-100');
+                    inlineStatus.classList.add('opacity-0');
+                }, 2500);
+            };
+
+            const applyToggleClasses = (button, isActive) => {
+                if (!button) {
+                    return;
+                }
+
+                const onClasses = (button.dataset.onClasses || '').split(' ').filter(Boolean);
+                const offClasses = (button.dataset.offClasses || '').split(' ').filter(Boolean);
+
+                button.classList.remove(...onClasses, ...offClasses);
+                if (isActive) {
+                    button.classList.add(...onClasses);
+                    button.dataset.enabled = '1';
+                } else {
+                    button.classList.add(...offClasses);
+                    button.dataset.enabled = '0';
+                }
+
+                const stateText = button.querySelector('[data-state-text]');
+                if (stateText) {
+                    stateText.textContent = isActive ? 'On' : 'Muted';
+                }
+            };
+
+            const updatePrefButtonsForCommunity = (slug, prefs) => {
+                document.querySelectorAll(`[data-pref-toggle][data-community="${slug}"]`).forEach(button => {
+                    const key = button.dataset.key;
+                    if (Object.prototype.hasOwnProperty.call(prefs, key)) {
+                        applyToggleClasses(button, !!prefs[key]);
+                    }
+                });
+            };
+
+            document.querySelectorAll('[data-pref-toggle]').forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!csrfToken) return;
+
+                    const slug = button.dataset.community;
+                    const key = button.dataset.key;
+                    const nextValue = !(button.dataset.enabled === '1');
+
+                    button.disabled = true;
+
+                    try {
+                        const res = await fetch(`/notifications/preferences/${slug}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({ [key]: nextValue })
+                        });
+
+                        if (!res.ok) {
+                            throw new Error('Request failed');
+                        }
+
+                        const payload = await res.json().catch(() => ({}));
+                        updatePrefButtonsForCommunity(slug, payload.preferences || { [key]: nextValue });
+                        showInlineStatus('Preferences updated.', 'success');
+                    } catch (error) {
+                        console.error(error);
+                        showInlineStatus('Unable to update preferences.', 'error');
+                    } finally {
+                        button.disabled = false;
+                    }
+                });
+            });
+
+            const updateSnoozeButton = (state, until = null) => {
+                if (!snoozeBtn) {
+                    return;
+                }
+
+                const isOn = state === 'on';
+                snoozeBtn.dataset.state = state;
+
+                const onClasses = (snoozeBtn.dataset.onClasses || '').split(' ').filter(Boolean);
+                const offClasses = (snoozeBtn.dataset.offClasses || '').split(' ').filter(Boolean);
+                snoozeBtn.classList.remove(...onClasses, ...offClasses);
+                snoozeBtn.classList.add(...(isOn ? onClasses : offClasses));
+
+                const icon = snoozeBtn.querySelector('i[data-lucide]');
+                if (icon) {
+                    icon.setAttribute('data-lucide', isOn ? 'bell-off' : 'bell-minus');
+                }
+
+                const label = snoozeBtn.querySelector('span');
+                if (label) {
+                    label.textContent = isOn ? 'Resume notifications' : 'Snooze all for 24h';
+                }
+
+                if (window.Lucide) {
+                    window.Lucide.createIcons();
+                }
+
+                const info = document.querySelector('[data-snooze-info]');
+                if (info) {
+                    if (isOn && until) {
+                        const untilDate = new Date(until);
+                        info.textContent = `Snoozed until ${untilDate.toLocaleString()}.`;
+                        info.classList.remove('hidden');
+                    } else if (isOn) {
+                        info.textContent = 'Snoozed for 24 hours.';
+                        info.classList.remove('hidden');
+                    } else {
+                        info.classList.add('hidden');
+                    }
+                }
+            };
+
+            snoozeBtn?.addEventListener('click', async () => {
+                if (!csrfToken) return;
+
+                const nextState = snoozeBtn.dataset.state === 'on' ? 'off' : 'on';
+                snoozeBtn.disabled = true;
+
+                try {
+                    const res = await fetch('/notifications/preferences/snooze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ state: nextState })
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    const payload = await res.json().catch(() => ({}));
+                    updateSnoozeButton(nextState, payload.snoozed_until ?? null);
+                    showInlineStatus(payload.message || 'Preference updated.', 'success');
+                } catch (error) {
+                    console.error(error);
+                    showInlineStatus('Unable to update snooze.', 'error');
+                } finally {
+                    snoozeBtn.disabled = false;
+                }
+            });
 
             const markNotification = async (id, node) => {
                 if (!csrfToken) return;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CommunityMembership;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Notifications\DatabaseNotification;
@@ -38,11 +39,54 @@ class NotificationController extends Controller
         // Put the transformed items back into the paginator
         $notifications = $paginator->setCollection($transformedItems);
 
-        $unreadCount = Auth::user()
+        $user = Auth::user();
+
+        $unreadCount = $user
             ->unreadNotifications()
             ->count();
 
-        return view('notifications', compact('notifications', 'unreadCount'));
+        $preferenceMemberships = $user->memberships()
+            ->where('status', 'active')
+            ->with(['community:id,name,slug'])
+            ->orderByDesc('role')
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($membership) {
+                $community = $membership->community;
+
+                if (! $community) {
+                    return null;
+                }
+
+                $prefs = array_merge(
+                    CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES,
+                    is_array($membership->notification_preferences) ? $membership->notification_preferences : []
+                );
+
+                return [
+                    'community_id' => $community->id,
+                    'community_slug' => $community->slug,
+                    'community_name' => $community->name,
+                    'role' => $membership->role,
+                    'preferences' => [
+                        'posts' => (bool) ($prefs['posts'] ?? true),
+                        'events' => (bool) ($prefs['events'] ?? true),
+                        'photos' => (bool) ($prefs['photos'] ?? true),
+                        'memberships' => (bool) ($prefs['memberships'] ?? true),
+                    ],
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $snoozedUntil = $user->notifications_snoozed_until;
+
+        return view('notifications', [
+            'notifications' => $notifications,
+            'unreadCount' => $unreadCount,
+            'preferenceMemberships' => $preferenceMemberships,
+            'snoozedUntil' => $snoozedUntil,
+        ]);
     }
 
     /**

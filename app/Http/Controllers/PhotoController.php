@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Community;
 use App\Models\Photo;
+use App\Notifications\PhotoApproved;
+use App\Notifications\PhotoPendingApproval;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Gate;
@@ -152,18 +155,11 @@ class PhotoController extends Controller
 
         // If photo requires approval, notify community owner and moderators
         if ($status === Photo::STATUS_PENDING) {
-            // Load users with owner/admin/moderator roles
-            $moderators = $community->memberships()
-                ->whereIn('role', ['owner', 'admin', 'moderator'])
-                ->where('status', 'active')
-                ->with('user')
-                ->get()
-                ->pluck('user');
-
-            // Send notification
-            \Illuminate\Support\Facades\Notification::send(
-                $moderators,
-                new \App\Notifications\PhotoPendingApproval($photo, $request->user())
+            app(NotificationService::class)->notifyCommunityModerators(
+                $community,
+                new PhotoPendingApproval($photo, $request->user()),
+                $request->user()->id,
+                'photos'
             );
         }
 
@@ -203,15 +199,11 @@ class PhotoController extends Controller
 
         // Notify community members that a new photo has been approved
         $community = $photo->community;
-        $members = $community->memberships()
-            ->where('status', 'active')
-            ->with('user')
-            ->get()
-            ->pluck('user');
-
-        \Illuminate\Support\Facades\Notification::send(
-            $members,
-            new \App\Notifications\PhotoApproved($photo, $photo->user)
+        app(NotificationService::class)->notifyCommunityMembers(
+            $community,
+            new PhotoApproved($photo, $photo->user),
+            null,
+            'photos'
         );
         
         return back()->with('success', 'Photo approved successfully!');

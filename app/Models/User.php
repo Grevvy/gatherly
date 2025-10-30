@@ -30,6 +30,7 @@ class User extends Authenticatable
         'website',
         'avatar',
         'interests',
+        'notifications_snoozed_until',
     ];
 
     /**
@@ -45,6 +46,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'interests' => 'array',
+        'notifications_snoozed_until' => 'datetime',
     ];
 
     // Helper: whether the user is a site admin (global)

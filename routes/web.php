@@ -16,6 +16,7 @@ use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Models\Community;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ExploreController;
@@ -94,6 +95,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
         ->whereUuid('notification')
         ->name('notifications.read');
+    Route::post('/notifications/preferences/snooze', [NotificationPreferenceController::class, 'toggleSnooze'])
+        ->name('notifications.preferences.snooze');
+    Route::post('/notifications/preferences/{community:slug}', [NotificationPreferenceController::class, 'updateCommunity'])
+        ->name('notifications.preferences.community');
 
     // Community routes
     Route::get('/community-edit', function () {

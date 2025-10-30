@@ -207,14 +207,17 @@ class EventController extends Controller
             if ($event->status === 'published') {
                 app(NotificationService::class)->notifyCommunityMembers(
                     $event->community,
-                    new EventPublished($event)
+                    new EventPublished($event),
+                    null,
+                    'events'
                 );
             } else if ($event->status === 'draft') {
                 // Notify moderators about the pending event
                 app(NotificationService::class)->notifyCommunityModerators(
                     $event->community,
                     new EventPendingApproval($event),
-                    Auth::id()
+                    Auth::id(),
+                    'events'
                 );
             }
         }
@@ -270,7 +273,8 @@ class EventController extends Controller
             app(NotificationService::class)->notifyCommunityMembers(
                 $event->community,
                 new EventPublished($event),
-                $event->owner_id
+                $event->owner_id,
+                'events'
             );
         }
 
@@ -324,7 +328,9 @@ class EventController extends Controller
             $event->loadMissing(['community:id,name,slug', 'owner:id,name']);
             app(NotificationService::class)->notifyCommunityMembers(
                 $event->community,
-                new EventPublished($event)
+                new EventPublished($event),
+                null,
+                'events'
             );
         }
 
@@ -664,7 +670,8 @@ class EventController extends Controller
             $service->notifyCommunityModerators(
                 $event->community,
                 $notification,
-                $user->id
+                $user->id,
+                'events'
             );
         }
     }

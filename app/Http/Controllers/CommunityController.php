@@ -111,6 +111,7 @@ public function store(Request $request)
             'user_id'      => $community->owner_id,
             'role'         => 'owner',
             'status'       => 'active',
+            'notification_preferences' => CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES,
         ]);
 
         return response()->json($community, 201);

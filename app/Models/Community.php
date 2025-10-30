@@ -50,7 +50,7 @@ class Community extends Model
     public function members()
     {
         return $this->belongsToMany(User::class, 'community_memberships')
-            ->withPivot(['role', 'status'])
+            ->withPivot(['role', 'status', 'notification_preferences'])
             ->withTimestamps();
     }
 

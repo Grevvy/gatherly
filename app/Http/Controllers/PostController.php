@@ -113,7 +113,9 @@ class PostController extends Controller
             // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post)
+                new PostPublished($post),
+                null,
+                'posts'
             );
         } else {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
@@ -121,7 +123,8 @@ class PostController extends Controller
             app(NotificationService::class)->notifyCommunityModerators(
                 $post->community,
                 new PostPendingApproval($post),
-                $post->user_id
+                $post->user_id,
+                'posts'
             );
         }
 
@@ -223,14 +226,17 @@ class PostController extends Controller
             // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post)
+                new PostPublished($post),
+                null,
+                'posts'
             );
         } elseif ($originalStatus !== 'pending' && $post->status === 'pending') {
             $post->loadMissing('community:id,name,slug', 'user:id,name');
             app(NotificationService::class)->notifyCommunityModerators(
                 $post->community,
                 new PostPendingApproval($post),
-                $post->user_id
+                $post->user_id,
+                'posts'
             );
         }
 
@@ -274,7 +280,9 @@ class PostController extends Controller
             // Notify all community members including the author about the published post
             app(NotificationService::class)->notifyCommunityMembers(
                 $post->community,
-                new PostPublished($post)
+                new PostPublished($post),
+                null,
+                'posts'
             );
         } else {
             $post->update([
@@ -304,7 +312,8 @@ class PostController extends Controller
                 app(NotificationService::class)->notifyCommunityMembers(
                     $post->community,
                     new PostLiked($post, $user),
-                    $user->id // Exclude the liker
+                    $user->id, // Exclude the liker
+                    'posts'
                 );
             }
         }
