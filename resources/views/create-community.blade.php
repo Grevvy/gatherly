@@ -3,8 +3,10 @@
 
     // Load communities the current user belongs to (for sidebar)
     $communities = auth()->check()
-        ? Community::whereHas('memberships', fn($q) => $q->where('user_id', auth()->id()))->get()
+        ? Community::whereHas('memberships', fn ($q) => $q->where('user_id', auth()->id()))->get()
         : collect();
+
+    $availableTags = config('tags.list', []);
 @endphp
 
 <x-layout :title="'Create Community - Gatherly'" :communities="$communities">
@@ -67,21 +69,32 @@
                     <option value="invite">Invite Only</option>
                 </select>
             </div>
-<!-- Tags -->
-<div class="relative mb-6">
-    <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">
-        Tags (comma-separated)
-    </span>
-    <input
-        name="tags"
-        type="text"
-        placeholder="e.g. music, gaming, movies"
-        class="w-full border p-2 pt-6 text-gray-800 bg-transparent rounded-xl"
-    >
-    <p class="text-xs text-gray-500 mt-1">
-        Use commas to separate topics — like <em>music, art, travel</em>.
-    </p>
-</div>
+            <!-- Tags -->
+            <div class="relative mb-6">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">
+                    Select Tags
+                </span>
+                <div class="border rounded-xl bg-white pt-10 pb-4 px-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach ($availableTags as $tag)
+                            <label class="group cursor-pointer">
+                                <input type="checkbox" name="tags[]" value="{{ strtolower($tag) }}"
+                                    class="hidden peer">
+                                <div
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-all
+                                        peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-purple-500
+                                        peer-checked:text-white peer-checked:border-transparent peer-checked:shadow-md
+                                        group-hover:border-blue-300 group-hover:shadow-sm">
+                                    {{ $tag }}
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    Select all topics that match this community.
+                </p>
+            </div>
         </form>
     </div>
 

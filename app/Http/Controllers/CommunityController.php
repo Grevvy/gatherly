@@ -79,16 +79,22 @@ public function store(Request $request)
         'banner_image' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
         'visibility'   => ['nullable','in:public,private'],
         'join_policy'  => ['nullable','in:open,request,invite'],
-        'tags'         => ['nullable','string'], // ✅ added
+        'tags'         => ['nullable','array'],
+        'tags.*'       => ['string'],
     ]);
 
     $data['owner_id']   = Auth::id();
     $data['visibility'] = $data['visibility'] ?? 'public';
     $data['join_policy'] = $data['join_policy'] ?? 'open';
 
-    // ✅ convert comma-separated tags to array
-    if (!empty($data['tags'])) {
-        $data['tags'] = array_map('trim', explode(',', strtolower($data['tags'])));
+    // Normalize selected tags
+    if (array_key_exists('tags', $data) && is_array($data['tags'])) {
+        $data['tags'] = collect($data['tags'])
+            ->filter(fn ($tag) => filled($tag))
+            ->map(fn ($tag) => strtolower(trim($tag)))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     // ✅ banner image
@@ -127,12 +133,18 @@ public function store(Request $request)
             'banner_image' => ['sometimes','nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
             'visibility'   => ['sometimes','in:public,private'],
             'join_policy'  => ['sometimes','in:open,request,invite'],
-            'tags'         => ['sometimes','nullable','string'],
+            'tags'         => ['sometimes','nullable','array'],
+            'tags.*'       => ['string'],
         ]);
 
-            if (array_key_exists('tags', $data) && !empty($data['tags'])) {
-        $data['tags'] = array_map('trim', explode(',', strtolower($data['tags'])));
-    }
+        if (array_key_exists('tags', $data) && is_array($data['tags'])) {
+            $data['tags'] = collect($data['tags'])
+                ->filter(fn ($tag) => filled($tag))
+                ->map(fn ($tag) => strtolower(trim($tag)))
+                ->unique()
+                ->values()
+                ->all();
+        }
         // If a new banner is uploaded, remove old local file then store new one
         if ($request->hasFile('banner_image')) {
             if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {

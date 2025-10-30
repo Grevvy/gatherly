@@ -18,44 +18,7 @@
         })->get();
     }
 
-    $tags = [
-        'Music',
-        'Tech',
-        'Art',
-        'Gaming',
-        'Fitness',
-        'Food',
-        'Travel',
-        'Movies',
-        'Fashion',
-        'Sports',
-        'Education',
-        'Health',
-        'Photography',
-        'Writing',
-        'DIY',
-        'Finance',
-        'Mental Health',
-        'Nature',
-        'Books',
-        'Science',
-        'History',
-        'Politics',
-        'Entrepreneurship',
-        'Design',
-        'Coding',
-        'Pets',
-        'Cars',
-        'Comics',
-        'Theater',
-        'Dance',
-        'Volunteering',
-        'Environment',
-        'Relationships',
-        'Language Learning',
-        'Home Decor',
-        'Astrology',
-    ];
+    $tags = config('tags.list', []);
 @endphp
 
 <!DOCTYPE html>
