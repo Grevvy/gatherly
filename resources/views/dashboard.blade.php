@@ -22,7 +22,10 @@
 
 <x-layout :title="'Dashboard - Gatherly'" :community="$community" :communities="$communities">
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
-        <main class="{{ $community ? 'max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6' : 'w-full px-0' }}">
+        <main
+            class="{{ $community
+                ? 'w-full max-w-none mx-auto px-4 2xl:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8'
+                : 'w-full px-0' }}">
 
 
             <style>
@@ -33,7 +36,7 @@
 
 
             <!-- Posts Section -->
-            <section class="lg:col-span-2 space-y-6">
+            <section class="lg:col-span-8 xl:col-span-9 2xl:col-span-9 space-y-6">
                 @if ($community)
                     <div class="flex items-center justify-between  backdrop-blur-md px-4 py-3 rounded-xl">
                         <div>
@@ -427,7 +430,7 @@
     </section>
 
     @if ($community)
-        <aside id="sidebar" class="space-y-6">
+        <aside id="sidebar" class="lg:col-span-4 xl:col-span-3 2xl:col-span-3 space-y-6">
             <div
                 class="bg-white/70 backdrop-blur-xl border border-blue-100/60 rounded-2xl shadow-[0_8px_24px_rgba(59,130,246,0.2)] hover:shadow-[0_12px_30px_rgba(59,130,246,0.3)] transition-all duration-300 p-6">
 
@@ -1027,11 +1030,11 @@
                 <strong>${data.comment.user}:</strong> ${data.comment.content}
             </p>
             ${(data.comment.is_author || canModerate) ? `
-                        <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
-                                class="text-red-500 hover:text-red-600 transition">
-                            <i class="fas fa-trash-alt text-xs"></i>
-                        </button>
-                    ` : ''}
+                            <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                                    class="text-red-500 hover:text-red-600 transition">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        ` : ''}
         </div>
     </div>
 `;
