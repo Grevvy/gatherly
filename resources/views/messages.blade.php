@@ -395,65 +395,76 @@
 
             let lastMessageId = getLastMessageId();
 
-            const createAvatarMarkup = (message) => {
-                const avatarUrl = message?.user?.avatar;
-                const displayName = message?.user?.name || 'Member';
-                if (avatarUrl) {
-                    // Handle both full URLs and relative paths
-                    const fullAvatarUrl = avatarUrl.startsWith('http') ? avatarUrl : `/storage/${avatarUrl}`;
-                    return `<img src="${fullAvatarUrl}" alt="${escapeHtml(displayName)}'s avatar" class="w-full h-full object-cover">`;
-                }
-                const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
-                return `<span class="text-white font-bold text-lg">${escapeHtml(initial)}</span>`;
-            };
+            // Replace createAvatarMarkup with this:
+const createAvatarMarkup = (message) => {
+  const displayName = message?.user?.name || 'Member';
+  const avatarUrl = message?.user?.avatar_url || message?.user?.avatar || null;
 
-            const buildMessageMarkup = (message, isSelf) => {
-                const safeBody = escapeHtml(message.body || '').replace(/\n/g, '<br>');
-                const timeLabel = formatMessageTime(message.created_at);
-                const displayName = escapeHtml(message?.user?.name || 'Member');
+  if (avatarUrl) {
+    const full = avatarUrl.startsWith('http') ? avatarUrl : `/storage/${avatarUrl}`;
+    return `<img src="${full}" alt="${escapeHtml(displayName)}'s avatar" class="w-full h-full object-cover">`;
+  }
+  const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+  return `<span class="text-white font-bold text-lg">${escapeHtml(initial)}</span>`;
+};
 
-                return `
-                    ${isSelf ? `
-                    <form method="POST" data-id="${message.id}"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
-                        <input type="hidden" name="_token" value="${csrfToken}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="button"
-                            class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
-                            title="Delete" onclick="confirmDeleteMessage(this)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                            </svg>
-                        </button>
-                    </form>` : ''}
-                    ${!isSelf ? `
-                    <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[1]">
-                        ${createAvatarMarkup(message)}
-                    </div>` : ''}
-                    <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
-                        ${!isSelf ? `
-                        <div class="text-left">
-                            <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
-                        </div>` : ''}
-                        <div class="relative">
-                            <div class="px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
-                                ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
-                                : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform'}">
-                                ${safeBody}
-                                <div class="absolute bottom-0 ${isSelf
-                                    ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
-                                    : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left'}">
-                            ${timeLabel}
-                        </div>
-                    </div>
-                `;
-            };
+
+            // Replace buildMessageMarkup with this:
+const buildMessageMarkup = (message, isSelf) => {
+  const safeBody = escapeHtml(message.body || '').replace(/\n/g, '<br>');
+  const timeLabel = formatMessageTime(message.created_at);
+  const displayName = escapeHtml(message?.user?.name || 'Member');
+
+  return `
+    ${isSelf ? `
+      <form method="POST" data-id="${message.id}"
+        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
+        <input type="hidden" name="_token" value="${csrfToken}">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="button"
+          class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
+          title="Delete" onclick="confirmDeleteMessage(this)">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+          </svg>
+        </button>
+      </form>
+    ` : ''}
+
+    ${!isSelf ? `
+      <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
+        ${createAvatarMarkup(message)}
+      </div>
+    ` : ''}
+
+    <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
+      ${!isSelf ? `
+        <div class="text-left">
+          <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
+        </div>
+      ` : ''}
+
+      <div class="relative">
+        <div class="px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
+          ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
+          : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform z-[2]'}">
+          ${safeBody}
+          <div class="absolute bottom-0 ${isSelf
+            ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
+            : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
+          </div>
+        </div>
+      </div>
+
+      <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left mb-2'}">
+        ${timeLabel}
+      </div>
+    </div>
+  `;
+};
+
 
             const appendMessageElement = (message, { scrollToBottom = false } = {}) => {
                 if (!scrollContainer || !message?.id) return;
