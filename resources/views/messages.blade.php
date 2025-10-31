@@ -367,9 +367,6 @@
             let messagePollTimer = null;
             let isPollingMessages = false;
 
-<<<<<<< HEAD
-            // --- Auto-scroll on load
-=======
             const escapeHtml = (input = '') => input
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -475,7 +472,6 @@
                 }
             };
 
->>>>>>> origin/main
             if (scrollContainer) {
                 setTimeout(() => (scrollContainer.scrollTop = scrollContainer.scrollHeight), 100);
             }
@@ -555,22 +551,8 @@
 
                 messageForm.addEventListener('submit', async e => {
                     e.preventDefault();
-<<<<<<< HEAD
-
-                    // If a delegated (capture) handler already processed the
-                    // submit, skip to avoid double-sends (delegated handler
-                    // sets data-ajax-handled).
-                    if (form.dataset.ajaxHandled === '1') {
-                        // clear the marker so future replacements work normally
-                        delete form.dataset.ajaxHandled;
-                        return;
-                    }
-                    const formData = new FormData(form);
-                    const body = formData.get('body').trim();
-=======
                     const formData = new FormData(messageForm);
                     const body = (formData.get('body') || '').toString().trim();
->>>>>>> origin/main
                     if (!body) return;
 
                     try {
@@ -578,88 +560,11 @@
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': token,
-<<<<<<< HEAD
-                                'X-Requested-With': 'XMLHttpRequest'
-=======
                                 'Accept': 'application/json'
->>>>>>> origin/main
                             },
                             body: formData
                         });
 
-<<<<<<< HEAD
-                        if (!res.ok) throw new Error('Failed to send');
-
-                        // Prefer JSON response when available (controller returns JSON for AJAX)
-                        let newId;
-                        const contentType = res.headers.get('content-type') || '';
-                        if (contentType.includes('application/json')) {
-                            const data = await res.json();
-                            newId = data.id;
-                        } else {
-                            const html = await res.text();
-                            const match = html.match(/\/messages\/(\d+)/);
-                            newId = match ? match[1] : Date.now();
-                        }
-
-                        const newMsg = document.createElement('div');
-                        newMsg.className = 'flex justify-end group items-start gap-2 fade-in';
-                        newMsg.dataset.messageId = newId;
-                        newMsg.innerHTML = `
-                        <form method="POST" action="/messages/${newId}" data-message-id="${newId}"
-    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px]">
-    <input type="hidden" name="_token" value="${token}">
-    <input type="hidden" name="_method" value="DELETE">
-    <button type="button" onclick="confirmDeleteMessage(this)"
-      class="text-red-400 hover:text-red-500 transition transform hover:scale-110"
-      title="Delete">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-        viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-      </svg>
-    </button>
-  </form>
-  <div class="max-w-[75%] flex flex-col items-end space-y-0.5">
-    <div class="relative px-4 py-2 max-w-[255px] break-words text-sm 
-      bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2">
-      ${body.replace(/\n/g, '<br>')}
-      <div class="absolute bottom-0 right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]
-        after:content-[''] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]">
-      </div>
-    </div>
-    <div class="text-[9px] text-gray-400 text-right mr-2">
-      ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-    </div>
-  </div>
-`;
-
-
-                        scrollContainer.appendChild(newMsg);
-                        // Update sidebar preview & timestamp
-                        updateSidebarAfterMessage({
-                                body: body,
-                                created_at: new Date().toISOString()
-                            },
-                            formData.get('messageable_type'),
-                            formData.get('messageable_id')
-                        );
-
-                        const deleteBtn = newMsg.querySelector('.delete-message-btn');
-                        if (deleteBtn) {
-                            deleteBtn.addEventListener('click', () => confirmDeleteMessage(deleteBtn));
-                        }
-                        input.value = '';
-                        updateCharCount();
-
-                        setTimeout(() => (scrollContainer.scrollTop = scrollContainer.scrollHeight),
-                            100);
-                        // Ensure we are subscribed to the active conversation after sending
-                        try {
-                            window.subscribeToActiveConversation && window
-                                .subscribeToActiveConversation();
-                        } catch (e) {}
-=======
                         if (!res.ok) {
                             const error = await res.json().catch(() => ({}));
                             throw new Error(error.message || 'Failed to send message.');
@@ -675,7 +580,6 @@
 
                         input.value = '';
                         updateCharCount();
->>>>>>> origin/main
                     } catch (err) {
                         console.error(err);
                         showToastify(err.message || 'Unable to send message.', 'error');
@@ -842,27 +746,12 @@
 
                         if (chatArea) {
                             chatArea.innerHTML = `
-<<<<<<< HEAD
-                    <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
-                        <p>Select a conversation or channel to start chatting</p>
-                    </div>`;
-                            try {
-                                window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
-                            } catch (e) {}
-                        }
-
-                        // --- NEW: Remove any sidebar highlights
-                        listContainer.querySelectorAll('a').forEach(a => a.classList.remove(
-                            'bg-blue-100/50'));
-
-=======
                                 <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
                                     <p>Select a conversation or channel to start chatting</p>
                                 </div>`;
                         }
 
                         listContainer?.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
->>>>>>> origin/main
                     } catch (err) {
                         console.error(err);
                         showToastify('Failed to create conversation.', 'error');
@@ -870,153 +759,8 @@
                 });
             }
 
-<<<<<<< HEAD
-            // --- Conversation click (no reload)
-            if (listContainer && chatArea) {
-                listContainer.addEventListener('click', async e => {
-                    const link = e.target.closest('a[href*="channel_id"], a[href*="thread_id"]');
-                    if (!link) return;
-                    e.preventDefault();
-                    const url = link.getAttribute('href');
-                    try {
-                        const res = await fetch(url, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        const html = await res.text();
-                        const doc = new DOMParser().parseFromString(html, 'text/html');
-                        const newChat = doc.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
-                        if (newChat) {
-                            chatArea.innerHTML = newChat.innerHTML;
-                            window.history.pushState({}, '', url);
-                            initializeMessageForm();
-                            // After replacing the chat area, subscribe to the active conversation
-                            try {
-                                window.subscribeToActiveConversation && window
-                                    .subscribeToActiveConversation();
-                            } catch (e) {}
-                        }
-                        listContainer.querySelectorAll('a').forEach(a => a.classList.remove(
-                            'bg-blue-100/50'));
-                        link.classList.add('bg-blue-100/50');
-                        const scrollContainer = document.getElementById('message-scroll');
-                        if (scrollContainer) {
-                            setTimeout(() => (scrollContainer.scrollTop = scrollContainer.scrollHeight),
-                                100);
-                        }
-                    } catch (err) {
-                        console.error('Failed to load conversation:', err);
-                    }
-                });
-            }
-
-            // --- Delete channel
-            window.confirmDeleteChannel = async button => {
-                const form = button.closest('form');
-                const id = form.dataset.id;
-                const token = document.querySelector('input[name="_token"]').value;
-                showConfirmToast('Are you sure you want to delete this channel?', async () => {
-                    try {
-                        const res = await fetch(`/channels/${id}`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': token,
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            },
-                            body: '_method=DELETE'
-                        });
-                        if (res.ok) {
-                            const el = form.closest('.group');
-                            el.style.opacity = '0';
-                            el.style.transform = 'translateY(-5px)';
-                            setTimeout(() => el.remove(), 300);
-                            chatArea.innerHTML = `
-                        <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
-                            <p>Select a conversation or channel to start chatting</p>
-                        </div>`;
-                            try {
-                                window.leaveCurrentEchoChannel && window
-                                    .leaveCurrentEchoChannel();
-                            } catch (e) {}
-                            showToastify('Channel deleted successfully.', 'success');
-                        }
-                    } catch {
-                        showToastify('Failed to delete channel.', 'error');
-                    }
-                }, 'bg-red-400 hover:bg-red-500', 'Delete');
-            };
-
-            // --- Delete thread
-            window.confirmDeleteThread = async button => {
-                const form = button.closest('form');
-                const id = form.dataset.id;
-                const token = document.querySelector('input[name="_token"]').value;
-                showConfirmToast('Are you sure you want to delete this conversation?', async () => {
-                    try {
-                        const res = await fetch(`/threads/${id}`, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': token,
-                                'Content-Type': 'application/x-www-form-urlencoded'
-                            },
-                            body: '_method=DELETE'
-                        });
-                        if (res.ok) {
-                            const el = form.closest('.group');
-                            el.style.opacity = '0';
-                            el.style.transform = 'translateY(-5px)';
-                            setTimeout(() => el.remove(), 300);
-                            chatArea.innerHTML = `
-                        <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
-                            <p>Select a conversation or channel to start chatting</p>
-                        </div>`;
-                            try {
-                                window.leaveCurrentEchoChannel && window
-                                    .leaveCurrentEchoChannel();
-                            } catch (e) {}
-                            showToastify('Conversation deleted successfully.', 'success');
-                        }
-                    } catch {
-                        showToastify('Failed to delete conversation.', 'error');
-                    }
-                }, 'bg-red-400 hover:bg-red-500', 'Delete');
-            };
-
-            async function loadTab(tab) {
-                try {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('tab', tab);
-                    const res = await fetch(url, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    });
-                    const html = await res.text();
-                    const doc = new DOMParser().parseFromString(html, 'text/html');
-                    const newList = doc.querySelector('#listContainer');
-                    const newForm = doc.querySelector('#newForm');
-                    if (newList && listContainer) listContainer.innerHTML = newList.innerHTML;
-                    if (newForm && document.getElementById('newForm')) {
-                        document.getElementById('newForm').innerHTML = newForm.innerHTML;
-                    }
-
-                    // Reset chat panel
-                    if (chatArea) {
-                        chatArea.innerHTML = `
-                <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
-                    <p>Select a conversation or channel to start chatting</p>
-                </div>`;
-                    }
-
-                    // Remove sidebar highlights
-                    listContainer.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
-
-                    // Update tab styles
-=======
             if (groupTab && directTab) {
                 const applyTabStyles = (tab) => {
->>>>>>> origin/main
                     const activeClasses = ['bg-blue-100', 'text-blue-600', 'shadow-inner'];
                     const inactiveClasses = ['text-gray-600'];
                     const hoverClasses = ['hover:bg-blue-50', 'hover:text-blue-600'];
@@ -1034,14 +778,6 @@
                     }
                 };
 
-<<<<<<< HEAD
-                    // Push new URL state
-                    window.history.pushState({}, '', url);
-                } catch (err) {
-                    console.error('Failed to load tab:', err);
-                }
-            }
-=======
                 const loadTab = async (tab) => {
                     try {
                         const url = new URL(window.location.href);
@@ -1072,7 +808,6 @@
                         console.error('Failed to load tab:', err);
                     }
                 };
->>>>>>> origin/main
 
                 groupTab.addEventListener('click', e => {
                     e.preventDefault();
@@ -1083,26 +818,12 @@
                     loadTab('direct');
                 });
             }
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/main
         });
 
         function confirmDeleteMessage(button) {
             const form = button.closest('form');
-<<<<<<< HEAD
-            // Accept either data-id (older) or data-message-id (newer) attributes
-            let messageId = form?.dataset?.id || form?.dataset?.messageId;
-            if (!messageId) {
-                const container = form.closest('[data-message-id]') || form.closest('[data-id]');
-                messageId = container?.dataset?.messageId || container?.dataset?.id;
-            }
-            const token = document.querySelector('input[name="_token"]').value;
-=======
             const messageId = form.dataset.id;
             const token = form.querySelector('input[name="_token"]').value;
->>>>>>> origin/main
 
             showConfirmToast('Are you sure you want to delete this message?', async () => {
                 try {
@@ -1179,8 +900,6 @@
             });
         }
 
-<<<<<<< HEAD
-=======
         function formatTimeForSidebar(isoString) {
             if (!isoString) return '';
             const dt = new Date(isoString);
@@ -1188,7 +907,6 @@
             return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         }
 
->>>>>>> origin/main
         async function refreshSidebarAfterDelete(messageableType, messageableId) {
             try {
                 const listItems = document.querySelectorAll('#listContainer .group');
