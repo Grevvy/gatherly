@@ -988,10 +988,12 @@
         // when conversations are created/loaded dynamically.
         let __currentEchoChannel = null;
         let __currentEchoChannelName = null;
+        let __subscriptionCount = 0;
 
         function leaveCurrentEchoChannel() {
             try {
                 if (__currentEchoChannelName && window.Echo) {
+                    console.log('[DEBUG] Leaving channel:', __currentEchoChannelName);
                     window.Echo.leave(__currentEchoChannelName);
                 }
             } catch (err) {
@@ -1002,7 +1004,8 @@
         }
 
         function subscribeToActiveConversation() {
-            console.log('[DEBUG] subscribeToActiveConversation called');
+            __subscriptionCount++;
+            console.log('[DEBUG] subscribeToActiveConversation called #', __subscriptionCount);
             // Determine the active conversation from the message form inputs
             const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
             if (!chatForm || !window.Echo) {
@@ -1056,13 +1059,36 @@
                 ch.listen('MessageSent', (e) => {
                     console.log('New message received:', e);
                     const scrollContainer = document.getElementById('message-scroll');
-                    if (!scrollContainer) return;
+                    if (!scrollContainer) {
+                        console.log('[DEBUG] No scroll container found');
+                        return;
+                    }
 
-                    const isOwnMessage = e.user.id === parseInt("{{ $userId }}");
-                    if (isOwnMessage) return; // Prevent duplicate render for sender
+                    // Check if message already exists to prevent duplicates
+                    const existingMessage = scrollContainer.querySelector(`[data-message-id="${e.id}"]`);
+                    if (existingMessage) {
+                        console.log('[DEBUG] Message already exists, skipping duplicate:', e.id);
+                        return;
+                    }
+
+                    const currentUserId = parseInt("{{ $userId }}");
+                    const isOwnMessage = e.user.id === currentUserId;
+                    console.log('[DEBUG] Message details', { 
+                        messageId: e.id,
+                        messageUserId: e.user.id, 
+                        currentUserId, 
+                        isOwnMessage,
+                        willRender: !isOwnMessage 
+                    });
+                    
+                    if (isOwnMessage) {
+                        console.log('[DEBUG] Skipping own message to prevent duplicate');
+                        return; // Prevent duplicate render for sender
+                    }
 
                     const wrapper = document.createElement('div');
                     wrapper.className = `flex justify-start group items-start gap-2`;
+                    wrapper.setAttribute('data-message-id', e.id);
 
                     // Render avatar image if provided, otherwise show initial
                     const avatarHtml = e.user.avatar ?
