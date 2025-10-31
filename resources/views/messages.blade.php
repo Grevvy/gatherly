@@ -399,7 +399,9 @@
                 const avatarUrl = message?.user?.avatar;
                 const displayName = message?.user?.name || 'Member';
                 if (avatarUrl) {
-                    return `<img src="${avatarUrl}" alt="${escapeHtml(displayName)}'s avatar" class="w-full h-full object-cover">`;
+                    // Handle both full URLs and relative paths
+                    const fullAvatarUrl = avatarUrl.startsWith('http') ? avatarUrl : `/storage/${avatarUrl}`;
+                    return `<img src="${fullAvatarUrl}" alt="${escapeHtml(displayName)}'s avatar" class="w-full h-full object-cover">`;
                 }
                 const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
                 return `<span class="text-white font-bold text-lg">${escapeHtml(initial)}</span>`;
@@ -998,8 +1000,7 @@
                 <div class="px-4 py-2 max-w-[255px] break-words text-sm shadow-sm transition-transform hover:scale-[1.02] duration-150 bg-gray-200 text-gray-900 rounded-[15px] self-start">
                     ${e.body.replace(/\n/g, '<br>')}
                 </div>
-                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]"></div>
-                <div class="absolute bottom-0 left-[-24px] w-[24px] h-[22px] bg-white rounded-br-[10px]"></div>
+                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\\"\\"] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]"></div>
             </div>
 
             <div class="text-[9px] text-gray-400 text-left">
