@@ -981,33 +981,12 @@
                         return; // Prevent duplicate render for sender
                     }
 
+                    // Use the same buildMessageMarkup function for consistency
                     const wrapper = document.createElement('div');
-                    wrapper.className = `flex justify-start group items-start gap-2`;
+                    wrapper.className = `flex justify-start group items-start gap-2 fade-in`;
                     wrapper.setAttribute('data-message-id', e.id);
-
-                    // Render avatar image if provided, otherwise show initial
-                    const avatarHtml = `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]">${createAvatarMarkup(e)}</div>`;
-
-                    wrapper.innerHTML = `
-        ${avatarHtml}
-
-        <div class="max-w-[75%] flex flex-col items-start">
-            <div class="text-left">
-                <span class="text-[10px] font-medium text-gray-500 block">${e.user.name}</span>
-            </div>
-
-            <div class="relative">
-                <div class="px-4 py-2 max-w-[255px] break-words text-sm shadow-sm transition-transform hover:scale-[1.02] duration-150 bg-gray-200 text-gray-900 rounded-[15px] self-start">
-                    ${e.body.replace(/\n/g, '<br>')}
-                </div>
-                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\\"\\"] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]"></div>
-            </div>
-
-            <div class="text-[9px] text-gray-400 text-left">
-                ${new Date(e.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-            </div>
-        </div>
-    `;
+                    wrapper.setAttribute('data-author-id', e.user.id);
+                    wrapper.innerHTML = buildMessageMarkup(e, false);
 
                     scrollContainer.appendChild(wrapper);
                     scrollContainer.scrollTop = scrollContainer.scrollHeight;
