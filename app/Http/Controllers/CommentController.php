@@ -45,7 +45,7 @@ class CommentController extends Controller
             'comment' => [
                 'id' => $comment->id,
                 'user' => $comment->user->name,
-                'avatar' => $comment->user->avatar,
+                'avatar' => $comment->user->avatar_url,
                 'content' => $comment->content,
                 'created_at' => $comment->created_at->diffForHumans(),
                 'is_author' => $comment->user_id === Auth::id(),

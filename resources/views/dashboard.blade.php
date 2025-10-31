@@ -1021,7 +1021,7 @@
     <div class="flex items-start gap-2 animate-fadeIn" data-comment-id="${data.comment.id}">
         <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
             ${data.comment.avatar 
-                ? `<img src="/storage/${data.comment.avatar}" alt="${data.comment.user}'s avatar" class="w-full h-full object-cover">`
+                ? `<img src="${data.comment.avatar}" alt="${data.comment.user}'s avatar" class="w-full h-full object-cover">`
                 : `<span class="text-white font-semibold text-xs">${data.comment.user.charAt(0).toUpperCase()}</span>`
             }
         </div>
