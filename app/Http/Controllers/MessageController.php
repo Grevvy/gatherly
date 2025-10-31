@@ -10,9 +10,12 @@ use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use App\Events\MessageSent;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Events\MessageDeleted;
 
 class MessageController extends BaseController
 {
@@ -39,6 +42,9 @@ class MessageController extends BaseController
             'user_id' => Auth::id(),
         ]);
 
+        event(new MessageSent($message));
+        Log::info('Broadcasting message', ['id' => $message->id]);
+
         $message->loadMissing('user:id,name', 'messageable');
         $notification = new MessageReceived($message);
         $dispatcher = app(NotificationService::class);
@@ -59,7 +65,9 @@ class MessageController extends BaseController
             );
         }
 
-        if ($request->expectsJson()) {
+        // If this was an AJAX request, return the created message id so clients
+        // that send via fetch can reliably set the element id without scraping HTML.
+        if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
             $message->loadMissing('user:id,name,avatar');
 
             return response()->json([
@@ -84,7 +92,26 @@ class MessageController extends BaseController
     {
         $this->authorize('delete', $message);
 
+        // capture context before deletion
+        $messageId = $message->id;
+        $messageableType = strtolower(class_basename($message->messageable_type)) === 'messagethread' ? 'messagethread' : strtolower(class_basename($message->messageable_type));
+        $messageableId = $message->messageable_id;
+
+        // try to extract community id from the parent (channel or thread)
+        $communityId = null;
+        try {
+            $communityId = $message->messageable->community_id ?? null;
+        } catch (\Throwable $e) {
+            // ignore if relationship not loaded
+        }
+
         $message->delete();
+
+        try {
+            Log::info('Dispatching MessageDeleted', ['id' => $messageId, 'type' => $messageableType, 'messageable_id' => $messageableId, 'community_id' => $communityId]);
+            event(new MessageDeleted($messageId, $messageableType, $messageableId, $communityId));
+        } catch (\Throwable $e) {
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true]);

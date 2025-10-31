@@ -12,7 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    {{-- CSRF meta for JS (Echo/axios will look for this) --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- Vite (load app CSS/JS) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 
@@ -1199,6 +1203,49 @@
                 }
             });
         }
+    </script>
+
+    <script>
+        // Keep sidebars/lists fresh across all pages in a community
+        document.addEventListener('DOMContentLoaded', () => {
+            const communityId = @json($community?->id ?? null);
+            if (!communityId || !window.Echo) return;
+
+            try {
+                const ch = window.Echo.private(`community.${communityId}`);
+
+                const refreshFragments = async () => {
+                    try {
+                        const res = await fetch(window.location.href, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        if (!res.ok) return;
+                        const html = await res.text();
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                        const newList = doc.querySelector('#listContainer');
+                        const curList = document.getElementById('listContainer');
+                        if (newList && curList) curList.innerHTML = newList.innerHTML;
+
+                        const newCommunities = doc.querySelector('#community-list');
+                        const curCommunities = document.getElementById('community-list');
+                        if (newCommunities && curCommunities) curCommunities.innerHTML = newCommunities
+                            .innerHTML;
+                    } catch (err) {
+                        console.error('[Broadcasting][layout] fragment refresh failed', err);
+                    }
+                };
+
+                ch.listen('.ChannelCreated', refreshFragments);
+                ch.listen('.ChannelDeleted', refreshFragments);
+                ch.listen('.ThreadCreated', refreshFragments);
+                ch.listen('.ThreadDeleted', refreshFragments);
+            } catch (err) {
+                console.error('[Broadcasting][layout] subscription failed', err);
+            }
+        });
     </script>
 </body>
 

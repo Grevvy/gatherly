@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Install dependencies
+composer install --no-dev --optimize-autoloader
+
+# Clear and cache config
+php artisan config:clear
+php artisan config:cache
+
+# Cache routes
+php artisan route:cache
+
+# Run migrations
+php artisan migrate --force
+
+# Start Reverb in the background
+php artisan reverb:start --daemon
