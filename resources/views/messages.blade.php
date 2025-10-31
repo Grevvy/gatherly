@@ -1000,7 +1000,7 @@
                 <div class="px-4 py-2 max-w-[255px] break-words text-sm shadow-sm transition-transform hover:scale-[1.02] duration-150 bg-gray-200 text-gray-900 rounded-[15px] self-start">
                     ${e.body.replace(/\n/g, '<br>')}
                 </div>
-                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\'\'] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]">
+                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\\"\\"] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]">
                 </div>
             </div>
 
