@@ -441,10 +441,14 @@
                             ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
                             : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform'}">
                             ${safeBody}
-                            <div class="absolute bottom-0 ${isSelf
-                                ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
-                                : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
-                            </div>
+                        </div>
+                        <div class="absolute bottom-0 ${isSelf
+                            ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]'
+                            : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]'}">
+                        </div>
+                        <div class="absolute bottom-0 ${isSelf
+                            ? 'right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
+                            : 'left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
                         </div>
                         <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left'}">
                             ${timeLabel}
@@ -960,26 +964,31 @@
                 }
 
                 ch.listen('MessageSent', (e) => {
-                    console.log('New message received:', e);
+                    console.log('🔴 WEBSOCKET MESSAGE RECEIVED:', e);
                     const scrollContainer = document.getElementById('message-scroll');
                     if (!scrollContainer) {
-                        console.log('[DEBUG] No scroll container found');
+                        console.log('🔴 No scroll container found');
                         return;
                     }
 
                     // Check if message already exists to prevent duplicates
                     const existingMessage = scrollContainer.querySelector(`[data-message-id="${e.id}"]`);
                     if (existingMessage) {
-                        console.log('[DEBUG] Message already exists, skipping duplicate:', e.id);
+                        console.log('🔴 Message already exists, skipping duplicate:', e.id);
                         return;
                     }
 
                     const currentUserId = parseInt("{{ $userId }}");
                     const isOwnMessage = e.user.id === currentUserId;
                     
+                    console.log('🔴 Is own message?', isOwnMessage, 'Current user:', currentUserId, 'Message user:', e.user.id);
+                    
                     if (isOwnMessage) {
+                        console.log('🔴 Skipping own message');
                         return; // Prevent duplicate render for sender
                     }
+
+                    console.log('🔴 Processing message for other user');
 
                     // Create a properly structured message object for buildMessageMarkup
                     const messageObj = {
