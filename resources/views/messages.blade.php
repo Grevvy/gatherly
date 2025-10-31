@@ -550,7 +550,6 @@
 
                 messageForm.addEventListener('submit', async e => {
                     e.preventDefault();
-                    console.log('[DEBUG] Per-form submit handler triggered');
                     
                     const formData = new FormData(messageForm);
                     const body = (formData.get('body') || '').toString().trim();
@@ -972,13 +971,6 @@
 
                     const currentUserId = parseInt("{{ $userId }}");
                     const isOwnMessage = e.user.id === currentUserId;
-                    console.log('[DEBUG] Message details', { 
-                        messageId: e.id,
-                        messageUserId: e.user.id, 
-                        currentUserId, 
-                        isOwnMessage,
-                        willRender: !isOwnMessage 
-                    });
                     
                     if (isOwnMessage) {
                         return; // Prevent duplicate render for sender
@@ -1203,7 +1195,6 @@
 
         // Subscribe on initial load
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('[DEBUG] DOMContentLoaded - attempting initial subscription');
             subscribeToActiveConversation();
         });
 
