@@ -48,7 +48,7 @@
 
             <!-- Banner Image -->
             <div class="relative mb-4">
-                <img id="banner-preview" src="{{ $community->banner_image ? asset($community->banner_image) : '' }}"
+                <img id="banner-preview" src="{{ $community->banner_image_url ?? '' }}"
                     alt="Banner Preview" class="w-full h-40 object-cover rounded mb-2" />
 
                 <input id="banner-input" type="file" name="banner_image" accept="image/*"
@@ -138,7 +138,7 @@
                     reader.readAsDataURL(file);
                 } else {
                     bannerPreview.src =
-                        "{{ $community->banner_image ? asset($community->banner_image) : '' }}"; // fallback
+                        "{{ $community->banner_image_url ?? '' }}"; // fallback
                 }
             });
 

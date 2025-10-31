@@ -274,7 +274,7 @@
                 <div class="relative w-full max-w-6xl h-64 mx-auto rounded-3xl overflow-hidden group">
                     <!-- Background Image with Parallax Effect -->
                     <div class="absolute inset-0">
-                        <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
+                        <img src="{{ $community->banner_image_url ?? asset('images/default-banner.jpg') }}"
                             alt="Community Banner"
                             class="w-full h-full object-cover transform group-hover:scale-105 transition-all duration-700 ease-out" />
                         <div

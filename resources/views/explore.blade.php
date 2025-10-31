@@ -67,7 +67,7 @@
 
                             <div>
                                 <div class="relative overflow-hidden rounded-2xl">
-                                    <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
+                                    <img src="{{ $community->banner_image_url ?? asset('images/default-banner.jpg') }}"
                                         alt="Community Banner"
                                         class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
                                     <div
@@ -163,7 +163,7 @@
 
                         <div>
                             <div class="relative overflow-hidden rounded-2xl">
-                                <img src="{{ asset($community->banner_image ?? 'images/default-banner.jpg') }}"
+                                <img src="{{ $community->banner_image_url ?? asset('images/default-banner.jpg') }}"
                                     alt="Community Banner"
                                     class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
                                 <div
