@@ -360,7 +360,7 @@
             const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
             const csrfToken = document.getElementById('csrf-token')?.value || '';
             const currentUserId = @json($userId);
-            const messageFormSelector = 'form[action="{{ route('messages.store') }}"]';
+            const messageFormSelector = 'form[action="{{ route("messages.store") }}"]';
             let messageForm = document.querySelector(messageFormSelector);
             let messageableType = messageForm?.querySelector('input[name="messageable_type"]')?.value || null;
             let messageableId = messageForm?.querySelector('input[name="messageable_id"]')?.value || null;
@@ -610,7 +610,7 @@
             // submit event falls through.
             document.addEventListener('submit', async (e) => {
                 const form = e.target;
-                if (!form || !form.matches('form[action="{{ route('messages.store') }}"]')) return;
+                if (!form || !form.matches('form[action="{{ route("messages.store") }}"]')) return;
                 try {
                     e.preventDefault();
                 } catch (_) {}
@@ -847,7 +847,7 @@
                             setTimeout(async () => {
                                 msgEl.remove();
 
-                                const chat = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                                const chat = document.querySelector('form[action="{{ route("messages.store") }}"]');
                                 if (chat) {
                                     const messageableType = chat.querySelector('input[name="messageable_type"]').value;
                                     const messageableId = chat.querySelector('input[name="messageable_id"]').value;
@@ -1004,7 +1004,7 @@
 
         function subscribeToActiveConversation() {
             // Determine the active conversation from the message form inputs
-            const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
+            const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
             if (!chatForm || !window.Echo) return;
 
             const typeInput = chatForm.querySelector('input[name="messageable_type"]');
@@ -1087,7 +1087,7 @@
                         console.debug('[Broadcasting] MessageDeleted event received', e);
 
                         // Ensure this event applies to the currently-open conversation
-                        const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                        const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
                         if (chatForm) {
                             const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                             const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
@@ -1141,7 +1141,7 @@
                         }
 
                         // Refresh sidebar preview to reflect deleted message
-                        const chat = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                        const chat = document.querySelector('form[action="{{ route("messages.store") }}"]');
                         if (chat) {
                             const messageableType = chat.querySelector('input[name="messageable_type"]').value;
                             const messageableId = chat.querySelector('input[name="messageable_id"]').value;
@@ -1331,7 +1331,7 @@
                 ch.listen('.ChannelDeleted', async (e) => {
                     await refreshSidebarList('channel');
                     // If the active conversation was deleted, clear it
-                    const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                    const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
                     if (chatForm) {
                         const type = chatForm.querySelector('input[name="messageable_type"]').value;
                         const id = chatForm.querySelector('input[name="messageable_id"]').value;
@@ -1354,7 +1354,7 @@
                 });
                 ch.listen('.ThreadDeleted', async (e) => {
                     await refreshSidebarList('direct');
-                    const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                    const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
                     if (chatForm) {
                         const type = chatForm.querySelector('input[name="messageable_type"]').value;
                         const id = chatForm.querySelector('input[name="messageable_id"]').value;
@@ -1393,7 +1393,7 @@
                         await refreshSidebarList();
 
                         const chatForm = document.querySelector(
-                            'form[action="{{ route('messages.store') }}"]');
+                            'form[action="{{ route("messages.store") }}"]');
                         if (!chatForm) return;
                         const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                         const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
@@ -1453,7 +1453,7 @@
                         await refreshSidebarList();
 
                         const chatForm = document.querySelector(
-                            'form[action="{{ route('messages.store') }}"]');
+                            'form[action="{{ route("messages.store") }}"]');
                         if (!chatForm) return;
                         const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                         const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
