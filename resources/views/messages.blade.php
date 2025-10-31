@@ -675,7 +675,7 @@
             bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2">
             ${body.replace(/\n/g, '<br>')}
             <div class="absolute bottom-0 right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]
-                after:content-[''] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]">
+                after:content-[\'\'] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]">
             </div>
         </div>
         <div class="text-[9px] text-gray-400 text-right mr-2">
@@ -1068,7 +1068,7 @@
                 <div class="px-4 py-2 max-w-[255px] break-words text-sm shadow-sm transition-transform hover:scale-[1.02] duration-150 bg-gray-200 text-gray-900 rounded-[15px] self-start">
                     ${e.body.replace(/\n/g, '<br>')}
                 </div>
-                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[''] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]">
+                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\'\'] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]">
                 </div>
             </div>
 
