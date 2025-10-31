@@ -724,7 +724,7 @@
 
         function confirmDeleteMessage(button) {
             const form = button.closest('form');
-            const messageId = form.dataset.id;
+            const messageId = form.dataset.messageId || form.dataset.id;
             const token = form.querySelector('input[name="_token"]').value;
 
             showConfirmToast('Are you sure you want to delete this message?', async () => {
