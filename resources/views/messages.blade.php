@@ -981,12 +981,47 @@
                         return; // Prevent duplicate render for sender
                     }
 
+                    // Create a properly structured message object for buildMessageMarkup
+                    const messageObj = {
+                        id: e.id,
+                        body: e.body,
+                        created_at: e.created_at,
+                        user_id: e.user.id,
+                        user: e.user
+                    };
+
+                    console.log('Converted message object:', messageObj);
+
                     // Use the same buildMessageMarkup function for consistency
                     const wrapper = document.createElement('div');
                     wrapper.className = `flex justify-start group items-start gap-2 fade-in`;
                     wrapper.setAttribute('data-message-id', e.id);
                     wrapper.setAttribute('data-author-id', e.user.id);
-                    wrapper.innerHTML = buildMessageMarkup(e, false);
+                    
+                    try {
+                        wrapper.innerHTML = buildMessageMarkup(messageObj, false);
+                        console.log('Successfully created markup');
+                    } catch (error) {
+                        console.error('Error creating markup:', error);
+                        // Fallback to simple markup
+                        wrapper.innerHTML = `
+                            <div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]">
+                                ${createAvatarMarkup(messageObj)}
+                            </div>
+                            <div class="max-w-[75%] flex flex-col items-start">
+                                <div class="text-left">
+                                    <span class="text-[10px] font-medium text-gray-500 block">${e.user.name}</span>
+                                </div>
+                                <div class="relative px-4 py-2 max-w-[255px] break-words text-sm bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform">
+                                    ${e.body.replace(/\n/g, '<br>')}
+                                    <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[''] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]"></div>
+                                </div>
+                                <div class="text-[9px] text-gray-400 text-left">
+                                    ${new Date(e.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                                </div>
+                            </div>
+                        `;
+                    }
 
                     scrollContainer.appendChild(wrapper);
                     scrollContainer.scrollTop = scrollContainer.scrollHeight;
