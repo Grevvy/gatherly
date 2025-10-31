@@ -451,10 +451,14 @@ const buildMessageMarkup = (message, isSelf) => {
           ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
           : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform z-[2]'}">
           ${safeBody}
-          <div class="absolute bottom-0 ${isSelf
-            ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
-            : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
-          </div>
+        </div>
+        <div class="absolute bottom-0 ${isSelf
+          ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]'
+          : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]'}">
+        </div>
+        <div class="absolute bottom-0 ${isSelf
+          ? 'right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
+          : 'left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
         </div>
       </div>
 
