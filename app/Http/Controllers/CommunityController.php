@@ -99,8 +99,8 @@ public function store(Request $request)
 
     // ✅ banner image
     if ($request->hasFile('banner_image')) {
-        $path = $request->file('banner_image')->store('communities/banners', 'public');
-        $data['banner_image'] = "/storage/{$path}";
+        $path = $request->file('banner_image')->store('communities/banners', 's3');
+        $data['banner_image'] = $path; // Store path only, URL will be generated when needed
     }
 
     return DB::transaction(function () use ($data) {
@@ -146,14 +146,19 @@ public function store(Request $request)
                 ->values()
                 ->all();
         }
-        // If a new banner is uploaded, remove old local file then store new one
+        // If a new banner is uploaded, remove old file then store new one
         if ($request->hasFile('banner_image')) {
-            if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {
-                $old = str_replace('/storage/', '', $community->banner_image);
-                Storage::disk('public')->delete($old);
+            if ($community->banner_image) {
+                // Try to delete from both old (public) and new (s3) storage
+                if (str_starts_with($community->banner_image, '/storage/')) {
+                    $old = str_replace('/storage/', '', $community->banner_image);
+                    Storage::disk('public')->delete($old);
+                } else {
+                    Storage::disk('s3')->delete($community->banner_image);
+                }
             }
-            $path = $request->file('banner_image')->store('communities/banners', 'public');
-            $data['banner_image'] = "/storage/{$path}";
+            $path = $request->file('banner_image')->store('communities/banners', 's3');
+            $data['banner_image'] = $path; // Store path only
         }
 
         $community->update($data);
@@ -164,10 +169,14 @@ public function store(Request $request)
     {
         $this->authorizeOwnerOrAdmin($community);
 
-        // Delete banner file if stored locally
-        if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {
-            $old = str_replace('/storage/', '', $community->banner_image);
-            Storage::disk('public')->delete($old);
+        // Delete banner file
+        if ($community->banner_image) {
+            if (str_starts_with($community->banner_image, '/storage/')) {
+                $old = str_replace('/storage/', '', $community->banner_image);
+                Storage::disk('public')->delete($old);
+            } else {
+                Storage::disk('s3')->delete($community->banner_image);
+            }
         }
 
         $community->delete();

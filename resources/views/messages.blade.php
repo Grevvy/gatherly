@@ -84,7 +84,7 @@
                                         <div
                                             class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
                                             @if (!empty($member->avatar))
-                                                <img src="{{ asset('storage/' . $member->avatar) }}"
+                                                <img src="{{ $member->avatar_url }}"
                                                     alt="{{ $member->name }}'s avatar"
                                                     class="w-full h-full object-cover">
                                             @else
@@ -263,7 +263,7 @@
                                         @endphp
 
                                         @if ($sender && $sender->avatar)
-                                            <img src="{{ asset('storage/' . $sender->avatar) }}"
+                                            <img src="{{ $sender->avatar_url }}"
                                                 alt="{{ $sender->name }}'s avatar"
                                                 class="w-full h-full object-cover">
                                         @else

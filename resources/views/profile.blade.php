@@ -16,7 +16,7 @@
                 <!-- Banner -->
                 <div class="relative h-56 bg-gradient-to-r from-indigo-400 to-sky-400">
                     @if (Auth::user()->banner)
-                        <img src="{{ asset('storage/' . Auth::user()->banner) }}"
+                        <img src="{{ Auth::user()->banner_image_url }}"
                             class="absolute inset-0 w-full h-full object-cover opacity-90" alt="Banner">
                     @endif
                     <a href="{{ route('profile.edit') }}"
@@ -29,7 +29,7 @@
                 <div class="relative flex flex-col items-center -mt-20 pb-10">
                     <div class="relative w-36 h-36">
                         @if (Auth::user()->avatar)
-                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}"
+                            <img src="{{ Auth::user()->avatar_url }}"
                                 class="w-36 h-36 rounded-full border-4 border-white shadow-xl object-cover"
                                 alt="Avatar">
                         @else

@@ -92,7 +92,7 @@ class Photo extends Model
     public function reject(User $user): void
     {
         // Delete the file from storage
-        \Illuminate\Support\Facades\Storage::disk('public')->delete($this->image_path);
+        \Illuminate\Support\Facades\Storage::disk('s3')->delete($this->image_path);
         
         // Delete the database record
         $this->delete();
@@ -111,6 +111,6 @@ class Photo extends Model
      */
     public function getImageUrlAttribute(): string
     {
-        return asset('storage/' . $this->image_path);
+        return \App\Helpers\StorageHelper::getFileUrl($this->image_path) ?? '';
     }
 }

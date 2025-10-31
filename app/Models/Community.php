@@ -104,4 +104,12 @@ class Community extends Model
             }
         });
     }
+
+    /**
+     * Get the URL for the community's banner image
+     */
+    public function getBannerImageUrlAttribute(): ?string
+    {
+        return \App\Helpers\StorageHelper::getFileUrl($this->banner_image);
+    }
 }

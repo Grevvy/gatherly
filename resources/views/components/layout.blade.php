@@ -228,7 +228,7 @@
                             <div
                                 class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                 @if ($user->avatar)
-                                    <img src="{{ asset('storage/' . $user->avatar) }}"
+                                    <img src="{{ $user->avatar_url }}"
                                         alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
                                 @else
                                     <span

@@ -102,4 +102,12 @@ class User extends Authenticatable
     {
         $this->notify(new GatherlyResetPassword($token));
     }
+
+    /**
+     * Get the URL for the user's avatar
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return \App\Helpers\StorageHelper::getFileUrl($this->avatar);
+    }
 }

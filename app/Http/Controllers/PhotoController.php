@@ -130,7 +130,7 @@ class PhotoController extends Controller
             'caption' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $path = $request->file('photo')->store('community-photos', 'public');
+        $path = $request->file('photo')->store('community-photos', 's3');
 
         // Check if user is owner/admin - their photos are auto-approved
         $membership = $community->memberships()
@@ -177,7 +177,7 @@ class PhotoController extends Controller
         Gate::authorize('delete', $photo);
 
         // Delete the file from storage
-        Storage::disk('public')->delete($photo->image_path);
+        Storage::disk('s3')->delete($photo->image_path);
 
         // Delete the database record
         $photo->delete();

@@ -102,7 +102,7 @@ class PostController extends Controller
 
         // Handle image upload if present
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('post-images', 'public');
+            $path = $request->file('image')->store('post-images', 's3');
             $post->image_path = $path;
         }
 
@@ -193,7 +193,7 @@ class PostController extends Controller
         // Handle image removal if requested
         if ($request->filled('remove_image') && $request->remove_image) {
             if ($post->image_path) {
-                Storage::disk('public')->delete($post->image_path);
+                Storage::disk('s3')->delete($post->image_path);
                 $contentChanged = true; // Image removal is a content change
             }
             $data['image_path'] = null;
@@ -202,9 +202,9 @@ class PostController extends Controller
         elseif ($request->hasFile('image')) {
             // Delete old image if it exists
             if ($post->image_path) {
-                Storage::disk('public')->delete($post->image_path);
+                Storage::disk('s3')->delete($post->image_path);
             }
-            $data['image_path'] = $request->file('image')->store('post-images', 'public');
+            $data['image_path'] = $request->file('image')->store('post-images', 's3');
             $contentChanged = true; // Image change is a content change
         }
 

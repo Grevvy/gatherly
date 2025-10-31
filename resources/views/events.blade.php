@@ -221,7 +221,7 @@
                                                     <div
                                                         class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                                         @if ($avatarUser && $avatarUser->avatar)
-                                                            <img src="{{ asset('storage/' . $avatarUser->avatar) }}"
+                                                            <img src="{{ $avatarUser->avatar_url }}"
                                                                 alt="{{ $avatarUser->name }}'s avatar"
                                                                 class="w-full h-full object-cover">
                                                         @elseif ($avatarUser)
@@ -532,7 +532,7 @@
                                                     <div
                                                         class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                                         @if ($avatarUser && $avatarUser->avatar)
-                                                            <img src="{{ asset('storage/' . $avatarUser->avatar) }}"
+                                                            <img src="{{ $avatarUser->avatar_url }}"
                                                                 alt="{{ $avatarUser->name }}'s avatar"
                                                                 class="w-full h-full object-cover">
                                                         @elseif ($avatarUser)
