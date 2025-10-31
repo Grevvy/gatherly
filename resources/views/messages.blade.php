@@ -603,113 +603,6 @@
                     startMessagePolling();
                 }
             });
-
-            // DISABLED: Delegated submit handler was causing duplicate message submissions
-            /*
-            document.addEventListener('submit', async (e) => {
-                const form = e.target;
-                if (!form || !form.matches('form[action="{{ route("messages.store") }}"]')) return;
-                
-                console.log('[DEBUG] Delegated submit handler triggered');
-                
-                try {
-                    e.preventDefault();
-                } catch (_) {}
-
-                // If the per-form handler already handled this (we mark it), skip
-                if (form.dataset.ajaxHandled === '1') {
-                    console.log('[DEBUG] Form already handled, skipping delegated handler');
-                    return;
-                }
-                form.dataset.ajaxHandled = '1';
-
-                const input = document.getElementById('messageInput');
-                const token = form.querySelector('input[name="_token"]')?.value;
-                if (!input || !token) return;
-
-                const formData = new FormData(form);
-                const body = formData.get('body').trim();
-                if (!body) return;
-
-                try {
-                    const res = await fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': token,
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: formData
-                    });
-
-                    if (!res.ok) throw new Error('Failed to send');
-
-                    let newId;
-                    const contentType = res.headers.get('content-type') || '';
-                    if (contentType.includes('application/json')) {
-                        const data = await res.json();
-                        newId = data.id;
-                    } else {
-                        const html = await res.text();
-                        const match = html.match(/\/messages\/(\d+)/);
-                        newId = match ? match[1] : Date.now();
-                    }
-
-                    // Append a local optimistic message bubble (same as per-form)
-                    const scrollContainer = document.getElementById('message-scroll');
-                    const newMsg = document.createElement('div');
-                    newMsg.className = 'flex justify-end group items-start gap-2 fade-in';
-                    newMsg.dataset.messageId = newId;
-                    newMsg.innerHTML = `
-                                                <form method="POST" action="/messages/${newId}" data-message-id="${newId}"
-        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px]">
-        <input type="hidden" name="_token" value="${token}">
-        <input type="hidden" name="_method" value="DELETE">
-        <button type="button" onclick="confirmDeleteMessage(this)"
-            class="text-red-400 hover:text-red-500 transition transform hover:scale-110"
-            title="Delete">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-            </svg>
-        </button>
-    </form>
-    <div class="max-w-[75%] flex flex-col items-end space-y-0.5">
-        <div class="relative px-4 py-2 max-w-[255px] break-words text-sm 
-            bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2">
-            ${body.replace(/\n/g, '<br>')}
-            <div class="absolute bottom-0 right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]
-                after:content-[\'\'] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]">
-            </div>
-        </div>
-        <div class="text-[9px] text-gray-400 text-right mr-2">
-            ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-        </div>
-    </div>
-`;
-
-                    if (scrollContainer) {
-                        scrollContainer.appendChild(newMsg);
-                        setTimeout(() => (scrollContainer.scrollTop = scrollContainer.scrollHeight),
-                            100);
-                    }
-
-                    // update sidebar preview
-                    updateSidebarAfterMessage({
-                        body: body,
-                        created_at: new Date().toISOString()
-                    }, formData.get('messageable_type'), formData.get('messageable_id'));
-
-                    input.value = '';
-                    updateCharCount();
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    // allow per-form handlers to run in future replacements
-                    delete form.dataset.ajaxHandled;
-                }
-            }, true);
-            */
             const newForm = document.getElementById('newForm');
             if (newForm) {
                 newForm.addEventListener('submit', async e => {
@@ -1088,7 +981,6 @@
                     });
                     
                     if (isOwnMessage) {
-                        console.log('[DEBUG] Skipping own message to prevent duplicate');
                         return; // Prevent duplicate render for sender
                     }
 
