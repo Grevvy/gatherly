@@ -469,6 +469,9 @@
                         scrollContainer.scrollTop = scrollContainer.scrollHeight;
                     }, 50);
                 }
+                
+                // Force a repaint to ensure styles are applied
+                wrapper.offsetHeight;
             };
 
             if (scrollContainer) {
@@ -982,7 +985,7 @@
 
                     // Render avatar image if provided, otherwise show initial
                     const avatarHtml = e.user.avatar ?
-                        `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]"><img src="/storage/${e.user.avatar}" alt="${e.user.name}" class="w-full h-full object-cover"></div>` :
+                        `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]"><img src="${e.user.avatar}" alt="${e.user.name}" class="w-full h-full object-cover"></div>` :
                         `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]"><span class="text-white font-bold text-lg">${e.user.name.charAt(0).toUpperCase()}</span></div>`;
 
                     wrapper.innerHTML = `
@@ -1009,6 +1012,9 @@
 
                     scrollContainer.appendChild(wrapper);
                     scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    
+                    // Force a repaint to ensure styles are applied
+                    wrapper.offsetHeight;
                 });
                 // Listen for deleted messages and remove them from the DOM
                 ch.listen('MessageDeleted', (e) => {
