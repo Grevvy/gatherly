@@ -984,9 +984,7 @@
                     wrapper.setAttribute('data-message-id', e.id);
 
                     // Render avatar image if provided, otherwise show initial
-                    const avatarHtml = e.user.avatar ?
-                        `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]"><img src="${e.user.avatar}" alt="${e.user.name}" class="w-full h-full object-cover"></div>` :
-                        `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]"><span class="text-white font-bold text-lg">${e.user.name.charAt(0).toUpperCase()}</span></div>`;
+                    const avatarHtml = `<div class="w-9 h-9 rounded-full ml-3 mt-8 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[10]">${createAvatarMarkup(e)}</div>`;
 
                     wrapper.innerHTML = `
         ${avatarHtml}
@@ -1000,8 +998,8 @@
                 <div class="px-4 py-2 max-w-[255px] break-words text-sm shadow-sm transition-transform hover:scale-[1.02] duration-150 bg-gray-200 text-gray-900 rounded-[15px] self-start">
                     ${e.body.replace(/\n/g, '<br>')}
                 </div>
-                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[\\'\\'] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]">
-                </div>
+                <div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]"></div>
+                <div class="absolute bottom-0 left-[-24px] w-[24px] h-[22px] bg-white rounded-br-[10px]"></div>
             </div>
 
             <div class="text-[9px] text-gray-400 text-left">
