@@ -552,9 +552,6 @@
                     e.preventDefault();
                     console.log('[DEBUG] Per-form submit handler triggered');
                     
-                    // Mark as handled to prevent delegated handler from also processing
-                    messageForm.dataset.ajaxHandled = '1';
-                    
                     const formData = new FormData(messageForm);
                     const body = (formData.get('body') || '').toString().trim();
                     if (!body) return;
@@ -584,18 +581,11 @@
 
                         input.value = '';
                         updateCharCount();
-                        
-                        // Clear the handled flag for next submission
-                        setTimeout(() => {
-                            delete messageForm.dataset.ajaxHandled;
-                        }, 100);
                     } catch (err) {
-                        // Clear the handled flag on error too
-                        delete messageForm.dataset.ajaxHandled;
                         console.error(err);
                         showToastify(err.message || 'Unable to send message.', 'error');
                     }
-                });
+                }); // Removed capture parameter
             };
 
            initializeMessageForm();
@@ -614,11 +604,8 @@
                 }
             });
 
-            // Delegated submit handler (capture) to reliably prevent native
-            // form submits even if the form is replaced rapidly and the
-            // per-form listener hasn't been attached yet. This prevents
-            // occasional page reloads on the receiver/sender when the
-            // submit event falls through.
+            // DISABLED: Delegated submit handler was causing duplicate message submissions
+            /*
             document.addEventListener('submit', async (e) => {
                 const form = e.target;
                 if (!form || !form.matches('form[action="{{ route("messages.store") }}"]')) return;
@@ -722,6 +709,7 @@
                     delete form.dataset.ajaxHandled;
                 }
             }, true);
+            */
             const newForm = document.getElementById('newForm');
             if (newForm) {
                 newForm.addEventListener('submit', async e => {
