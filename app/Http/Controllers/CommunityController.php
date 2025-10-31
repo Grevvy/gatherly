@@ -71,40 +71,53 @@ class CommunityController extends Controller
 
         return response()->json($results);
     }
-
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'name'         => ['required','string','max:120'],
-            'description'  => ['nullable','string'],
-            'banner_image' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
-            'visibility'   => ['nullable','in:public,private'],
-            'join_policy'  => ['nullable','in:open,request,invite'],
-        ]);
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'name'         => ['required','string','max:120'],
+        'description'  => ['nullable','string'],
+        'banner_image' => ['nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
+        'visibility'   => ['nullable','in:public,private'],
+        'join_policy'  => ['nullable','in:open,request,invite'],
+        'tags'         => ['nullable','array'],
+        'tags.*'       => ['string'],
+    ]);
 
     $data['owner_id']   = Auth::id();
-        $data['visibility'] = $data['visibility'] ?? 'public';
-        $data['join_policy'] = $data['join_policy'] ?? 'open';
+    $data['visibility'] = $data['visibility'] ?? 'public';
+    $data['join_policy'] = $data['join_policy'] ?? 'open';
 
-        // Handle banner upload (if any) before transaction; only the path is stored.
-        if ($request->hasFile('banner_image')) {
-            $path = $request->file('banner_image')->store('communities/banners', 'public');
-            $data['banner_image'] = "/storage/{$path}";
-        }
-
-        return DB::transaction(function () use ($data) {
-            $community = Community::create($data);
-
-            CommunityMembership::create([
-                'community_id' => $community->id,
-                'user_id'      => $community->owner_id,
-                'role'         => 'owner',
-                'status'       => 'active',
-            ]);
-
-            return response()->json($community, 201);
-        });
+    // Normalize selected tags
+    if (array_key_exists('tags', $data) && is_array($data['tags'])) {
+        $data['tags'] = collect($data['tags'])
+            ->filter(fn ($tag) => filled($tag))
+            ->map(fn ($tag) => strtolower(trim($tag)))
+            ->unique()
+            ->values()
+            ->all();
     }
+
+    // ✅ banner image
+    if ($request->hasFile('banner_image')) {
+        $path = $request->file('banner_image')->store('communities/banners', 's3');
+        $data['banner_image'] = $path; // Store path only, URL will be generated when needed
+    }
+
+    return DB::transaction(function () use ($data) {
+        $community = Community::create($data);
+
+        CommunityMembership::create([
+            'community_id' => $community->id,
+            'user_id'      => $community->owner_id,
+            'role'         => 'owner',
+            'status'       => 'active',
+            'notification_preferences' => CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES,
+        ]);
+
+        return response()->json($community, 201);
+    });
+}
+
 
     public function show(Community $community)
     {
@@ -121,16 +134,31 @@ class CommunityController extends Controller
             'banner_image' => ['sometimes','nullable','image','mimes:jpg,jpeg,png,webp','max:2048'],
             'visibility'   => ['sometimes','in:public,private'],
             'join_policy'  => ['sometimes','in:open,request,invite'],
+            'tags'         => ['sometimes','nullable','array'],
+            'tags.*'       => ['string'],
         ]);
 
-        // If a new banner is uploaded, remove old local file then store new one
+        if (array_key_exists('tags', $data) && is_array($data['tags'])) {
+            $data['tags'] = collect($data['tags'])
+                ->filter(fn ($tag) => filled($tag))
+                ->map(fn ($tag) => strtolower(trim($tag)))
+                ->unique()
+                ->values()
+                ->all();
+        }
+        // If a new banner is uploaded, remove old file then store new one
         if ($request->hasFile('banner_image')) {
-            if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {
-                $old = str_replace('/storage/', '', $community->banner_image);
-                Storage::disk('public')->delete($old);
+            if ($community->banner_image) {
+                // Try to delete from both old (public) and new (s3) storage
+                if (str_starts_with($community->banner_image, '/storage/')) {
+                    $old = str_replace('/storage/', '', $community->banner_image);
+                    Storage::disk('public')->delete($old);
+                } else {
+                    Storage::disk('s3')->delete($community->banner_image);
+                }
             }
-            $path = $request->file('banner_image')->store('communities/banners', 'public');
-            $data['banner_image'] = "/storage/{$path}";
+            $path = $request->file('banner_image')->store('communities/banners', 's3');
+            $data['banner_image'] = $path; // Store path only
         }
 
         $community->update($data);
@@ -141,10 +169,14 @@ class CommunityController extends Controller
     {
         $this->authorizeOwnerOrAdmin($community);
 
-        // Delete banner file if stored locally
-        if ($community->banner_image && str_starts_with($community->banner_image, '/storage/')) {
-            $old = str_replace('/storage/', '', $community->banner_image);
-            Storage::disk('public')->delete($old);
+        // Delete banner file
+        if ($community->banner_image) {
+            if (str_starts_with($community->banner_image, '/storage/')) {
+                $old = str_replace('/storage/', '', $community->banner_image);
+                Storage::disk('public')->delete($old);
+            } else {
+                Storage::disk('s3')->delete($community->banner_image);
+            }
         }
 
         $community->delete();

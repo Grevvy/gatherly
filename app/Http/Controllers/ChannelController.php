@@ -4,13 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Channel;
 use App\Models\Community;
+use App\Notifications\ChannelCreated;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Routing\Controller as BaseController;
-use App\Events\ChannelCreated;
+use App\Events\ChannelCreated as ChannelCreatedEvent;
 use App\Events\ChannelDeleted;
+use Illuminate\Support\Facades\Auth;
 
 class ChannelController extends BaseController
 {
@@ -28,10 +31,17 @@ class ChannelController extends BaseController
 
         // Broadcast to community members that a channel was created
         try {
-            event(new ChannelCreated($channel));
+            event(new ChannelCreatedEvent($channel));
         } catch (\Throwable $e) {
             // do not fail the request if broadcasting fails
         }
+
+        $channel->loadMissing('community:id,name,slug');
+        app(NotificationService::class)->notifyCommunityMembers(
+            $community,
+            new ChannelCreated($channel),
+            Auth::id()
+        );
 
         return back()->with('success', 'Channel created successfully.');
     }

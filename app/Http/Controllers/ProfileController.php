@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+
 class ProfileController extends Controller
 {
     public function show(): View
@@ -34,6 +35,12 @@ class ProfileController extends Controller
         ]);
     }
 
+    /**
+     * Update the user's profile information including avatar upload.
+     *
+     * @param UpdateProfileRequest $request
+     * @return RedirectResponse
+     */
     public function update(UpdateProfileRequest $request): RedirectResponse
     {
         $validated = $request->validated();
@@ -42,11 +49,11 @@ class ProfileController extends Controller
         if ($request->hasFile('avatar')) {
             // Delete old avatar if it exists
             if (Auth::user()->avatar) {
-                Storage::disk('public')->delete(Auth::user()->avatar);
+                Storage::disk('s3')->delete(Auth::user()->avatar);
             }
             
             // Store the new avatar
-            $path = $request->file('avatar')->store('avatars', 'public');
+            $path = $request->file('avatar')->store('avatars', 's3');
             $validated['avatar'] = $path;
         }
 

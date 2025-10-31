@@ -28,6 +28,9 @@ return new class extends Migration {
             // Owner (creator) — assumes users table exists
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
 
+            // Tags for categorizing communities
+            $table->json('tags')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 

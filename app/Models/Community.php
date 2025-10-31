@@ -19,12 +19,15 @@ class Community extends Model
         'join_policy',  // 'open' | 'request' | 'invite'
         'owner_id',
         'banner_image',
+         'tags',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'owner_id' => 'integer',
+        'tags' => 'array',
     ];
 
     // Use slug in URLs: route model binding {community:slug}
@@ -47,7 +50,7 @@ class Community extends Model
     public function members()
     {
         return $this->belongsToMany(User::class, 'community_memberships')
-            ->withPivot(['role', 'status'])
+            ->withPivot(['role', 'status', 'notification_preferences'])
             ->withTimestamps();
     }
 
@@ -72,6 +75,14 @@ class Community extends Model
         return $this->hasMany(MessageThread::class);
     }
 
+    /**
+     * Get all photos in this community
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(Photo::class);
+    }
+
     // Helpers
     public function scopePublic($q)
     {
@@ -92,5 +103,13 @@ class Community extends Model
                 $community->slug = $slug;
             }
         });
+    }
+
+    /**
+     * Get the URL for the community's banner image
+     */
+    public function getBannerImageUrlAttribute(): ?string
+    {
+        return \App\Helpers\StorageHelper::getFileUrl($this->banner_image);
     }
 }

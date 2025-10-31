@@ -5,6 +5,10 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @method bool hasFile(string $key)
+ * @method \Illuminate\Http\UploadedFile|null file(string $key = null)
+ */
 class UpdateProfileRequest extends FormRequest
 {
     /**

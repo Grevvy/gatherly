@@ -22,7 +22,11 @@
 
 <x-layout :title="'Dashboard - Gatherly'" :community="$community" :communities="$communities">
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
-        <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <main
+            class="{{ $community
+                ? 'w-full max-w-none mx-auto px-4 2xl:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8'
+                : 'w-full px-0' }}">
+
 
             <style>
                 body {
@@ -32,7 +36,7 @@
 
 
             <!-- Posts Section -->
-            <section class="lg:col-span-2 space-y-6">
+            <section class="lg:col-span-8 xl:col-span-9 2xl:col-span-9 space-y-6">
                 @if ($community)
                     <div class="flex items-center justify-between  backdrop-blur-md px-4 py-3 rounded-xl">
                         <div>
@@ -73,7 +77,7 @@
                                 <div
                                     class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
                                     @if ($user && $user->avatar)
-                                        <img src="{{ asset('storage/' . $user->avatar) }}"
+                                        <img src="{{ $user->avatar_url }}"
                                             alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-bold text-lg">
@@ -139,36 +143,9 @@
 
                     </div>
                 @else
-                    <div class="ml-72 px-4">
-                        <div
-                            class="max-w-3xl mx-auto flex flex-col items-center justify-center h-[50vh] text-center animate-fade-in">
-                            <div class="flex items-center gap-4 mb-6">
-                                <h1
-                                    class="text-4xl sm:text-3xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 drop-shadow transition-transform duration-300 hover:scale-105 whitespace-nowrap">
-                                    Welcome to Gatherly
-                                </h1>
-                                <i class="fas fa-star text-purple-600 text-4xl drop-shadow-md"></i>
-
-                            </div>
-
-                            <p class="text-gray-600 mb-10 text-sm sm:text-base md:text-lg tracking-wide">
-                                Let’s get started!
-                            </p>
-
-                            <div class="flex flex-row gap-4 justify-center">
-                                <a href="{{ route('create-community') }}"
-                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:brightness-110 hover:scale-105 transition-all duration-200">
-                                    Create a Community
-                                </a>
-
-                                <a href="{{ route('explore') }}"
-                                    class="bg-white text-blue-600 border border-blue-200 px-6 py-3 rounded-xl font-semibold shadow hover:bg-blue-50 hover:scale-105 transition-all duration-200">
-                                    Explore Communities
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
+                    <section class="col-span-3 w-full">
+                        <x-community-welcome />
+                    </section>
 
     </div>
     @endif
@@ -192,7 +169,7 @@
                 @endphp
                 @if ($canSeePost)
                     <div class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]"
-                        id="post-{{ $post->id }}">
+                        id="post-{{ $post->id }}" data-can-moderate="{{ $canModerate ? 'true' : 'false' }}">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-3">
                                 @php
@@ -202,7 +179,7 @@
                                 <div
                                     class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                     @if ($postUser && $postUser->avatar)
-                                        <img src="{{ asset('storage/' . $postUser->avatar) }}"
+                                        <img src="{{ $postUser->avatar_url }}"
                                             alt="{{ $postUser->name }}'s avatar" class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-semibold">
@@ -275,16 +252,92 @@
 
                             @if ($post->image_path)
                                 <div class="mt-2">
-                                    <img src="{{ asset('storage/' . $post->image_path) }}"
+                                    <img src="{{ $post->image_url }}"
                                         class="w-full h-auto object-contain rounded border border-gray-300" />
                                 </div>
                             @endif
 
                             <div class="text-xs text-gray-400 mt-9">
                                 Posted {{ $post->created_at->diffForHumans() }}
-                                @if ($post->updated_at > $post->created_at)
+                                @if ($post->content_updated_at && $post->content_updated_at > $post->created_at)
                                     • <span class="text-xs text-gray-400 mt-9 italic">(edited)</span>
                                 @endif
+                            </div>
+                            <div class="flex items-center gap-5 mt-4 text-sm">
+                                <!-- ❤️ Like Button -->
+                                <button onclick="toggleLike({{ $post->id }}, '{{ $community->slug }}')"
+                                    id="like-btn-{{ $post->id }}"
+                                    class="flex items-center gap-2 group transition">
+                                    <div
+                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-pink-50 border border-pink-200 text-pink-500 hover:bg-pink-100 hover:scale-105 transition">
+                                        <i
+                                            class="fa-solid fa-heart group-hover:scale-110 transition-transform duration-200"></i>
+                                    </div>
+                                    <span id="like-count-{{ $post->id }}"
+                                        class="text-gray-600 group-hover:text-pink-600">
+                                        {{ $post->likes->count() }}
+                                    </span>
+                                </button>
+
+                                <!-- 💬 Reply Button -->
+                                <button onclick="toggleCommentBox({{ $post->id }})"
+                                    class="flex items-center gap-2 group transition">
+                                    <div
+                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-500 hover:bg-blue-100 hover:scale-105 transition">
+                                        <i
+                                            class="fa-regular fa-comment group-hover:scale-110 transition-transform duration-200"></i>
+                                    </div>
+                                    <span class="text-gray-600 group-hover:text-blue-600">Reply</span>
+                                </button>
+                            </div>
+
+
+                            <!-- Comment box -->
+                            <div id="comment-box-{{ $post->id }}" class="hidden mt-4 animate-fadeIn">
+                                <form
+                                    onsubmit="return postComment(event, {{ $post->id }}, '{{ $community->slug }}')"
+                                    class="flex gap-3 items-center">
+                                    <input type="text" name="content" placeholder="Write a reply..."
+                                        class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm shadow-sm focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                        required>
+                                    <button type="submit"
+                                        class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 transition">
+                                        Send
+                                    </button>
+                                </form>
+
+                                <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
+                                    @foreach ($post->comments as $comment)
+                                        <div class="flex items-start gap-2" data-comment-id="{{ $comment->id }}">
+                                            <div
+                                                class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                                @if ($comment->user->avatar)
+                                                    <img src="{{ $comment->user->avatar_url }}"
+                                                        alt="{{ $comment->user->name }}'s avatar"
+                                                        class="w-full h-full object-cover">
+                                                @else
+                                                    <span class="text-white font-semibold text-xs">
+                                                        {{ strtoupper(substr($comment->user->name, 0, 1)) }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="flex-1 flex items-start justify-between gap-2">
+                                                <p
+                                                    class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                                                    <strong>{{ $comment->user->name }}:</strong>
+                                                    {{ $comment->content }}
+                                                </p>
+                                                @if ($comment->user_id === auth()->id() || $canModerate)
+                                                    <button
+                                                        onclick="deleteComment({{ $comment->id }}, {{ $post->id }}, '{{ $community->slug }}')"
+                                                        class="text-red-500 hover:text-red-600 transition">
+                                                        <i class="fas fa-trash-alt text-xs"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
 
                             @php
@@ -297,7 +350,8 @@
                                 $status = strtolower($post->status);
                             @endphp
 
-                            <div class="absolute bottom-2 right-2 text-xs">
+                            <div class="absolute top-2 right-3 text-xs">
+
                                 <span
                                     class="inline-block px-2 py-0.5 rounded font-medium {{ $statusStyles[$status] ?? 'bg-gray-100 text-gray-700' }}">
                                     {{ ucfirst($status) }}
@@ -324,7 +378,7 @@
                                     class="relative w-full max-w-xs mt-2">
                                     @if ($post->image_path)
                                         <img id="edit-crop-preview-{{ $post->id }}"
-                                            src="{{ asset('storage/' . $post->image_path) }}"
+                                            src="{{ $post->image_url }}"
                                             class="rounded border object-contain w-full max-h-60 shadow" />
                                         <button type="button" onclick="startEditCrop({{ $post->id }})"
                                             class="absolute top-1 left-1 bg-white text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center shadow hover:bg-blue-50 transition rounded-full"
@@ -376,7 +430,7 @@
     </section>
 
     @if ($community)
-        <aside id="sidebar" class="space-y-6">
+        <aside id="sidebar" class="lg:col-span-4 xl:col-span-3 2xl:col-span-3 space-y-6">
             <div
                 class="bg-white/70 backdrop-blur-xl border border-blue-100/60 rounded-2xl shadow-[0_8px_24px_rgba(59,130,246,0.2)] hover:shadow-[0_12px_30px_rgba(59,130,246,0.3)] transition-all duration-300 p-6">
 
@@ -437,6 +491,25 @@
                     </p>
                 </div>
             </div>
+            @if (!empty($community->tags))
+                <div class="mt-4 border-t border-gray-300 pt-3">
+                    <h4 class="text-gray-700 font-semibold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l9 9 9-9" />
+                        </svg>
+                        Tags
+                    </h4>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        @foreach ($community->tags as $tag)
+                            <span
+                                class="px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
+                                {{ ucfirst($tag) }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
         </aside>
 
     @endif
@@ -457,6 +530,13 @@
 
         function startEdit(postId) {
             setupEditImagePreview(postId);
+
+            // Check if this image was marked for removal
+            const hiddenFlag = document.getElementById(`remove-image-${postId}`);
+            if (removedImages.has(postId) && hiddenFlag) {
+                hiddenFlag.value = '1';
+            }
+
             cancelAllDropdowns();
             document.getElementById(`content-${postId}`).style.display = 'none';
             document.getElementById(`edit-form-${postId}`).style.display = 'block';
@@ -485,7 +565,11 @@
                     'Accept': 'text/html'
                 },
                 body: formData
-            }).then(() => {
+            }).then((response) => {
+                if (response.ok) {
+                    // Clear any localStorage entries for image removals since the form was successful
+                    localStorage.removeItem('removedImages');
+                }
                 window.location.href = `/dashboard?community=${slug}`;
             }).catch(() => {
                 alert('Something went wrong. Please try again.');
@@ -812,31 +896,6 @@
                     document.getElementById(`edit-photo-upload-${postId}`).files = dt.files;
                 }, 'image/png');
             }
-            window.removeEditPreview = function(postId) {
-                const previewContainer = document.getElementById(`edit-image-preview-${postId}`);
-                const input = document.getElementById(`edit-photo-upload-${postId}`);
-                const hiddenFlag = document.getElementById(`remove-image-${postId}`);
-
-                // Remove preview completely
-                previewContainer.innerHTML = '';
-                if (input) input.value = '';
-
-                // Track this post's image as removed
-                removedImages.add(postId);
-
-                // Mark removal (for future formData)
-                if (hiddenFlag) hiddenFlag.value = '1';
-
-                // Clean up cropper + image state
-                if (cropper) {
-                    cropper.destroy();
-                    cropper = null;
-                }
-                originalImageSrc = null;
-                lastCropBoxData = null;
-                lastCroppedImageUrl = null;
-                currentFile = null;
-            };
 
         }
 
@@ -844,12 +903,14 @@
             // When page loads, remove any images marked as "removed" before
             const removed = JSON.parse(localStorage.getItem('removedImages') || '[]');
             removed.forEach(id => {
-                const img = document.getElementById(`edit-crop-preview-${id}`);
                 const container = document.getElementById(`edit-image-preview-${id}`);
                 const hiddenFlag = document.getElementById(`remove-image-${id}`);
-                if (img) img.remove();
+
                 if (container) container.innerHTML = '';
                 if (hiddenFlag) hiddenFlag.value = '1';
+
+                // Also add to our Set for consistency
+                removedImages.add(id);
             });
         });
 
@@ -859,10 +920,17 @@
             const input = document.getElementById(`edit-photo-upload-${postId}`);
             const hiddenFlag = document.getElementById(`remove-image-${postId}`);
 
-            previewContainer.innerHTML = '';
+            // Clear the preview container
+            if (previewContainer) previewContainer.innerHTML = '';
+
+            // Clear the file input
             if (input) input.value = '';
 
+            // Set the removal flag to indicate the image should be removed
             if (hiddenFlag) hiddenFlag.value = '1';
+
+            // Track this post's image as removed in our Set
+            removedImages.add(postId);
 
             // Remember removal across reloads
             let removed = JSON.parse(localStorage.getItem('removedImages') || '[]');
@@ -870,18 +938,113 @@
                 removed.push(postId);
                 localStorage.setItem('removedImages', JSON.stringify(removed));
             }
-
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-
-            originalImageSrc = null;
-            lastCropBoxData = null;
-            lastCroppedImageUrl = null;
-            currentFile = null;
         };
+        async function toggleLike(postId, slug) {
+            const res = await fetch(`/communities/${slug}/posts/${postId}/like`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+            const data = await res.json();
+            document.getElementById(`like-count-${postId}`).textContent = data.like_count;
+        }
+
+        function toggleCommentBox(postId) {
+            const box = document.getElementById(`comment-box-${postId}`);
+            box.classList.toggle('hidden');
+        }
+
+        async function deleteComment(commentId, postId, slug) {
+            showConfirmToast(
+                'Are you sure you want to delete this comment?',
+                async () => {
+                        const res = await fetch(`/communities/${slug}/posts/${postId}/comment/${commentId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            try {
+                                // Find and remove the comment element
+                                const commentList = document.getElementById(`comments-list-${postId}`);
+                                const commentElement = commentList.querySelector(
+                                    `[data-comment-id="${commentId}"]`);
+                                if (commentElement) {
+                                    // Add fade-out animation
+                                    commentElement.style.transition = 'opacity 0.2s ease-out';
+                                    commentElement.style.opacity = '0';
+                                    setTimeout(() => {
+                                        commentElement.remove();
+                                    }, 200);
+                                    showToastify('Comment deleted successfully.', 'success');
+                                }
+                            } catch (err) {
+                                console.error('Error removing comment from UI:', err);
+                            }
+                        } else {
+                            showToastify('Failed to delete comment.', 'error');
+                        }
+                    },
+                    'bg-red-400 hover:bg-red-500',
+                    'Delete'
+            );
+        }
+
+        async function postComment(e, postId, slug) {
+            e.preventDefault();
+            const content = e.target.content.value.trim();
+            if (!content) return;
+
+            const res = await fetch(`/communities/${slug}/posts/${postId}/comment`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content
+                })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                const list = document.getElementById(`comments-list-${postId}`);
+                // Get canModerate value from the post's container
+                const postContainer = document.getElementById(`post-${postId}`);
+                const canModerate = postContainer.querySelector('[data-can-moderate="true"]') !== null;
+
+                list.innerHTML += `
+    <div class="flex items-start gap-2 animate-fadeIn" data-comment-id="${data.comment.id}">
+        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+            ${data.comment.avatar 
+                ? `<img src="${data.comment.avatar}" alt="${data.comment.user}'s avatar" class="w-full h-full object-cover">`
+                : `<span class="text-white font-semibold text-xs">${data.comment.user.charAt(0).toUpperCase()}</span>`
+            }
+        </div>
+        <div class="flex-1 flex items-start justify-between gap-2">
+            <p class="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 shadow-sm">
+                <strong>${data.comment.user}:</strong> ${data.comment.content}
+            </p>
+            ${(data.comment.is_author || canModerate) ? `
+                            <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                                    class="text-red-500 hover:text-red-600 transition">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        ` : ''}
+        </div>
+    </div>
+`;
+                e.target.reset();
+            }
+            return false;
+        }
     </script>
+
+
 
 
 </x-layout>

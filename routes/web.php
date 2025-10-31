@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\CommunityController;
@@ -12,7 +15,11 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageThreadController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Models\Community;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ExploreController;
 
 
 // routes/web.php
@@ -30,6 +37,16 @@ Route::middleware('guest')->group(function () {
     // Register
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'store']);
+
+    // Password reset (forgot/reset)
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+    Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
 });
 
 // ------------------
@@ -43,12 +60,12 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 // Authenticated routes
 // ------------------
 Route::middleware('auth')->group(function () {
-Route::get('/explore', function () {
-    // Show all public communities (or all if you haven’t added visibility)
-    $communities = Community::where('visibility', 'public')->get();
 
-    return view('explore', compact('communities'));
-})->name('explore');
+    Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
+    
+    // Welcome
+    Route::get('/welcome', fn () => view('community-welcome'))->name('community-welcome');
+
     // Dashboard + Events
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/events', fn() => view('events'))->name('events');
@@ -67,7 +84,21 @@ Route::get('/explore', function () {
     Route::delete('/threads/{thread}', [MessageThreadController::class, 'destroy'])->name('threads.destroy');
     
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/feed', [MessageController::class, 'feed'])->name('messages.feed');
     Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // Notifications
+    Route::get('/notifications/center', [NotificationController::class, 'page'])->name('notifications.center');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::post('/notifications/clear-all', [NotificationController::class, 'clearAll'])->name('notifications.clearAll');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
+        ->whereUuid('notification')
+        ->name('notifications.read');
+    Route::post('/notifications/preferences/snooze', [NotificationPreferenceController::class, 'toggleSnooze'])
+        ->name('notifications.preferences.snooze');
+    Route::post('/notifications/preferences/{community:slug}', [NotificationPreferenceController::class, 'updateCommunity'])
+        ->name('notifications.preferences.community');
 
     // Community routes
     Route::get('/community-edit', function () {
@@ -77,6 +108,15 @@ Route::get('/explore', function () {
     Route::get('/create-event', function () {
         return view('create-event');
     })->name(name: 'create-event');
+    
+
+        // Photo Gallery routes
+        Route::get('/photos', [PhotoController::class, 'index'])->name('photos.index');
+        Route::get('/photos/upload', [PhotoController::class, 'create'])->name('photos.create');
+        Route::post('/photos', [PhotoController::class, 'store'])->name('photos.store');
+        Route::delete('/photos/{photo}', [PhotoController::class, 'destroy'])->name('photos.destroy');
+        Route::post('/photos/{photo}/approve', [PhotoController::class, 'approve'])->name('photos.approve');
+        Route::post('/photos/{photo}/reject', [PhotoController::class, 'reject'])->name('photos.reject');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -145,5 +185,18 @@ Route::get('/explore', function () {
     Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
-});
 
+    // Onboarding routes
+    Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');
+    Route::post('/onboarding', [OnboardingController::class, 'save'])->name('onboarding.save');
+
+    // Likes
+    Route::post('/communities/{community:slug}/posts/{post}/like', [PostController::class, 'toggleLike'])
+        ->name('posts.like');
+
+    // Replies (Comments)
+    Route::post('/communities/{community:slug}/posts/{post}/replies', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.replies.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/replies/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.replies.destroy');
+    Route::post('/communities/{community:slug}/posts/{post}/comment', [\App\Http\Controllers\CommentController::class, 'store'])->name('posts.comment.store');
+    Route::delete('/communities/{community:slug}/posts/{post}/comment/{comment}', [\App\Http\Controllers\CommentController::class, 'destroy'])->name('posts.comment.destroy');
+});

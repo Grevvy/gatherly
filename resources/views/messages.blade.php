@@ -84,7 +84,7 @@
                                         <div
                                             class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
                                             @if (!empty($member->avatar))
-                                                <img src="{{ asset('storage/' . $member->avatar) }}"
+                                                <img src="{{ $member->avatar_url }}"
                                                     alt="{{ $member->name }}'s avatar"
                                                     class="w-full h-full object-cover">
                                             @else
@@ -233,8 +233,10 @@
                         @endif
 
                         @foreach ($messages->reverse() as $message)
-                            <div data-message-id="{{ $message->id }}"
-                                class="flex {{ $message->user_id === $userId ? 'justify-end' : 'justify-start' }} group items-start gap-2">
+                            <div
+                                class="flex {{ $message->user_id === $userId ? 'justify-end' : 'justify-start' }} group items-start gap-2"
+                                data-message-id="{{ $message->id }}"
+                                data-author-id="{{ $message->user_id }}">
                                 @if ($message->user_id === $userId)
                                     {{-- Trash icon --}}
                                     <form method="POST" action="{{ route('messages.destroy', $message->id) }}"
@@ -262,7 +264,7 @@
                                         @endphp
 
                                         @if ($sender && $sender->avatar)
-                                            <img src="{{ asset('storage/' . $sender->avatar) }}"
+                                            <img src="{{ $sender->avatar_url }}"
                                                 alt="{{ $sender->name }}'s avatar"
                                                 class="w-full h-full object-cover">
                                         @else
@@ -356,34 +358,204 @@
             const directTab = document.querySelector('a[href*="tab=direct"]');
             const listContainer = document.getElementById('listContainer');
             const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+            const csrfToken = document.getElementById('csrf-token')?.value || '';
+            const currentUserId = @json($userId);
+            const messageFormSelector = 'form[action="{{ route('messages.store') }}"]';
+            let messageForm = document.querySelector(messageFormSelector);
+            let messageableType = messageForm?.querySelector('input[name="messageable_type"]')?.value || null;
+            let messageableId = messageForm?.querySelector('input[name="messageable_id"]')?.value || null;
+            let messagePollTimer = null;
+            let isPollingMessages = false;
 
+<<<<<<< HEAD
             // --- Auto-scroll on load
+=======
+            const escapeHtml = (input = '') => input
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+            const formatMessageTime = (isoString) => {
+                if (!isoString) return '';
+                const dt = new Date(isoString);
+                if (Number.isNaN(dt.getTime())) return '';
+                return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            };
+
+            const isNearBottom = () => {
+                if (!scrollContainer) return false;
+                return (scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 80;
+            };
+
+            const getLastMessageId = () => {
+                if (!scrollContainer) return null;
+                const nodes = [...scrollContainer.querySelectorAll('[data-message-id]')];
+                if (!nodes.length) return null;
+                return nodes.reduce((max, node) => Math.max(max, Number(node.dataset.messageId) || 0), 0);
+            };
+
+            let lastMessageId = getLastMessageId();
+
+            const createAvatarMarkup = (message) => {
+                const avatarUrl = message?.user?.avatar;
+                const displayName = message?.user?.name || 'Member';
+                if (avatarUrl) {
+                    return `<img src="${avatarUrl}" alt="${escapeHtml(displayName)}'s avatar" class="w-full h-full object-cover">`;
+                }
+                const initial = (displayName.trim().charAt(0) || 'U').toUpperCase();
+                return `<span class="text-white font-bold text-lg">${escapeHtml(initial)}</span>`;
+            };
+
+            const buildMessageMarkup = (message, isSelf) => {
+                const safeBody = escapeHtml(message.body || '').replace(/
+/g, '<br>');
+                const timeLabel = formatMessageTime(message.created_at);
+                const displayName = escapeHtml(message?.user?.name || 'Member');
+
+                return `
+                    ${isSelf ? `
+                    <form method="POST" data-id="${message.id}"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
+                        <input type="hidden" name="_token" value="${csrfToken}">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <button type="button"
+                            class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
+                            title="Delete" onclick="confirmDeleteMessage(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                            </svg>
+                        </button>
+                    </form>` : ''}
+                    ${!isSelf ? `
+                    <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 z-[1]">
+                        ${createAvatarMarkup(message)}
+                    </div>` : ''}
+                    <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
+                        ${!isSelf ? `
+                        <div class="text-left">
+                            <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
+                        </div>` : ''}
+                        <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
+                            : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform'}">
+                            ${safeBody}
+                            <div class="absolute bottom-0 ${isSelf
+                                ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
+                                : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
+                            </div>
+                        </div>
+                        <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left'}">
+                            ${timeLabel}
+                        </div>
+                    </div>
+                `;
+            };
+
+            const appendMessageElement = (message, { scrollToBottom = false } = {}) => {
+                if (!scrollContainer || !message?.id) return;
+                if (scrollContainer.querySelector(`[data-message-id="${message.id}"]`)) return;
+
+                const isSelf = Number(message.user_id) === Number(currentUserId);
+                const wrapper = document.createElement('div');
+                wrapper.className = `flex ${isSelf ? 'justify-end' : 'justify-start'} group items-start gap-2 fade-in`;
+                wrapper.dataset.messageId = message.id;
+                wrapper.dataset.authorId = message.user_id;
+                wrapper.innerHTML = buildMessageMarkup(message, isSelf);
+
+                scrollContainer.appendChild(wrapper);
+
+                if (scrollToBottom) {
+                    setTimeout(() => {
+                        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    }, 50);
+                }
+            };
+
+>>>>>>> origin/main
             if (scrollContainer) {
                 setTimeout(() => (scrollContainer.scrollTop = scrollContainer.scrollHeight), 100);
             }
 
-            // --- Search filter
             if (searchInput) {
                 searchInput.addEventListener('input', e => {
                     const term = e.target.value.toLowerCase();
-                    const items = document.querySelectorAll('#listContainer a'); // query live each time
-                    items.forEach(item => {
+                    document.querySelectorAll('#listContainer a').forEach(item => {
                         const text = item.textContent.toLowerCase();
                         item.style.display = text.includes(term) ? '' : 'none';
                     });
                 });
             }
 
-            // --- Initialize message form (no reload)
-            function initializeMessageForm() {
-                const form = document.querySelector('form[action="{{ route('messages.store') }}"]');
-                const input = document.getElementById('messageInput');
-                const scrollContainer = document.getElementById('message-scroll');
-                const token = form?.querySelector('input[name="_token"]')?.value;
-                if (!form || !input || !token) return;
+            const pollMessages = async () => {
+                if (!messageableType || !messageableId || isPollingMessages) return;
+                isPollingMessages = true;
 
-                form.addEventListener('submit', async e => {
+                try {
+                    const params = new URLSearchParams({
+                        messageable_type: messageableType,
+                        messageable_id: messageableId,
+                    });
+                    if (lastMessageId) params.append('since_id', lastMessageId);
+                    const res = await fetch(`/messages/feed?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!res.ok) throw new Error('Failed to fetch messages');
+                    const payload = await res.json();
+                    const incoming = payload?.messages || [];
+
+                    if (incoming.length) {
+                        const shouldStick = isNearBottom();
+                        incoming.forEach(message => {
+                            appendMessageElement(message, {
+                                scrollToBottom: shouldStick || Number(message.user_id) === Number(currentUserId)
+                            });
+                        });
+                        lastMessageId = Number(payload.latest_id ?? lastMessageId);
+                        const latest = incoming[incoming.length - 1];
+                        updateSidebarAfterMessage(latest, messageableType, messageableId);
+                    }
+                } catch (err) {
+                    console.error('Message polling failed:', err);
+                } finally {
+                    isPollingMessages = false;
+                }
+            };
+
+            const startMessagePolling = () => {
+                if (messagePollTimer) {
+                    clearInterval(messagePollTimer);
+                    messagePollTimer = null;
+                }
+
+                if (!messageableType || !messageableId) return;
+
+                pollMessages();
+                messagePollTimer = setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        pollMessages();
+                    }
+                }, 5000);
+            };
+
+            const initializeMessageForm = () => {
+                messageForm = document.querySelector(messageFormSelector);
+                const input = document.getElementById('messageInput');
+                const token = messageForm?.querySelector('input[name="_token"]')?.value || csrfToken;
+
+                if (!messageForm || !input || !token) return;
+
+                messageableType = messageForm.querySelector('input[name="messageable_type"]')?.value || null;
+                messageableId = messageForm.querySelector('input[name="messageable_id"]')?.value || null;
+
+                messageForm.addEventListener('submit', async e => {
                     e.preventDefault();
+<<<<<<< HEAD
 
                     // If a delegated (capture) handler already processed the
                     // submit, skip to avoid double-sends (delegated handler
@@ -395,18 +567,27 @@
                     }
                     const formData = new FormData(form);
                     const body = formData.get('body').trim();
+=======
+                    const formData = new FormData(messageForm);
+                    const body = (formData.get('body') || '').toString().trim();
+>>>>>>> origin/main
                     if (!body) return;
 
                     try {
-                        const res = await fetch(form.action, {
+                        const res = await fetch(messageForm.action, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': token,
+<<<<<<< HEAD
                                 'X-Requested-With': 'XMLHttpRequest'
+=======
+                                'Accept': 'application/json'
+>>>>>>> origin/main
                             },
                             body: formData
                         });
 
+<<<<<<< HEAD
                         if (!res.ok) throw new Error('Failed to send');
 
                         // Prefer JSON response when available (controller returns JSON for AJAX)
@@ -478,13 +659,45 @@
                             window.subscribeToActiveConversation && window
                                 .subscribeToActiveConversation();
                         } catch (e) {}
+=======
+                        if (!res.ok) {
+                            const error = await res.json().catch(() => ({}));
+                            throw new Error(error.message || 'Failed to send message.');
+                        }
+
+                        const payload = await res.json();
+                        const savedMessage = payload?.message;
+                        if (savedMessage) {
+                            appendMessageElement(savedMessage, { scrollToBottom: true });
+                            lastMessageId = Math.max(lastMessageId ?? 0, Number(savedMessage.id));
+                            updateSidebarAfterMessage(savedMessage, messageableType, messageableId);
+                        }
+
+                        input.value = '';
+                        updateCharCount();
+>>>>>>> origin/main
                     } catch (err) {
                         console.error(err);
+                        showToastify(err.message || 'Unable to send message.', 'error');
                     }
                 });
-            }
+            };
 
-            initializeMessageForm();
+           initializeMessageForm();
+           startMessagePolling();
+            updateCharCount();
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    if (messagePollTimer) {
+                        clearInterval(messagePollTimer);
+                        messagePollTimer = null;
+                    }
+                } else {
+                    lastMessageId = getLastMessageId();
+                    startMessagePolling();
+                }
+            });
 
             // Delegated submit handler (capture) to reliably prevent native
             // form submits even if the form is replaced rapidly and the
@@ -595,48 +808,41 @@
                     const form = e.target;
                     const token = form.querySelector('input[name="_token"]').value;
                     const formData = new FormData(form);
-
-                    const currentTab = groupTab.classList.contains('bg-blue-100') ? 'channel' :
-                        'direct';
+                    const currentTab = groupTab?.classList.contains('bg-blue-100') ? 'channel' : 'direct';
 
                     try {
                         const res = await fetch(form.action, {
                             method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': token
-                            },
+                            headers: { 'X-CSRF-TOKEN': token },
                             body: formData
                         });
                         if (!res.ok) throw new Error('Failed to create');
 
                         showToastify(
-                            currentTab === 'channel' ? 'Channel created successfully.' :
-                            'Conversation created successfully.',
+                            currentTab === 'channel' ? 'Channel created successfully.' : 'Conversation created successfully.',
                             'success'
                         );
 
-                        // Reload sidebar list
                         const url = new URL(window.location.href);
                         url.searchParams.set('tab', currentTab);
                         const listRes = await fetch(url, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
                         });
                         const listHtml = await listRes.text();
                         const doc = new DOMParser().parseFromString(listHtml, 'text/html');
                         const newList = doc.querySelector('#listContainer');
                         const newFormContent = doc.querySelector('#newForm');
                         if (newList && listContainer) listContainer.innerHTML = newList.innerHTML;
-                        if (newFormContent && document.getElementById('newForm'))
+                        if (newFormContent && document.getElementById('newForm')) {
                             document.getElementById('newForm').innerHTML = newFormContent.innerHTML;
+                        }
 
                         form.reset();
                         newForm.classList.add('hidden');
 
-                        // --- NEW: Reset chat panel
                         if (chatArea) {
                             chatArea.innerHTML = `
+<<<<<<< HEAD
                     <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
                         <p>Select a conversation or channel to start chatting</p>
                     </div>`;
@@ -649,13 +855,22 @@
                         listContainer.querySelectorAll('a').forEach(a => a.classList.remove(
                             'bg-blue-100/50'));
 
+=======
+                                <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
+                                    <p>Select a conversation or channel to start chatting</p>
+                                </div>`;
+                        }
+
+                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
+>>>>>>> origin/main
                     } catch (err) {
                         console.error(err);
-                        showToastify('Failed to create.', 'error');
+                        showToastify('Failed to create conversation.', 'error');
                     }
                 });
             }
 
+<<<<<<< HEAD
             // --- Conversation click (no reload)
             if (listContainer && chatArea) {
                 listContainer.addEventListener('click', async e => {
@@ -798,6 +1013,10 @@
                     listContainer.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
 
                     // Update tab styles
+=======
+            if (groupTab && directTab) {
+                const applyTabStyles = (tab) => {
+>>>>>>> origin/main
                     const activeClasses = ['bg-blue-100', 'text-blue-600', 'shadow-inner'];
                     const inactiveClasses = ['text-gray-600'];
                     const hoverClasses = ['hover:bg-blue-50', 'hover:text-blue-600'];
@@ -813,15 +1032,48 @@
                         groupTab.classList.remove(...activeClasses);
                         groupTab.classList.add(...inactiveClasses, ...hoverClasses);
                     }
+                };
 
+<<<<<<< HEAD
                     // Push new URL state
                     window.history.pushState({}, '', url);
                 } catch (err) {
                     console.error('Failed to load tab:', err);
                 }
             }
+=======
+                const loadTab = async (tab) => {
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tab', tab);
+                        const res = await fetch(url, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
+                        const html = await res.text();
+                        const doc = new DOMParser().parseFromString(html, 'text/html');
+                        const newList = doc.querySelector('#listContainer');
+                        const newFormContent = doc.querySelector('#newForm');
 
-            if (groupTab && directTab) {
+                        if (newList && listContainer) listContainer.innerHTML = newList.innerHTML;
+                        if (newFormContent && document.getElementById('newForm')) {
+                            document.getElementById('newForm').innerHTML = newFormContent.innerHTML;
+                        }
+
+                        if (chatArea) {
+                            chatArea.innerHTML = `
+                                <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
+                                    <p>Select a conversation or channel to start chatting</p>
+                                </div>`;
+                        }
+
+                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
+                        applyTabStyles(tab);
+                    } catch (err) {
+                        console.error('Failed to load tab:', err);
+                    }
+                };
+>>>>>>> origin/main
+
                 groupTab.addEventListener('click', e => {
                     e.preventDefault();
                     loadTab('channel');
@@ -831,11 +1083,15 @@
                     loadTab('direct');
                 });
             }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
         });
 
         function confirmDeleteMessage(button) {
             const form = button.closest('form');
+<<<<<<< HEAD
             // Accept either data-id (older) or data-message-id (newer) attributes
             let messageId = form?.dataset?.id || form?.dataset?.messageId;
             if (!messageId) {
@@ -843,6 +1099,10 @@
                 messageId = container?.dataset?.messageId || container?.dataset?.id;
             }
             const token = document.querySelector('input[name="_token"]').value;
+=======
+            const messageId = form.dataset.id;
+            const token = form.querySelector('input[name="_token"]').value;
+>>>>>>> origin/main
 
             showConfirmToast('Are you sure you want to delete this message?', async () => {
                 try {
@@ -850,7 +1110,8 @@
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': token,
-                            'Content-Type': 'application/x-www-form-urlencoded'
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
                         },
                         body: '_method=DELETE'
                     });
@@ -865,19 +1126,14 @@
                             setTimeout(async () => {
                                 msgEl.remove();
 
-                                const chat = document.querySelector(
-                                    'form[action="{{ route('messages.store') }}"]');
+                                const chat = document.querySelector('form[action="{{ route('messages.store') }}"]');
                                 if (chat) {
-                                    const messageableType = chat.querySelector(
-                                        'input[name="messageable_type"]').value;
-                                    const messageableId = chat.querySelector(
-                                        'input[name="messageable_id"]').value;
+                                    const messageableType = chat.querySelector('input[name="messageable_type"]').value;
+                                    const messageableId = chat.querySelector('input[name="messageable_id"]').value;
 
-                                    // Instead of only local DOM read, fetch sidebar fresh
                                     await refreshSidebarAfterDelete(messageableType, messageableId);
                                 }
                             }, 300);
-
                         }
 
                         showToastify('Message deleted successfully.', 'success');
@@ -893,6 +1149,7 @@
         }
 
         function updateSidebarAfterMessage(message, messageableType, messageableId) {
+            if (!message) return;
             const listItems = document.querySelectorAll('#listContainer .group');
 
             listItems.forEach(item => {
@@ -901,39 +1158,18 @@
 
                 const urlParam = messageableType === 'channel' ? 'channel_id' : 'thread_id';
                 if (link.href.includes(`${urlParam}=${messageableId}`)) {
+                    const preview = item.querySelector('p.text-gray-500');
+                    if (preview) preview.textContent = message.body || '';
 
-                    // Update last message text and timestamp if a message exists
-                    if (message) {
-                        const preview = item.querySelector('p.text-gray-500');
-                        if (preview) preview.textContent = message.body;
-
-                        const timestamp = item.querySelector('span.text-xs.text-gray-400');
-                        if (timestamp) {
-                            const time = new Date(message.created_at).toLocaleTimeString([], {
-                                hour: 'numeric',
-                                minute: '2-digit'
-                            });
-                            timestamp.textContent = time;
-                        }
-                    } else {
-                        // If no message (like after deletion), clear preview and timestamp
-                        const preview = item.querySelector('p.text-gray-500');
-                        if (preview) preview.textContent = '';
-                        const timestamp = item.querySelector('span.text-xs.text-gray-400');
-                        if (timestamp) timestamp.textContent = '';
+                    const timestamp = item.querySelector('span.text-xs.text-gray-400');
+                    if (timestamp) {
+                        const time = formatTimeForSidebar(message.created_at);
+                        timestamp.textContent = time;
                     }
 
-                    // Handle trash icon visibility
                     const trashForm = item.querySelector('form');
-                    if (!trashForm) return;
-
-                    if (messageableType === 'channel') {
-                        // For channels, always show if user is owner
-                        trashForm.classList.remove('hidden');
-                    } else {
-                        // For threads, show trash only if chat is empty
-                        const chatMessages = document.querySelectorAll('#message-scroll .flex');
-                        if (chatMessages.length === 0) {
+                    if (trashForm) {
+                        if (messageableType === 'channel') {
                             trashForm.classList.remove('hidden');
                         } else {
                             trashForm.classList.add('hidden');
@@ -943,6 +1179,16 @@
             });
         }
 
+<<<<<<< HEAD
+=======
+        function formatTimeForSidebar(isoString) {
+            if (!isoString) return '';
+            const dt = new Date(isoString);
+            if (Number.isNaN(dt.getTime())) return '';
+            return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+
+>>>>>>> origin/main
         async function refreshSidebarAfterDelete(messageableType, messageableId) {
             try {
                 const listItems = document.querySelectorAll('#listContainer .group');
@@ -954,8 +1200,7 @@
                     const urlParam = messageableType === 'channel' ? 'channel_id' : 'thread_id';
                     if (!link.href.includes(`${urlParam}=${messageableId}`)) return;
 
-                    // Get all visible message bubbles
-                    const messageEls = document.querySelectorAll('#message-scroll .flex');
+                    const messageEls = document.querySelectorAll('#message-scroll [data-message-id]');
                     let lastMessage = null;
                     let lastTimestamp = null;
 
@@ -999,6 +1244,7 @@
         function updateCharCount() {
             const input = document.getElementById('messageInput');
             const counter = document.getElementById('charCount');
+            if (!input || !counter) return;
             counter.textContent = input.value.length;
         }
 
@@ -1543,4 +1789,5 @@
         window.subscribeToActiveConversation = subscribeToActiveConversation;
         window.leaveCurrentEchoChannel = leaveCurrentEchoChannel;
     </script>
+
 </x-layout>

@@ -13,6 +13,9 @@
         ? Community::whereHas('memberships', fn($q) => $q->where('user_id', auth()->id()))->get()
         : collect();
 
+    $availableTags = config('tags.list', []);
+    $selectedTags = collect($community->tags ?? [])->map(fn ($tag) => strtolower($tag))->all();
+
     $canPublish =
         auth()->check() &&
         (auth()->user()->isSiteAdmin() ||
@@ -29,16 +32,6 @@
             enctype="multipart/form-data">
             @csrf
             @method('PATCH')
-            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit"
-                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
-                    Update Community
-                </button>
-                <a href="{{ url('/dashboard?community=' . $community->slug) }}" class="text-gray-600 underline">
-                    Cancel
-                </a>
-            </div>
-
             <!-- Name -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Community Name</span>
@@ -55,7 +48,7 @@
 
             <!-- Banner Image -->
             <div class="relative mb-4">
-                <img id="banner-preview" src="{{ $community->banner_image ? asset($community->banner_image) : '' }}"
+                <img id="banner-preview" src="{{ $community->banner_image_url ?? '' }}"
                     alt="Banner Preview" class="w-full h-40 object-cover rounded mb-2" />
 
                 <input id="banner-input" type="file" name="banner_image" accept="image/*"
@@ -87,6 +80,44 @@
                 </select>
             </div>
 
+            <!-- Tags -->
+            <div class="relative mb-6">
+                <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">
+                    Select Tags
+                </span>
+                <div class="border rounded-xl bg-white pt-10 pb-4 px-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        @foreach ($availableTags as $tag)
+                            @php
+                                $value = strtolower($tag);
+                            @endphp
+                            <label class="group cursor-pointer">
+                                <input type="checkbox" name="tags[]" value="{{ $value }}"
+                                    class="hidden peer" {{ in_array($value, $selectedTags, true) ? 'checked' : '' }}>
+                                <div
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-all
+                                        peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-purple-500
+                                        peer-checked:text-white peer-checked:border-transparent peer-checked:shadow-md
+                                        group-hover:border-blue-300 group-hover:shadow-sm">
+                                    {{ $tag }}
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    Select all topics that match this community.
+                </p>
+            </div>
+            <div class="flex justify-between mt-8 pt-4 border-t border-gray-200">
+                <a href="{{ url('/dashboard?community=' . $community->slug) }}" class="text-gray-600 underline">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                    Update Community
+                </button>
+            </div>
         </form>
     </div>
 
@@ -107,7 +138,7 @@
                     reader.readAsDataURL(file);
                 } else {
                     bannerPreview.src =
-                        "{{ $community->banner_image ? asset($community->banner_image) : '' }}"; // fallback
+                        "{{ $community->banner_image_url ?? '' }}"; // fallback
                 }
             });
 
