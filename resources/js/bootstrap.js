@@ -84,4 +84,15 @@ window.Echo = new Echo({
     },
 });
 
+// Debug WebSocket connection and auth
+if (import.meta.env.DEV || window.location.hostname !== 'localhost') {
+    console.log('[Echo] Configuration:', {
+        key: import.meta.env.VITE_REVERB_APP_KEY,
+        host: import.meta.env.VITE_REVERB_HOST,
+        port: import.meta.env.VITE_REVERB_PORT,
+        scheme: import.meta.env.VITE_REVERB_SCHEME,
+        csrf: csrfToken ? 'present' : 'missing'
+    });
+}
+
 export default window.Echo;
