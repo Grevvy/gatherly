@@ -550,6 +550,11 @@
 
                 messageForm.addEventListener('submit', async e => {
                     e.preventDefault();
+                    console.log('[DEBUG] Per-form submit handler triggered');
+                    
+                    // Mark as handled to prevent delegated handler from also processing
+                    messageForm.dataset.ajaxHandled = '1';
+                    
                     const formData = new FormData(messageForm);
                     const body = (formData.get('body') || '').toString().trim();
                     if (!body) return;
@@ -579,7 +584,14 @@
 
                         input.value = '';
                         updateCharCount();
+                        
+                        // Clear the handled flag for next submission
+                        setTimeout(() => {
+                            delete messageForm.dataset.ajaxHandled;
+                        }, 100);
                     } catch (err) {
+                        // Clear the handled flag on error too
+                        delete messageForm.dataset.ajaxHandled;
                         console.error(err);
                         showToastify(err.message || 'Unable to send message.', 'error');
                     }
@@ -610,12 +622,18 @@
             document.addEventListener('submit', async (e) => {
                 const form = e.target;
                 if (!form || !form.matches('form[action="{{ route("messages.store") }}"]')) return;
+                
+                console.log('[DEBUG] Delegated submit handler triggered');
+                
                 try {
                     e.preventDefault();
                 } catch (_) {}
 
                 // If the per-form handler already handled this (we mark it), skip
-                if (form.dataset.ajaxHandled === '1') return;
+                if (form.dataset.ajaxHandled === '1') {
+                    console.log('[DEBUG] Form already handled, skipping delegated handler');
+                    return;
+                }
                 form.dataset.ajaxHandled = '1';
 
                 const input = document.getElementById('messageInput');
