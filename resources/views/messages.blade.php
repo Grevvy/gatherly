@@ -406,8 +406,7 @@
             };
 
             const buildMessageMarkup = (message, isSelf) => {
-                const safeBody = escapeHtml(message.body || '').replace(/
-/g, '<br>');
+                const safeBody = escapeHtml(message.body || '').replace(/\n/g, '<br>');
                 const timeLabel = formatMessageTime(message.created_at);
                 const displayName = escapeHtml(message?.user?.name || 'Member');
 
@@ -1003,17 +1002,27 @@
         }
 
         function subscribeToActiveConversation() {
+            console.log('[DEBUG] subscribeToActiveConversation called');
             // Determine the active conversation from the message form inputs
             const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
-            if (!chatForm || !window.Echo) return;
+            if (!chatForm || !window.Echo) {
+                console.log('[DEBUG] No chat form or Echo not available', { chatForm: !!chatForm, Echo: !!window.Echo });
+                return;
+            }
 
             const typeInput = chatForm.querySelector('input[name="messageable_type"]');
             const idInput = chatForm.querySelector('input[name="messageable_id"]');
-            if (!typeInput || !idInput) return;
+            if (!typeInput || !idInput) {
+                console.log('[DEBUG] Missing form inputs', { typeInput: !!typeInput, idInput: !!idInput });
+                return;
+            }
 
             const type = typeInput.value;
             const id = idInput.value;
-            if (!type || !id) return;
+            if (!type || !id) {
+                console.log('[DEBUG] Missing values', { type, id });
+                return;
+            }
 
             // The server broadcasts use the model class basename lowercased
             // (e.g. MessageThread -> 'messagethread'), while the form sends
@@ -1022,7 +1031,11 @@
             const channelKey = type === 'thread' ? 'messagethread' : type;
 
             const channelName = `${channelKey}.${id}`;
-            if (__currentEchoChannelName === channelName) return; // already subscribed
+            console.log('[DEBUG] Channel details', { type, id, channelKey, channelName });
+            if (__currentEchoChannelName === channelName) {
+                console.log('[DEBUG] Already subscribed to', channelName);
+                return; // already subscribed
+            }
 
             // Unsubscribe previous
             leaveCurrentEchoChannel();
@@ -1266,6 +1279,7 @@
 
         // Subscribe on initial load
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('[DEBUG] DOMContentLoaded - attempting initial subscription');
             subscribeToActiveConversation();
         });
 
