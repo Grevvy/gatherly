@@ -437,18 +437,20 @@
                         <div class="text-left">
                             <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
                         </div>` : ''}
-                        <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
-                            : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform'}">
-                            ${safeBody}
-                        </div>
-                        <div class="absolute bottom-0 ${isSelf
-                            ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]'
-                            : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]'}">
-                        </div>
-                        <div class="absolute bottom-0 ${isSelf
-                            ? 'right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
-                            : 'left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
+                        <div class="relative">
+                            <div class="px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
+                                : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform'}">
+                                ${safeBody}
+                            </div>
+                            <div class="absolute bottom-0 ${isSelf
+                                ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px]'
+                                : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]'}">
+                            </div>
+                            <div class="absolute bottom-0 ${isSelf
+                                ? 'right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
+                                : 'left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
+                            </div>
                         </div>
                         <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left'}">
                             ${timeLabel}
