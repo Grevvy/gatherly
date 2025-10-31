@@ -448,8 +448,8 @@
                                 : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px]'}">
                             </div>
                             <div class="absolute bottom-0 ${isSelf
-                                ? 'right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
-                                : 'left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
+                                ? '-right-[18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]'
+                                : '-left-[18px] w-[24px] h-[22px] bg-white rounded-br-[10px]'}">
                             </div>
                         </div>
                         <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left'}">
