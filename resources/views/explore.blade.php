@@ -338,6 +338,19 @@
                         injectCommunityIntoSidebar(slug, communityName, effectiveVisibility);
                     }
                 } else {
+                    // Handle error responses
+                    let errorData = null;
+                    try {
+                        errorData = await res.json();
+                    } catch (_) {}
+
+                    if (res.status === 403 && buttonText === 'Invite Only') {
+                        // Show specific message for invite-only communities
+                        showToastify(errorData?.message || 'This community is invite-only. You must be invited by a community moderator to join.', 'error');
+                    } else {
+                        showToastify(errorData?.message || 'Failed to join community', 'error');
+                    }
+
                     btn.disabled = false;
                     btn.textContent = originalText;
                     btn.removeAttribute('aria-busy');

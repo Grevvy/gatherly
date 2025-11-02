@@ -145,6 +145,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community:slug}', [CommunityController::class, 'update']);
     Route::delete('/communities/{community:slug}', [CommunityController::class, 'destroy']);
 
+    // User search for invitations
+    Route::get('/users/search', [\App\Http\Controllers\UserController::class, 'search'])->name('users.search');
+
     // Memberships + moderation
     Route::get('/members', [CommunityMembershipController::class, 'showMembers'])->name('members');
     Route::get('/communities/{community:slug}/members', [CommunityMembershipController::class, 'index']);
@@ -156,6 +159,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/communities/{community:slug}/role', [CommunityMembershipController::class, 'setRole']);
     Route::post('/communities/{community:slug}/ban', [CommunityMembershipController::class, 'ban']);
     Route::delete('/communities/{community:slug}/members/{userId}', [CommunityMembershipController::class, 'remove']);
+
+    // Invitation routes
+    Route::get('/invitation/{membershipId}/accept', [CommunityMembershipController::class, 'acceptInvitation'])->name('invitation.accept');
+    Route::get('/invitation/{membershipId}/decline', [CommunityMembershipController::class, 'declineInvitation'])->name('invitation.decline');
+    Route::get('/invitation/{membershipId}', [CommunityMembershipController::class, 'handleInvitation'])->name('invitation.handle');
 
     // Events
     Route::get('/events/list', [\App\Http\Controllers\EventController::class, 'index']);

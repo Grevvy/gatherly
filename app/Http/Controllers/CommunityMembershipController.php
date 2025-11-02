@@ -12,6 +12,7 @@ use App\Notifications\MemberRemoved;
 use App\Notifications\MembershipApproved;
 use App\Notifications\MembershipRoleChanged;
 use App\Notifications\MembershipRequested;
+use App\Notifications\CommunityInvitation;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -63,10 +64,16 @@ class CommunityMembershipController extends Controller
             return response()->json($existing, 200);
         }
 
+        // Prevent direct joining of invite-only communities
+        if ($community->join_policy === 'invite') {
+            return response()->json([
+                'message' => 'This community is invite-only. You must be invited by a community moderator to join.'
+            ], 403);
+        }
+
         $status = match ($community->join_policy) {
             'open'   => 'active',
             'request'=> 'pending',
-            'invite' => 'pending',
             default  => 'pending',
         };
 
@@ -102,7 +109,7 @@ class CommunityMembershipController extends Controller
 
     public function leave(Community $community)
     {
-        $uid = auth()->id();
+        $uid = Auth::id();
         abort_if($community->owner_id === $uid, 400, 'Owner must transfer ownership before leaving');
 
         CommunityMembership::where('community_id', $community->id)
@@ -177,7 +184,27 @@ class CommunityMembershipController extends Controller
     {
         $this->authorizeModerator($community);
 
-        $data = $request->validate(['user_id' => ['required','integer','exists:users,id']]);
+        $data = $request->validate([
+            'user_id' => ['required','integer','exists:users,id'],
+            'email' => ['sometimes','email'], // For frontend display
+        ]);
+
+        // Check if user is already a member or has pending invitation
+        $existing = CommunityMembership::where('community_id', $community->id)
+            ->where('user_id', $data['user_id'])
+            ->first();
+
+        if ($existing) {
+            if ($existing->status === 'active') {
+                return response()->json(['message' => 'User is already a member'], 400);
+            }
+            if ($existing->status === 'pending') {
+                return response()->json(['message' => 'User already has a pending invitation'], 400);
+            }
+            if ($existing->status === 'banned') {
+                return response()->json(['message' => 'User is banned from this community'], 400);
+            }
+        }
 
         $membership = CommunityMembership::firstOrCreate(
             ['community_id' => $community->id, 'user_id' => $data['user_id']],
@@ -188,6 +215,22 @@ class CommunityMembershipController extends Controller
             $membership->notification_preferences = CommunityMembership::DEFAULT_NOTIFICATION_PREFERENCES;
             $membership->save();
         }
+
+        // Load relationships for notification
+        $membership->loadMissing('user:id,name,email', 'community:id,name,slug,description');
+
+        // Send invitation notification to the invited user
+        if ($membership->user) {
+            $membership->user->notify(new CommunityInvitation($membership));
+        }
+
+        // Notify community moderators about the invitation
+        app(NotificationService::class)->notifyCommunityModerators(
+            $community,
+            new MembershipRequested($membership),
+            Auth::id(),
+            'memberships'
+        );
 
         return response()->json($membership, 201);
     }
@@ -299,7 +342,167 @@ class CommunityMembershipController extends Controller
         return response()->json(['message' => 'Member removed']);
     }
 
+    public function acceptInvitation($membershipId)
+    {
+        $membership = CommunityMembership::find($membershipId);
+        
+        if (!$membership) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Invitation not found. It may have already been processed.');
+        }
+
+        // Verify the invitation is for the current user
+        if ($membership->user_id !== Auth::id()) {
+            abort(403, 'This invitation is not for you');
+        }
+        
+        // If already active, redirect to community with success message
+        if ($membership->status === 'active') {
+            return redirect()->route('dashboard', ['community' => $membership->community->slug])
+                ->with('success', "You're already a member of {$membership->community->name}!");
+        }
+        
+        // If not pending, show appropriate message
+        if ($membership->status !== 'pending') {
+            if ($membership->status === 'banned') {
+                abort(403, 'You are banned from this community');
+            }
+            return redirect()->route('dashboard')
+                ->with('error', 'This invitation is no longer valid.');
+        }
+
+        // Accept the invitation
+        $membership->update(['status' => 'active']);
+        $membership->loadMissing('user:id,name,avatar', 'community:id,name,slug');
+
+        // Update related notifications to mark them as processed and change the URL
+        $this->updateInvitationNotifications($membership);
+
+        // Notify community moderators
+        app(NotificationService::class)->notifyCommunityModerators(
+            $membership->community,
+            new MemberJoined($membership),
+            $membership->user_id,
+            'memberships'
+        );
+
+        return redirect()->route('dashboard', ['community' => $membership->community->slug])
+            ->with('success', "Welcome to {$membership->community->name}! You're now a member.");
+    }
+
+    public function declineInvitation($membershipId)
+    {
+        $membership = CommunityMembership::find($membershipId);
+        
+        if (!$membership) {
+            return redirect()->route('dashboard')
+                ->with('info', 'Invitation not found. It may have already been processed.');
+        }
+
+        // Verify the invitation is for the current user
+        if ($membership->user_id !== Auth::id()) {
+            abort(403, 'This invitation is not for you');
+        }
+        
+        // If already declined or doesn't exist, that's fine
+        if ($membership->status !== 'pending') {
+            return redirect()->route('dashboard')
+                ->with('info', 'This invitation has already been processed.');
+        }
+
+        // Delete the invitation and update notifications
+        $this->updateDeclinedInvitationNotifications($membership);
+        $membership->delete();
+
+        return redirect()->route('dashboard')
+            ->with('success', 'You have declined the invitation.');
+    }
+
+    public function handleInvitation($membershipId)
+    {
+        $membership = CommunityMembership::find($membershipId);
+        
+        if (!$membership) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Invitation not found. It may have already been processed.');
+        }
+
+        // Verify the invitation is for the current user
+        if ($membership->user_id !== Auth::id()) {
+            abort(403, 'This invitation is not for you');
+        }
+        
+        // If already active, redirect to community
+        if ($membership->status === 'active') {
+            return redirect()->route('dashboard', ['community' => $membership->community->slug])
+                ->with('info', "You're already a member of {$membership->community->name}.");
+        }
+        
+        // If pending, show invitation acceptance page
+        if ($membership->status === 'pending') {
+            return redirect()->route('invitation.accept', ['membershipId' => $membership->id]);
+        }
+        
+        // If banned or other status
+        if ($membership->status === 'banned') {
+            return redirect()->route('dashboard')
+                ->with('error', 'You are banned from this community.');
+        }
+        
+        return redirect()->route('dashboard')
+            ->with('error', 'This invitation is no longer valid.');
+    }
+
     // ---- Inline guards ----
+
+    private function updateInvitationNotifications(CommunityMembership $membership): void
+    {
+        // Find and update invitation notifications for this user and membership
+        $user = $membership->user;
+        if (!$user) return;
+
+        // Get all invitation notifications for this membership
+        $notifications = $user->notifications()
+            ->where('data->membership_id', $membership->id)
+            ->where('data->type', 'community_invitation')
+            ->get();
+
+        foreach ($notifications as $notification) {
+            $data = $notification->data;
+            $data['url'] = route('dashboard', ['community' => $membership->community->slug]);
+            $data['title'] = "Welcome to {$membership->community->name}! You're now a member.";
+            $data['body'] = 'You successfully joined the community. Start connecting with members!';
+            
+            $notification->update([
+                'data' => $data,
+                'read_at' => now()
+            ]);
+        }
+    }
+
+    private function updateDeclinedInvitationNotifications(CommunityMembership $membership): void
+    {
+        // Find and update invitation notifications for this user and membership
+        $user = $membership->user;
+        if (!$user) return;
+
+        // Get all invitation notifications for this membership
+        $notifications = $user->notifications()
+            ->where('data->membership_id', $membership->id)
+            ->where('data->type', 'community_invitation')
+            ->get();
+
+        foreach ($notifications as $notification) {
+            $data = $notification->data;
+            $data['title'] = "Invitation to {$membership->community->name} declined";
+            $data['body'] = 'You declined the invitation to join this community.';
+            
+            $notification->update([
+                'data' => $data,
+                'read_at' => now()
+            ]);
+        }
+    }
     private function authorizeModerator(Community $community): void
     {
         $uid = Auth::id();

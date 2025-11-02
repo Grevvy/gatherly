@@ -27,6 +27,68 @@
                 </div>
             </div>
 
+            @php
+                $canInvite = (auth()->user()->id === $community->owner_id ||
+                    $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0);
+                $isInviteOnly = $community->join_policy === 'invite';
+            @endphp
+
+            <!-- Invite Section -->
+            @if($canInvite && $isInviteOnly)
+                <div class="flex justify-center mt-4">
+                    <button id="inviteButton" 
+                        class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Invite Member
+                    </button>
+                </div>
+
+                <!-- Invite Modal -->
+                <div id="inviteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-900">Invite New Member</h3>
+                            <button id="closeInviteModal" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <form id="inviteForm">
+                            <div class="mb-4">
+                                <label for="userSearch" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Search for a user to invite
+                                </label>
+                                <div class="relative">
+                                    <input type="text" id="userSearch" placeholder="Type name or email..."
+                                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" 
+                                        autocomplete="off">
+                                    <div id="userSearchResults" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-48 overflow-y-auto hidden z-10">
+                                        <!-- Search results will appear here -->
+                                    </div>
+                                </div>
+                                <input type="hidden" id="selectedUserId" name="user_id">
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button type="button" id="cancelInvite"
+                                    class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="sendInvite"
+                                    class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    disabled>
+                                    Send Invitation
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            @endif
+
 
             <!-- Filter Tabs -->
             <div class="flex justify-center gap-3 mt-6 flex-wrap">
@@ -379,6 +441,169 @@
                         'Remove'
                 );
             }
+
+            // Invitation functionality
+            const inviteButton = document.getElementById('inviteButton');
+            const inviteModal = document.getElementById('inviteModal');
+            const closeInviteModal = document.getElementById('closeInviteModal');
+            const cancelInvite = document.getElementById('cancelInvite');
+            const userSearch = document.getElementById('userSearch');
+            const userSearchResults = document.getElementById('userSearchResults');
+            const selectedUserId = document.getElementById('selectedUserId');
+            const sendInviteBtn = document.getElementById('sendInvite');
+            const inviteForm = document.getElementById('inviteForm');
+
+            let searchTimeout;
+
+            if (inviteButton) {
+                // Open modal
+                inviteButton.addEventListener('click', () => {
+                    inviteModal.classList.remove('hidden');
+                    inviteModal.classList.add('flex');
+                    userSearch.focus();
+                });
+
+                // Close modal
+                [closeInviteModal, cancelInvite].forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        inviteModal.classList.add('hidden');
+                        inviteModal.classList.remove('flex');
+                        clearInviteForm();
+                    });
+                });
+
+                // Close modal on backdrop click
+                inviteModal.addEventListener('click', (e) => {
+                    if (e.target === inviteModal) {
+                        inviteModal.classList.add('hidden');
+                        inviteModal.classList.remove('flex');
+                        clearInviteForm();
+                    }
+                });
+
+                // User search functionality
+                userSearch.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+                    
+                    clearTimeout(searchTimeout);
+                    
+                    if (query.length < 2) {
+                        hideSearchResults();
+                        return;
+                    }
+
+                    searchTimeout = setTimeout(() => searchUsers(query), 300);
+                });
+
+                // Handle form submission
+                inviteForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const userId = selectedUserId.value;
+                    if (!userId) {
+                        showToastify('Please select a user to invite', 'error');
+                        return;
+                    }
+
+                    try {
+                        sendInviteBtn.disabled = true;
+                        sendInviteBtn.textContent = 'Sending...';
+
+                        const response = await fetch(`/communities/{{ $community->slug }}/invite`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                user_id: parseInt(userId)
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            showToastify('Invitation sent successfully!', 'success');
+                            inviteModal.classList.add('hidden');
+                            inviteModal.classList.remove('flex');
+                            clearInviteForm();
+                            // Refresh the page to show pending invitation
+                            setTimeout(() => window.location.reload(), 1000);
+                        } else {
+                            showToastify(data.message || 'Failed to send invitation', 'error');
+                        }
+                    } catch (err) {
+                        console.error('Error sending invitation:', err);
+                        showToastify('Something went wrong', 'error');
+                    } finally {
+                        sendInviteBtn.disabled = false;
+                        sendInviteBtn.textContent = 'Send Invitation';
+                    }
+                });
+            }
+
+            async function searchUsers(query) {
+                try {
+                    const response = await fetch(`/users/search?q=${encodeURIComponent(query)}&community={{ $community->slug }}&limit=5`);
+                    const data = await response.json();
+
+                    if (response.ok && data.users) {
+                        displaySearchResults(data.users);
+                    } else {
+                        hideSearchResults();
+                    }
+                } catch (err) {
+                    console.error('Error searching users:', err);
+                    hideSearchResults();
+                }
+            }
+
+            function displaySearchResults(users) {
+                if (users.length === 0) {
+                    userSearchResults.innerHTML = '<div class="p-3 text-gray-500 text-sm">No users found</div>';
+                } else {
+                    userSearchResults.innerHTML = users.map(user => `
+                        <div class="p-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3 border-b border-gray-100 last:border-b-0" 
+                             onclick="selectUser(${user.id}, '${user.name}', '${user.email}')">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center text-white text-sm font-semibold">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">${user.name}</div>
+                                <div class="text-sm text-gray-500">${user.email}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                userSearchResults.classList.remove('hidden');
+            }
+
+            function hideSearchResults() {
+                userSearchResults.classList.add('hidden');
+            }
+
+            function selectUser(id, name, email) {
+                selectedUserId.value = id;
+                userSearch.value = `${name} (${email})`;
+                sendInviteBtn.disabled = false;
+                hideSearchResults();
+            }
+
+            function clearInviteForm() {
+                userSearch.value = '';
+                selectedUserId.value = '';
+                sendInviteBtn.disabled = true;
+                hideSearchResults();
+            }
+
+            // Hide search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userSearch.contains(e.target) && !userSearchResults.contains(e.target)) {
+                    hideSearchResults();
+                }
+            });
         </script>
 
 </x-layout>
