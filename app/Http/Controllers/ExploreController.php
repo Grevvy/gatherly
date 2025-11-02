@@ -35,6 +35,12 @@ class ExploreController extends Controller
         $recommended = collect();
         if (!empty($userInterests)) {
             $recommended = Community::with('memberships')
+                ->where(function ($query) use ($user) {
+                    $query->where('visibility', 'public')
+                        ->orWhereHas('memberships', function ($q) use ($user) {
+                            $q->where('user_id', $user->id);
+                        });
+                })
                 ->where(function ($query) use ($userInterests) {
                     foreach ($userInterests as $interest) {
                         $query->orWhereJsonContains('tags', $interest);
