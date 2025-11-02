@@ -110,20 +110,6 @@
                         </span>
                     </p>
 
-                    <p class="mt-2 text-gray-500 text-xs flex items-center justify-center md:justify-start gap-1.5">
-                        <span>
-                            Tip: You can leave a community by clicking
-                            <span class="inline-flex items-center gap-1 align-middle">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                            </span>
-                            beside the community name in the sidebar.
-                        </span>
-                    </p>
-
                 </div>
 
                 <!-- Right: Hero image (fits content) -->
@@ -173,6 +159,19 @@
                                     +
                                 </span> in the
                                 sidebar to create your own</span></li>
+
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i> <span>
+                                Leave a joined community by clicking
+                                <span class="inline-flex items-center gap-1 align-middle">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                </span>
+                                beside the community name in the sidebar.
+                            </span></li>
                     </ul>
                 </div>
             </div>
@@ -220,7 +219,8 @@
                         </div>
                         <h3 class="text-base md:text-lg font-semibold text-gray-900">Plan and attend events</h3>
                     </div>
-                    <p class="mt-3 text-sm text-gray-600 leading-relaxed">Create events in your community and keep track
+                    <p class="mt-3 text-sm text-gray-600 leading-relaxed">Create events in your community and keep
+                        track
                         of who’s going.</p>
                     <ul class="mt-3 space-y-1.5 text-sm text-gray-600">
                         <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
@@ -228,7 +228,7 @@
                                 <strong>Events</strong></span></li>
                         <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
                                 aria-hidden="true"></i><span>Create your event with title, date, time, and
-                                details</span></li>
+                                other details</span></li>
                         <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
                                 aria-hidden="true"></i><span>View events in <strong>List</strong> or
                                 <strong>Calendar</strong> tabs; filter by <strong>Upcoming</strong> or
@@ -331,6 +331,82 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Set up your profile -->
+            <div
+                class="group w-full p-[1px] rounded-2xl bg-gradient-to-br from-sky-200 via-indigo-100 to-blue-200 transition hover:shadow-md hover:-translate-y-0.5 hover:shadow-sky-200/80">
+                <div
+                    class="relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 backdrop-blur p-6 h-full">
+                    <span
+                        class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 via-indigo-500 to-blue-500"></span>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="card-icon w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                            <i class="fas fa-id-card" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-900">Set up your profile</h3>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 leading-relaxed">Personalize your profile so people can find
+                        and recognize you.</p>
+                    <ul class="mt-3 space-y-1.5 text-sm text-gray-600">
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Open <a href="{{ route('profile.show') }}"
+                                    class="text-blue-700 underline hover:text-blue-800">View Profile</a> from the
+                                dropdown in the top nav
+                                bar and click <a href="{{ route('profile.edit') }}"
+                                    class="text-blue-700 underline hover:text-blue-800">Edit Profile</a></span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Add your <strong>avatar</strong> and an optional
+                                <strong>banner</strong></span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Update <strong>name</strong>,
+                                <strong>username</strong>, <strong>email/phone</strong>,
+                                <strong>location</strong>, and <strong>website</strong></span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Write a short <strong>bio</strong> to introduce
+                                yourself</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Pick your <strong>interests</strong> to help us recommend
+                                relevant communities</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div
+                class="group w-full p-[1px] rounded-2xl bg-gradient-to-br from-emerald-200 via-green-100 to-teal-200 transition hover:shadow-md hover:-translate-y-0.5 hover:shadow-emerald-200/80">
+                <div
+                    class="relative overflow-hidden rounded-2xl border border-white/60 bg-white/70 backdrop-blur p-6 h-full">
+                    <span
+                        class="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500"></span>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="card-icon w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                            <i class="fas fa-bell" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="text-base md:text-lg font-semibold text-gray-900">Stay in the loop with
+                            notifications</h3>
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 leading-relaxed">Manage your alerts across communities with
+                        per‑community preferences, quick bulk actions, and a one‑tap snooze.</p>
+                    <ul class="mt-3 space-y-1.5 text-sm text-gray-600">
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Choose what you hear about per community —
+                                <strong>Posts</strong>, <strong>Events</strong>, <strong>Photos</strong>, and
+                                <strong>Members</strong></span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span><strong>Snooze all</strong> notifications for 24 hours and
+                                resume anytime</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span><strong>Mark all read</strong> or
+                                <strong>Clear all</strong> in one click</span></li>
+                        <li class="flex items-start gap-2"><i class="fas fa-check text-green-500 mt-0.5"
+                                aria-hidden="true"></i><span>Enable browser notifications for real‑time alerts</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
         </section>
 
         <!-- How it works -->
@@ -354,7 +430,8 @@
                         <i class="fas fa-paper-plane"></i>
                     </div>
                     <h3 class="font-semibold text-gray-900">Invite your people</h3>
-                    <p class="text-sm text-gray-600 mt-1">Add members directly — it only takes
+                    <p class="text-sm text-gray-600 mt-1">Send an invitation through email or add members directly — it
+                        only takes
                         a moment.</p>
                 </div>
                 <div
