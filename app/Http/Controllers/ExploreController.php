@@ -20,26 +20,30 @@ class ExploreController extends Controller
             $userInterests = [];
         }
 
-        
+        // All communities - site admins can see everything
         $allCommunities = Community::with('memberships')
-            ->where(function ($query) use ($user) {
-                $query->where('visibility', 'public')
-                    ->orWhereHas('memberships', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    });
+            ->when(!$user->isSiteAdmin(), function ($query) use ($user) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                        ->orWhereHas('memberships', function ($membership) use ($user) {
+                            $membership->where('user_id', $user->id);
+                        });
+                });
             })
             ->orderBy('created_at', 'desc')
             ->get();
 
-        
+        // Recommended communities based on user interests
         $recommended = collect();
         if (!empty($userInterests)) {
             $recommended = Community::with('memberships')
-                ->where(function ($query) use ($user) {
-                    $query->where('visibility', 'public')
-                        ->orWhereHas('memberships', function ($q) use ($user) {
-                            $q->where('user_id', $user->id);
-                        });
+                ->when(!$user->isSiteAdmin(), function ($query) use ($user) {
+                    $query->where(function ($q) use ($user) {
+                        $q->where('visibility', 'public')
+                            ->orWhereHas('memberships', function ($membership) use ($user) {
+                                $membership->where('user_id', $user->id);
+                            });
+                    });
                 })
                 ->where(function ($query) use ($userInterests) {
                     foreach ($userInterests as $interest) {
@@ -82,16 +86,18 @@ class ExploreController extends Controller
             $userInterests = [];
         }
 
-        // Search all accessible communities - first get broader results
+        // Search all accessible communities - site admins can see everything
         $communities = Community::with(['memberships' => function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             }])
             ->withCount('memberships')
-            ->where(function ($query) use ($user) {
-                $query->where('visibility', 'public')
-                    ->orWhereHas('memberships', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    });
+            ->when(!$user->isSiteAdmin(), function ($query) use ($user) {
+                $query->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                        ->orWhereHas('memberships', function ($membership) use ($user) {
+                            $membership->where('user_id', $user->id);
+                        });
+                });
             })
             ->orderBy('created_at', 'desc')
             ->get();

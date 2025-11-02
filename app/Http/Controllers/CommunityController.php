@@ -32,14 +32,15 @@ class CommunityController extends Controller
      */
     public function search(Request $request)
     {
-    $uid = Auth::id();
+        $uid = Auth::id();
+        $user = Auth::user();
 
         // If debug=1 is provided, return broader results for troubleshooting
         $isDebug = $request->boolean('debug');
 
-        // Return communities that are public OR that the current user already belongs to.
+        // Return communities that are public OR that the current user already belongs to OR if user is site admin
         $q = Community::query()
-            ->when(!$isDebug, function ($qq) use ($uid) {
+            ->when(!$isDebug && !$user->isSiteAdmin(), function ($qq) use ($uid) {
                 $qq->where(function ($q2) use ($uid) {
                     $q2->where('visibility', 'public')
                         ->orWhereHas('memberships', fn($m) => $m->where('user_id', $uid));
