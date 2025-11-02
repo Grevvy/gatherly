@@ -30,11 +30,10 @@
             @php
                 $canInvite = (auth()->user()->id === $community->owner_id ||
                     $community->memberships->where('user_id', auth()->user()->id)->whereIn('role', ['admin', 'moderator'])->count() > 0);
-                $isInviteOnly = $community->join_policy === 'invite';
             @endphp
 
             <!-- Invite Section -->
-            @if($canInvite && $isInviteOnly)
+            @if($canInvite)
                 <div class="flex justify-center mt-4">
                     <button id="inviteButton" 
                         class="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300 hover:-translate-y-0.5 flex items-center gap-2">
