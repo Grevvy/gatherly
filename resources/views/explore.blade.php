@@ -6,11 +6,14 @@
         $q->where('user_id', auth()->id());
     })->get();
 
-    // Recommended communities (passed from controller)
+    // Recommended communities (based on interests)
     $recommended = $recommended ?? collect();
 
-    // All communities (passed from controller) 
-    $communities = $communities ?? collect();
+    // All communities (regardless of visibility or ownership)
+    $allCommunities = Community::with('memberships')->get();
+
+    // Merge recommended and all communities for display
+    $communities = $recommended->merge($allCommunities)->unique('id');
 @endphp
 
 <x-layout :title="'Explore Communities'" :community="null" :communities="$userCommunities">
