@@ -30,6 +30,10 @@ class Community extends Model
         'tags' => 'array',
     ];
 
+    protected $appends = [
+        'banner_image_url'
+    ];
+
     // Use slug in URLs: route model binding {community:slug}
     public function getRouteKeyName()
     {

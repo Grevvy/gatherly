@@ -76,7 +76,7 @@ class ExploreController extends Controller
             $userInterests = [];
         }
 
-        // Search all accessible communities
+        // Search all accessible communities - first get broader results
         $communities = Community::with(['memberships' => function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             }])
@@ -87,21 +87,19 @@ class ExploreController extends Controller
                         $q->where('user_id', $user->id);
                     });
             })
-            ->where(function ($query) use ($term, $searchTerm) {
-                $query->whereRaw('LOWER(name) LIKE ?', [$term])
-                    ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
-                
-                // For tags, we'll filter in PHP after the query for better compatibility
-            })
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Filter by tags in PHP for better compatibility
+        // Filter by search term (name, description, and tags) in PHP for better compatibility
         $searchTermClean = trim($term, '%');
-        $allCommunities = $communities->filter(function ($community) use ($term, $searchTermClean) {
-            // Already matched by name/description in SQL
-            if (stripos($community->name, $searchTermClean) !== false || 
-                stripos($community->description, $searchTermClean) !== false) {
+        $allCommunities = $communities->filter(function ($community) use ($searchTermClean) {
+            // Check name
+            if (stripos($community->name, $searchTermClean) !== false) {
+                return true;
+            }
+            
+            // Check description
+            if ($community->description && stripos($community->description, $searchTermClean) !== false) {
                 return true;
             }
             

@@ -70,7 +70,7 @@
 
                             <div>
                                 <div class="relative overflow-hidden rounded-2xl">
-                                    <img src="{{ $community->banner_image_url ?? asset('images/default-banner.jpg') }}"
+                                    <img src="{{ $community->banner_image_url ?? asset('images/hero-image.png') }}"
                                         alt="Community Banner"
                                         class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
                                     <div
@@ -166,7 +166,7 @@
 
                         <div>
                             <div class="relative overflow-hidden rounded-2xl">
-                                <img src="{{ $community->banner_image_url ?? asset('images/default-banner.jpg') }}"
+                                <img src="{{ $community->banner_image_url ?? asset('images/hero-image.png') }}"
                                     alt="Community Banner"
                                     class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
                                 <div
@@ -421,7 +421,7 @@
                            transform hover:-translate-y-2 hover:scale-[1.02]">
                     <div>
                         <div class="relative overflow-hidden rounded-2xl">
-                            <img src="${community.banner_image_url || '{{ asset('images/default-banner.jpg') }}'}"
+                            <img src="${community.banner_image_url || '{{ asset('images/hero-image.png') }}'}"
                                  alt="Community Banner"
                                  class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
                             <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500 rounded-2xl"></div>
