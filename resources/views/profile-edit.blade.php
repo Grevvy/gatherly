@@ -1,4 +1,8 @@
 <x-layout :communities="$communities">
+    @php
+        $availableTags = config('tags.list', []);
+        $selectedInterests = collect(Auth::user()->interests ?? [])->map(fn ($interest) => strtolower($interest))->all();
+    @endphp
     <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
         <div class="max-w-4xl mx-auto px-6 py-8 text-center">
             <!-- Back -->
@@ -59,6 +63,38 @@
                             @enderror
                         </div>
                     @endforeach
+
+                    <!-- Interests -->
+                    <div class="relative mb-6">
+                        <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">
+                            Select Your Interests
+                        </span>
+                        <div class="border rounded-xl bg-white/70 pt-10 pb-4 px-4">
+                            <!-- Hidden field to ensure interests array is always sent, even when empty -->
+                            <input type="hidden" name="interests" value="">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                @foreach ($availableTags as $tag)
+                                    @php
+                                        $value = strtolower($tag);
+                                    @endphp
+                                    <label class="group cursor-pointer">
+                                        <input type="checkbox" name="interests[]" value="{{ $value }}"
+                                            class="hidden peer" {{ in_array($value, $selectedInterests, true) ? 'checked' : '' }}>
+                                        <div
+                                            class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-all
+                                                peer-checked:bg-gradient-to-r peer-checked:from-blue-500 peer-checked:to-purple-500
+                                                peer-checked:text-white peer-checked:border-transparent peer-checked:shadow-md
+                                                group-hover:border-blue-300 group-hover:shadow-sm">
+                                            {{ $tag }}
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            Select topics that interest you. This helps us recommend relevant communities.
+                        </p>
+                    </div>
 
                     <!-- Bio -->
                     <div class="relative">

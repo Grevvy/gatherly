@@ -34,6 +34,8 @@ class UpdateProfileRequest extends FormRequest
             'location' => ['nullable', 'string', 'max:255'],
             'website' => ['nullable', 'string', 'url', 'max:255'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'interests' => ['nullable', 'array'],
+            'interests.*' => ['string', 'max:255'],
         ];
     }
 }

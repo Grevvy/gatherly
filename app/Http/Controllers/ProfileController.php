@@ -45,6 +45,15 @@ class ProfileController extends Controller
     {
         $validated = $request->validated();
 
+        // Handle interests: if only empty string from hidden field, set to empty array
+        if (isset($validated['interests']) && is_array($validated['interests'])) {
+            $validated['interests'] = array_filter($validated['interests'], function($value) {
+                return !empty($value);
+            });
+        } else {
+            $validated['interests'] = [];
+        }
+
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
             // Delete old avatar if it exists
