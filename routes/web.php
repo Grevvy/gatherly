@@ -62,6 +62,7 @@ Route::post('/logout', [LogoutController::class, 'logout'])
 Route::middleware('auth')->group(function () {
 
     Route::get('/explore', [ExploreController::class, 'index'])->name('explore');
+    Route::get('/explore/search', [ExploreController::class, 'search'])->name('explore.search');
     
     // Welcome
     Route::get('/welcome', fn () => view('community-welcome'))->name('community-welcome');

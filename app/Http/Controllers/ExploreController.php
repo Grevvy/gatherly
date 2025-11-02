@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Community;
 
 class ExploreController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $userInterests = $user->interests ?? [];
 
         
@@ -50,6 +51,89 @@ class ExploreController extends Controller
         return view('explore', [
             'recommended' => $recommended,
             'communities' => $filteredAll,
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $user = Auth::user();
+        $searchTerm = $request->input('q', '');
+
+        if (empty($searchTerm)) {
+            return response()->json([
+                'recommended' => [],
+                'communities' => []
+            ]);
+        }
+
+        $term = '%' . strtolower($searchTerm) . '%';
+
+        // Get user interests for recommendations
+        $userInterests = $user->interests ?? [];
+        if (is_string($userInterests)) {
+            $userInterests = json_decode($userInterests, true) ?? [];
+        } elseif (!is_array($userInterests)) {
+            $userInterests = [];
+        }
+
+        // Search all accessible communities
+        $communities = Community::with(['memberships' => function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            }])
+            ->withCount('memberships')
+            ->where(function ($query) use ($user) {
+                $query->where('visibility', 'public')
+                    ->orWhereHas('memberships', function ($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    });
+            })
+            ->where(function ($query) use ($term, $searchTerm) {
+                $query->whereRaw('LOWER(name) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+                
+                // For tags, we'll filter in PHP after the query for better compatibility
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Filter by tags in PHP for better compatibility
+        $searchTermClean = trim($term, '%');
+        $allCommunities = $communities->filter(function ($community) use ($term, $searchTermClean) {
+            // Already matched by name/description in SQL
+            if (stripos($community->name, $searchTermClean) !== false || 
+                stripos($community->description, $searchTermClean) !== false) {
+                return true;
+            }
+            
+            // Check tags
+            if ($community->tags && is_array($community->tags)) {
+                foreach ($community->tags as $tag) {
+                    if (stripos($tag, $searchTermClean) !== false) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        });
+
+        // Filter recommended communities from search results
+        $recommended = collect();
+        if (!empty($userInterests)) {
+            $recommended = $allCommunities->filter(function ($community) use ($userInterests) {
+                $communityTags = $community->tags ?? [];
+                return !empty(array_intersect($communityTags, $userInterests));
+            });
+        }
+
+        // Filter out recommended from all communities
+        $filteredAll = $allCommunities->reject(function ($community) use ($recommended) {
+            return $recommended->pluck('id')->contains($community->id);
+        })->values();
+
+        return response()->json([
+            'recommended' => $recommended->values(),
+            'communities' => $filteredAll
         ]);
     }
 }

@@ -41,7 +41,7 @@
             <!-- 🔍 Search Bar -->
             <div class="max-w-2xl mx-auto mb-10">
                 <div class="relative">
-                    <input id="communitySearch" type="text" placeholder="Search communities by name or description..."
+                    <input id="communitySearch" type="text" placeholder="Search communities by name, description, or tags..."
                         class="w-full px-4 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 
                         shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-200 focus:outline-none 
                         placeholder-gray-400 text-sm transition-all duration-300 hover:shadow-md hover:border-blue-100">
@@ -51,6 +51,9 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z" />
                     </svg>
+                    <div id="searchSpinner" class="absolute right-10 top-3 hidden">
+                        <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    </div>
                 </div>
             </div>
 
@@ -345,6 +348,173 @@
                 btn.textContent = originalText;
                 btn.removeAttribute('aria-busy');
             }
+        }
+
+        // Search functionality
+        let searchTimeout;
+        const searchInput = document.getElementById('communitySearch');
+        const searchSpinner = document.getElementById('searchSpinner');
+        const recommendedGrid = document.getElementById('recommendedGrid');
+        const communitiesGrid = document.getElementById('communitiesGrid');
+        const recommendedSection = recommendedGrid ? recommendedGrid.closest('div').parentElement : null;
+        const allCommunitiesSection = communitiesGrid ? communitiesGrid.closest('div').parentElement : null;
+
+        // Store original content for reset
+        const originalRecommendedContent = recommendedGrid ? recommendedGrid.innerHTML : '';
+        const originalCommunitiesContent = communitiesGrid ? communitiesGrid.innerHTML : '';
+
+        function showSpinner() {
+            if (searchSpinner) {
+                searchSpinner.classList.remove('hidden');
+            }
+        }
+
+        function hideSpinner() {
+            if (searchSpinner) {
+                searchSpinner.classList.add('hidden');
+            }
+        }
+
+        function renderCommunityCard(community) {
+            const membership = community.memberships && community.memberships.length > 0 ? community.memberships[0] : null;
+            const isMember = membership && membership.status === 'active';
+            const isPending = membership && membership.status === 'pending';
+            const joinPolicy = community.join_policy || 'open';
+            const buttonText = joinPolicy === 'request' ? 'Request to Join' : 
+                             joinPolicy === 'invite' ? 'Invite Only' : 'Join';
+
+            const tags = community.tags || [];
+            const tagsHtml = tags.length > 0 ? `
+                <div class="mt-3">
+                    <p class="text-xs font-semibold text-gray-600 mb-1">Tags:</p>
+                    <div class="flex flex-wrap gap-2">
+                        ${tags.map(tag => `
+                            <span class="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
+                                ${tag.charAt(0).toUpperCase() + tag.slice(1)}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : '';
+
+            let buttonHtml;
+            if (isMember) {
+                buttonHtml = `<button disabled class="bg-gray-300 text-white text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Member ✓</button>`;
+            } else if (isPending) {
+                buttonHtml = `<button disabled class="bg-yellow-100 text-yellow-700 text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Request Pending</button>`;
+            } else {
+                const isDisabled = joinPolicy === 'invite';
+                buttonHtml = `<button 
+                    onclick="joinCommunity(event, '${community.slug}', '${community.name}', '${buttonText}', this, '${community.visibility || 'public'}')"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm px-4 py-1.5 rounded-xl 
+                           font-semibold shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 
+                           transition-all duration-300 hover:-translate-y-0.5 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}"
+                    ${isDisabled ? 'disabled' : ''}
+                    title="${isDisabled ? 'This community is invite-only' : ''}">
+                    ${buttonText}
+                </button>`;
+            }
+
+            return `
+                <div class="group relative bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-md 
+                           hover:shadow-blue-200/70 transition-all duration-300 p-5 flex flex-col justify-between 
+                           transform hover:-translate-y-2 hover:scale-[1.02]">
+                    <div>
+                        <div class="relative overflow-hidden rounded-2xl">
+                            <img src="${community.banner_image_url || '{{ asset('images/default-banner.jpg') }}'}"
+                                 alt="Community Banner"
+                                 class="w-full h-36 object-cover rounded-2xl transform group-hover:scale-110 transition duration-500 ease-out">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-500 rounded-2xl"></div>
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-800 mb-1 tracking-tight">${community.name}</h2>
+                        <p class="text-sm text-gray-500 italic line-clamp-2 leading-relaxed">
+                            ${community.description || 'No description yet.'}
+                        </p>
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-2">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">${(community.visibility || 'public').charAt(0).toUpperCase() + (community.visibility || 'public').slice(1)}</span>
+                            <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">${(community.join_policy || 'open').charAt(0).toUpperCase() + (community.join_policy || 'open').slice(1)}</span>
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${community.memberships_count || 0} members</span>
+                        </div>
+                        ${tagsHtml}
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <a href="/dashboard?community=${community.slug}" class="text-blue-600 text-sm font-medium hover:underline">View</a>
+                        ${buttonHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function performSearch(query) {
+            if (!query.trim()) {
+                // Reset to original content
+                if (recommendedGrid) recommendedGrid.innerHTML = originalRecommendedContent;
+                if (communitiesGrid) communitiesGrid.innerHTML = originalCommunitiesContent;
+                return;
+            }
+
+            showSpinner();
+
+            fetch(`/explore/search?q=${encodeURIComponent(query)}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideSpinner();
+                
+                // Update recommended communities
+                if (recommendedGrid) {
+                    if (data.recommended && data.recommended.length > 0) {
+                        recommendedGrid.innerHTML = data.recommended.map(community => renderCommunityCard(community)).join('');
+                    } else {
+                        recommendedGrid.innerHTML = `
+                            <div class="col-span-full text-center text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl py-10">
+                                <p class="text-base font-medium mb-2">No recommended communities found</p>
+                                <p class="text-sm text-gray-500">Try different search terms</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Update all communities
+                if (communitiesGrid) {
+                    if (data.communities && data.communities.length > 0) {
+                        communitiesGrid.innerHTML = data.communities.map(community => renderCommunityCard(community)).join('');
+                    } else {
+                        communitiesGrid.innerHTML = `
+                            <div class="col-span-full text-center text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl py-10">
+                                <p class="text-base font-medium mb-2">No communities found</p>
+                                <p class="text-sm text-gray-500">Try different search terms</p>
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                hideSpinner();
+                console.error('Search failed:', error);
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function(e) {
+                const query = e.target.value;
+                
+                // Clear existing timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // Debounce search requests
+                searchTimeout = setTimeout(() => {
+                    performSearch(query);
+                }, 300);
+            });
         }
     </script>
 

@@ -47,7 +47,11 @@ class CommunityController extends Controller
             })
             ->when($request->filled('q'), function ($qq) use ($request) {
                 $term = '%'.strtolower($request->q).'%';
-                $qq->whereRaw('LOWER(name) LIKE ?', [$term]);
+                $qq->where(function($q) use ($term) {
+                    $q->whereRaw('LOWER(name) LIKE ?', [$term])
+                      ->orWhereRaw('LOWER(description) LIKE ?', [$term])
+                      ->orWhereRaw('JSON_SEARCH(LOWER(tags), "one", ?) IS NOT NULL', [$term]);
+                });
             })
             // eager-load the current user's membership (if any)
             ->with(['memberships' => fn($m) => $m->where('user_id', $uid)])
