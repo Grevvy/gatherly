@@ -10,7 +10,13 @@
         'attendees' => function ($query) {
             $query->where('status', 'accepted')->with('user');
         },
-    ])->findOrFail($eventId);
+    ])
+        ->withCount([
+            'attendees as accepted_count' => function ($query) {
+                $query->where('status', 'accepted');
+            },
+        ])
+        ->findOrFail($eventId);
 
     // Load the community for the event
     $community = $event->community;
@@ -27,7 +33,7 @@
 
 @endphp
 
-<x-layout :title="'Edit Event - Gatherly'" :community="$community" :communities="$communities">
+<x-layout :title="'Event Details- Gatherly'" :community="$community" :communities="$communities">
     <div class="w-full bg-white shadow-lg p-6 mt-2 px-4 lg:px-8 rounded-2xl">
         <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
             <div>
@@ -35,11 +41,11 @@
                 <p class="mt-2 text-base text-gray-600">
                     Event Organized by <span
                         class="font-medium text-gray-800">{{ $event->owner->name ?? 'Unknown' }}</span>
-                    in <span class="font-medium text-gray-800">{{ $event->community->name ?? 'Community' }}</span>
+
                 </p>
             </div>
             <a href="{{ route('events', ['community' => $event->community?->slug]) }}"
-                class="text-gray-600 underline hover:text-gray-800">←
+                class="text-gray-600 hover:text-gray-800 text-sm">←
                 Back to Events</a>
         </div>
 
@@ -54,29 +60,71 @@
             <!-- Metadata Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-[14px] text-gray-800">
 
-                <div>
-                    <p class="text-gray-500 font-semibold text-base mb-1">Location</p>
-                    <p>{{ $event->location ?? 'N/A' }}</p>
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11a3 3 0 100-6 3 3 0 000 6z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z" />
+                        </svg>
+                    </span>
+                    <p class="text-gray-500 font-semibold text-base">Location</p>
+                    <p class="col-start-2">{{ $event->location ?? 'N/A' }}</p>
                 </div>
 
-                <div>
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                        </svg>
+                    </span>
                     <p class="text-gray-500 font-semibold text-base mb-1">Starts</p>
-                    <p>{{ $event->starts_at->format('D, M j, Y') }} at {{ $event->starts_at->format('g:i A') }}</p>
+                    <p class="col-start-2">{{ $event->starts_at->format('D, M j, Y') }} at
+                        {{ $event->starts_at->format('g:i A') }}</p>
                 </div>
 
-                <div>
-                    <p class="text-gray-500 font-semibold text-base mb-1">Ends</p>
-                    <p>{{ $event->ends_at->format('D, M j, Y') }} at {{ $event->ends_at->format('g:i A') }}</p>
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="9" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3" />
+                        </svg>
+                    </span>
+                    <p class="text-gray-500 font-semibold text-base">Ends</p>
+                    <p class="col-start-2">{{ $event->ends_at->format('D, M j, Y') }} at
+                        {{ $event->ends_at->format('g:i A') }}</p>
                 </div>
 
-                <div>
-                    <p class="text-gray-500 font-semibold text-base mb-1">Capacity</p>
-                    <p>{{ $event->capacity ?? 'Unlimited' }}</p>
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 13l4 4L19 7M16 6a4 4 0 11-8 0 4 4 0 018 0zM4 20h16v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2z" />
+                        </svg>
+                    </span>
+                    <p class="text-gray-500 font-semibold text-base">Capacity</p>
+                    <p class="col-start-2">
+                        {{ $event->accepted_count }}/{{ $event->capacity ?? '∞' }}
+                        spots filled
+                    </p>
                 </div>
 
-                <div>
-                    <p class="text-gray-500 font-semibold text-base mb-1">Visibility</p>
-                    <p>{{ $event->visibility ?? 'N/A' }}</p>
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </span>
+                    <p class="text-gray-500 font-semibold text-base">Visibility</p>
+                    <p class="col-start-2">{{ $event->visibility ?? 'N/A' }}</p>
                 </div>
 
                 @php
@@ -90,9 +138,14 @@
                     $statusClass = $statusStyles[$event->status] ?? 'bg-gray-100 text-gray-600';
                 @endphp
 
-                <div>
-                    <p class="text-gray-500 font-semibold text-base mb-1">Status</p>
-                    <span class="inline-block px-3 py-1 rounded-md font-semibold capitalize {{ $statusClass }}">
+                <div class="grid grid-cols-[auto_1fr] gap-3 items-start">
+                    <span
+                        class="inline-flex items-center justify-center bg-gradient-to-br from-blue-100 to-sky-100 text-blue-600 p-2 rounded-xl shadow-sm shrink-0 row-span-2">
+                        <i data-lucide="badge-check" class="w-4 h-4"></i>
+                    </span>
+                    <p class="text-gray-500 font-semibold text-base">Status</p>
+                    <span
+                        class="col-start-2 inline-block px-4 py-1 rounded-md font-semibold capitalize w-fit justify-self-start {{ $statusClass }}">
                         {{ $event->status }}
                     </span>
                 </div>
@@ -106,17 +159,45 @@
                 Attendees ({{ $event->attendees->count() }}/{{ $event->capacity ?? '∞' }})
             </h3>
             @if ($event->attendees->count())
-                <ul class="list-disc pl-6 space-y-2 text-[15px] text-gray-700">
+                <ul class="space-y-3 text-[15px] text-gray-700">
                     @foreach ($event->attendees as $attendee)
-                        <li>{{ $attendee->user->name ?? 'Unknown' }}</li>
+                        @php
+                            $avatarUser = $attendee->user ?? null;
+                        @endphp
+
+                        <li class="flex items-center gap-3">
+                            <span class="text-gray-500 w-5 text-right">{{ $loop->iteration }}.</span>
+
+                            <!-- Avatar -->
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                @if ($avatarUser && $avatarUser->avatar)
+                                    <img src="{{ asset('storage/' . $avatarUser->avatar) }}"
+                                        alt="{{ $avatarUser->name }}'s avatar" class="w-full h-full object-cover">
+                                @elseif ($avatarUser)
+                                    <span class="text-white font-semibold">
+                                        {{ strtoupper(substr($avatarUser->name ?? 'U', 0, 1)) }}
+                                    </span>
+                                @else
+                                    <span class="text-white font-semibold">?</span>
+                                @endif
+                            </div>
+
+                            <div>
+                                <div class="font-medium text-gray-800">{{ $avatarUser->name ?? 'Unknown' }}</div>
+                                @if ($avatarUser?->email)
+                                    <div class="text-xs text-gray-500">{{ $avatarUser->email }}</div>
+                                @endif
+                            </div>
+                        </li>
                     @endforeach
                 </ul>
             @else
                 <p class="text-[15px] text-gray-500">No attendees yet.</p>
             @endif
         </div>
-        <div class="text-xs text-gray-400 mt-9">
-            Created on {{ $event->created_at->format('g:i A · M j, Y') }}
+        <div class="text-[11px] text-gray-400 text-right mt-4">
+            Created: {{ $event->created_at->format('g:i A · M j, Y') }}
         </div>
 
     </div>

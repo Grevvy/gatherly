@@ -81,9 +81,9 @@
 @endphp
 
 <x-layout :community="$community" :communities="$communities">
-    <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
+    <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen p-2">
         @if ($community)
-            <div class="p-8 mt-4 max-w-5xl mx-auto space-y-8">
+            <div class="mt-4 max-w-5xl mx-auto space-y-8">
 
                 <div class="flex items-center justify-end mb-4">
 
@@ -204,8 +204,9 @@
                                 @endphp
 
                                 <!-- Event Card -->
-                                <div
-                                    class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]">
+                                <div id="event-card-upcoming-{{ $event->id }}"
+                                    class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-2 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]">
+
 
                                     <div class="p-6">
                                         <!-- Header -->
@@ -235,7 +236,9 @@
                                                         <p class="text-sm font-medium text-gray-900">
                                                             {{ $event->owner->name ?? 'Community' }}
                                                         </p>
-                                                        <p class="text-xs text-gray-500">Event Organizer</p>
+                                                        <p class="text-xs text-gray-500">
+                                                            {{ '@' . ($event->owner->username ?? Str::slug($event->owner->name ?? 'user')) }}
+                                                        </p>
                                                     </div>
                                                 </div>
 
@@ -308,7 +311,7 @@
                                         </div>
 
                                         <!-- Event Info Row -->
-                                        <div class="mt-4 border-t border-pink-100 pt-3">
+                                        <div class="mt-4 border-t border-gray-200 pt-3">
                                             <div class="flex flex-wrap gap-x-16 gap-y-6 text-sm text-gray-600">
 
                                                 <!-- Date -->
@@ -320,7 +323,7 @@
                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor"
                                                             stroke-width="2">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />
+                                                                d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                                         </svg>
                                                     </span>
                                                     <div>
@@ -393,8 +396,9 @@
                                                     <div>
                                                         <p class="text-gray-500 text-[11px] leading-tight">Capacity</p>
                                                         <p class="font-medium text-gray-800 text-[13px]">
-                                                            {{ $event->accepted_count }}/{{ $event->capacity ?? '∞' }}
-                                                            spots filled
+                                                            <span
+                                                                id="event-capacity-upcoming-{{ $event->id }}">{{ $event->accepted_count }}
+                                                                / {{ $event->capacity ?? '∞' }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -449,7 +453,7 @@
 
 
                                         </div>
-                                        <div class="text-xs text-gray-400 mt-9">
+                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9">
                                             Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
@@ -471,6 +475,15 @@
                                 <p class="text-gray-500 text-md text-center">You're not attending any events yet.</p>
                             </div>
                         @else
+                            <div id="attending-empty-state"
+                                class="p-8 w-full max-w-5xl h-64 mx-auto text-gray-500 hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-gray-400"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-gray-500 text-md text-center">You're not attending any events yet.</p>
+                            </div>
                             @foreach ($attendingEvents as $event)
                                 @php
                                     $canManage = false;
@@ -509,8 +522,9 @@
                                             : 'bg-green-100 text-green-700';
                                 @endphp
 
-                                <div
-                                    class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-5 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]">
+                                <div id="event-card-attending-{{ $event->id }}"
+                                    class="bg-white/90 backdrop-blur-sm border border-blue-100 rounded-2xl shadow-md shadow-blue-100/50 p-2 relative transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/70 hover:translate-y-[-2px]">
+
 
                                     <div class="p-6">
 
@@ -544,7 +558,9 @@
                                                         <p class="text-sm font-medium text-gray-900">
                                                             {{ $event->owner->name ?? 'Community' }}
                                                         </p>
-                                                        <p class="text-xs text-gray-500">Event Organizer</p>
+                                                        <p class="text-xs text-gray-500">
+                                                            {{ '@' . ($event->owner->username ?? Str::slug($event->owner->name ?? 'user')) }}
+                                                        </p>
                                                     </div>
                                                 </div>
 
@@ -649,8 +665,9 @@
                                                     <div>
                                                         <p class="text-gray-500 text-[11px] leading-tight">Capacity</p>
                                                         <p class="font-medium text-gray-800 text-[13px]">
-                                                            {{ $event->accepted_count }}/{{ $event->capacity ?? '∞' }}
-                                                            spots filled
+                                                            <span
+                                                                id="event-capacity-attending-{{ $event->id }}">{{ $event->accepted_count }}
+                                                                / {{ $event->capacity ?? '∞' }}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -673,20 +690,19 @@
                                             </div>
 
                                         </div>
-                                        <div class="text-xs text-gray-400 mt-9">
+                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9">
                                             Created {{ $event->created_at->diffForHumans() }}
                                         </div>
                                     </div>
                                 </div>
+                            @endforeach
+                        @endif
                     </div>
-        @endforeach
+                </div>
+            </div>
+        @else
+            <div class="min-h-screen flex flex-col items-center"></div>
         @endif
-    </div>
-    </div>
-    </div>
-@else
-    <div class="min-h-screen flex flex-col items-center"></div>
-    @endif
     </div>
 
     @php
@@ -887,7 +903,7 @@
             icon.setAttribute('stroke', 'currentColor');
             icon.setAttribute('stroke-width', '2');
             icon.innerHTML =
-                `<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v11a2 2 0 002 2z" />`;
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10m-12 8h14a2 2 0 002-2V9a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />`;
 
             const msgText = document.createElement('span');
             msgText.textContent = 'Select a date with a blue dot to view events for that day.';
@@ -1024,6 +1040,16 @@
         }
         renderCalendar();
 
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
         function setActiveTab(active, inactive, activeView, inactiveView) {
             activeView.classList.remove('hidden');
             inactiveView.classList.add('hidden');
@@ -1079,30 +1105,87 @@
 
                 if (res.status === 200) {
                     showToastify('RSVP updated successfully.', 'success');
-                    // If this was an Un-RSVP action from waitlist, update UI without reload
+                    // If this was an Un-RSVP action from waitlist or attending list, update UI without reload
                     if (status === 'declined' && button) {
-                        const container = button.parentElement; // .flex.gap-3.w-full
-                        if (container) {
-                            // Find the primary RSVP button in the same container (exclude this un-RSVP button)
-                            const primaryBtn = [...container.querySelectorAll('button')]
-                                .find(b => b !== button);
-                            if (primaryBtn) {
-                                // Restore primary button to RSVP state
-                                primaryBtn.disabled = false;
-                                primaryBtn.textContent = 'RSVP to Event';
-                                primaryBtn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-default');
-                                primaryBtn.classList.add('bg-gradient-to-r', 'from-blue-400', 'to-sky-500',
-                                    'text-white', 'hover:shadow-lg', 'hover:scale-[1.02]');
-                                primaryBtn.setAttribute('onclick', `sendRSVP(${eventId}, 'accepted', this)`);
-                            }
-                            // Remove the un-RSVP button
-                            button.remove();
+                        const isAttendingTabActive = !document.getElementById('attending-view').classList.contains(
+                            'hidden');
+
+                        // Hide the event card from the 'Attending' view
+                        const attendingCard = document.getElementById(`event-card-attending-${eventId}`);
+                        if (attendingCard) {
+                            attendingCard.remove();
                         }
+
+                        // Update the 'Attending' count
+                        const attendingTab = document.getElementById('attending-tab');
+                        const currentAttendingCount = parseInt(attendingTab.textContent.match(/\d+/)[0]);
+                        attendingTab.textContent = `Attending (${Math.max(0, currentAttendingCount - 1)})`;
+
+                        // Update capacity display on both cards
+                        updateCapacity(eventId, false); // Decrement for 'declined'
+
+                        // Restore the RSVP button on the 'Upcoming' card
+                        const upcomingCard = document.getElementById(`event-card-upcoming-${eventId}`);
+                        if (upcomingCard) {
+                            const rsvpButton = upcomingCard.querySelector(
+                                'button[onclick*="sendRSVP"], button:disabled');
+                            if (rsvpButton) {
+                                rsvpButton.disabled = false;
+                                rsvpButton.textContent = 'RSVP to Event';
+                                rsvpButton.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-default');
+                                rsvpButton.classList.add('bg-gradient-to-r', 'from-blue-400', 'to-sky-500',
+                                    'text-white', 'hover:shadow-lg', 'hover:scale-[1.02]');
+                                rsvpButton.setAttribute('onclick', `sendRSVP(${eventId}, 'accepted', this)`);
+                            }
+                            // Also remove the 'Un-RSVP' button from the upcoming card if it exists (from a waitlist scenario)
+                            const unRsvpButton = upcomingCard.querySelector('button[data-role="unrsvp"]');
+                            if (unRsvpButton) {
+                                unRsvpButton.remove();
+                            }
+                        }
+
+                        // If no attending events remain, reveal the empty-state message
+                        const remainingAttending = document.querySelectorAll(
+                            '#attending-view [id^="event-card-attending-"]').length;
+                        if (remainingAttending === 0) {
+                            const emptyState = document.getElementById('attending-empty-state');
+                            if (emptyState) {
+                                emptyState.classList.remove('hidden');
+                                emptyState.classList.add('flex', 'flex-col', 'items-center', 'justify-center');
+                            }
+                        }
+
+                        // If the action was taken from the attending tab, switch to the upcoming tab
+                        if (isAttendingTabActive) {
+                            document.getElementById('upcoming-tab').click();
+                        }
+
+                        // Remove the un-RSVP button itself from whichever card it was on
+                        button.remove();
+
                     } else {
                         // Accepted flow or other success: keep current behavior
                         window.location.reload();
                     }
-                } else if (res.status === 202) {
+                } else if (res.status === 200 && status === 'accepted') { // Successfully RSVP'd (not waitlisted)
+                    showToastify('RSVP updated successfully.', 'success');
+                    updateCapacity(eventId, true); // Increment capacity
+
+                    // Update button to 'Attending'
+                    if (button) {
+                        button.disabled = true;
+                        button.textContent = 'Attending';
+                        button.classList.remove('bg-gradient-to-r', 'from-blue-400', 'to-sky-500', 'text-white',
+                            'hover:shadow-lg', 'hover:scale-[1.02]');
+                        button.classList.add('bg-gray-200', 'text-gray-400', 'cursor-default');
+                        button.removeAttribute('onclick');
+                    }
+                    // Potentially move card to 'Attending' list dynamically or just update counts
+                    const attendingTab = document.getElementById('attending-tab');
+                    const currentAttendingCount = parseInt(attendingTab.textContent.match(/\d+/)[0]);
+                    attendingTab.textContent = `Attending (${currentAttendingCount + 1})`;
+
+                } else if (res.status === 202) { // Waitlisted
                     const pos = data?.waitlist_position ?? 'unknown';
                     const size = data?.waitlist_size ?? 'unknown';
                     showToastify(`Added to waitlist: #${pos} of ${size}. We emailed your waitlist confirmation.`,
@@ -1146,10 +1229,29 @@
             } finally {
                 // Keep disabled state for waitlisted main button; otherwise re-enable
                 if (button) {
-                    if (!(status === 'accepted' && button.textContent === 'Waitlisted')) {
+                    if (!(status === 'accepted' && (button.textContent === 'Waitlisted' || button.textContent ===
+                            'Attending'))) {
                         button.disabled = false;
                     }
                 }
+            }
+        }
+
+        function updateCapacity(eventId, increment = false) {
+            const upcomingCapacityEl = document.getElementById(`event-capacity-upcoming-${eventId}`);
+            if (upcomingCapacityEl) {
+                let [accepted, total] = upcomingCapacityEl.textContent.split('/').map(s => s.trim());
+                let currentAccepted = parseInt(accepted);
+                let newAccepted = increment ? currentAccepted + 1 : Math.max(0, currentAccepted - 1);
+                upcomingCapacityEl.textContent = `${newAccepted} / ${total}`;
+            }
+
+            const attendingCapacityEl = document.getElementById(`event-capacity-attending-${eventId}`);
+            if (attendingCapacityEl) {
+                let [accepted, total] = attendingCapacityEl.textContent.split('/').map(s => s.trim());
+                let currentAccepted = parseInt(accepted);
+                let newAccepted = increment ? currentAccepted + 1 : Math.max(0, currentAccepted - 1);
+                attendingCapacityEl.textContent = `${newAccepted} / ${total}`;
             }
         }
 

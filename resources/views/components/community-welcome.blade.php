@@ -1,4 +1,5 @@
-<div class="relative w-full px-4 g-welcome bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50">
+<div
+    class="relative w-full px-4 pt-6 md:pt-10 lg:pt-2 g-welcome bg-gradient-to-b from-slate-50 via-blue-50 to-indigo-50">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
 
@@ -49,7 +50,7 @@
         <section class="animate-fade-in">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 <!-- Left: Copy (shifted up without moving the image) -->
-                <div class="text-center md:text-left -mt-3 md:-mt-10">
+                <div class="text-center md:text-left">
 
                     <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-center">
                         <span
@@ -106,6 +107,20 @@
                             </span>
 
                             in the top‑left corner to come back to this welcome page anytime.
+                        </span>
+                    </p>
+
+                    <p class="mt-2 text-gray-500 text-xs flex items-center justify-center md:justify-start gap-1.5">
+                        <span>
+                            Tip: You can leave a community by clicking
+                            <span class="inline-flex items-center gap-1 align-middle">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </span>
+                            beside the community name in the sidebar.
                         </span>
                     </p>
 

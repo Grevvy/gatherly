@@ -81,7 +81,7 @@
                                     {{ $community->description ?? 'No description yet.' }}
                                 </p>
 
-                                <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-2">
                                     <span
                                         class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->visibility ?? 'public') }}</span>
                                     <span
@@ -176,7 +176,7 @@
                                 {{ $community->description ?? 'No description yet.' }}
                             </p>
 
-                            <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-2">
                                 <span
                                     class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->visibility ?? 'public') }}</span>
                                 <span

@@ -28,17 +28,6 @@
         <form id="create-event-form" method="POST" action="{{ url('/events') }}">
             @csrf
 
-            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit"
-                    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
-                    Create Event
-                </button>
-                <a href="{{ route('events', ['community' => $community->slug]) }}"
-                    class="text-gray-600 underline text-sm">
-                    Cancel
-                </a>
-            </div>
-
             <input type="hidden" name="community_id" value="{{ $community->id }}">
 
             <!-- Title -->
@@ -106,6 +95,16 @@
                     @endif
                     <option value="cancelled">Cancelled</option>
                 </select>
+            </div>
+            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
+                <a href="{{ route('events', ['community' => $community->slug]) }}" class="text-gray-600 underline">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                    Create Event
+                </button>
+
             </div>
         </form>
     </div>

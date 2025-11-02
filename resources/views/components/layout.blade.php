@@ -29,16 +29,17 @@
             class="w-72 bg-white/70 backdrop-blur-xl border-r border-gray-100 shadow-[0_8px_24px_rgba(0,0,0,0.05)] p-5 flex flex-col">
 
             <!-- Logo -->
-            <div class="flex flex-wrap items-center gap-2 mb-6 w-full overflow-hidden">
+            <div class="flex flex-wrap items-center gap-2 mb-6 w-full">
 
                 <a href="{{ route('community-welcome') }}"
                     class="inline-flex items-center gap-2 mb-6 hover:opacity-90 transition">
                     <img src="{{ asset('images/gatherly-logo.png') }}" alt="Gatherly Logo"
                         class="w-8 h-8 rounded-lg shadow-sm object-contain">
                     <h1
-                        class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight">
+                        class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 tracking-tight truncate">
                         Gatherly
                     </h1>
+
                 </a>
 
             </div>
@@ -96,7 +97,7 @@
                                         </a>
                                         @if ($c->owner_id !== auth()->id())
                                             <form action="/communities/{{ $c->slug }}/leave" method="POST"
-                                                class="hidden group-hover:block ml-2 leave-community-form">
+                                                class="ml-2 leave-community-form">
                                                 @csrf
                                                 <button type="button"
                                                     class="p-1 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
@@ -232,8 +233,8 @@
                             <div
                                 class="w-11 h-11 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                 @if ($user->avatar)
-                                    <img src="{{ $user->avatar_url }}"
-                                        alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}'s avatar"
+                                        class="w-full h-full object-cover">
                                 @else
                                     <span
                                         class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
@@ -473,7 +474,7 @@
                 error: '[Error]',
                 warning: '[Warning]',
                 info: '[Info]'
-            }[type] || '[Info]';
+            } [type] || '[Info]';
 
             if (type === 'error') {
                 console.error(prefix, message);
@@ -1064,6 +1065,27 @@
                     .replace(/'/g, '&#039;');
             }
 
+            // Refresh the sidebar "My Communities" list without a full reload
+            async function refreshCommunityList() {
+                try {
+                    const res = await fetch(window.location.href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    if (!res.ok) return;
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const incoming = doc.querySelector('#community-list');
+                    const current = document.getElementById('community-list');
+                    if (incoming && current) {
+                        current.innerHTML = incoming.innerHTML;
+                    }
+                } catch (err) {
+                    console.error('Failed to refresh community list', err);
+                }
+            }
+
             searchBox?.addEventListener('input', (e) => {
                 clearTimeout(searchTimer);
                 const q = e.target.value;
@@ -1096,15 +1118,8 @@
                         btn.textContent = 'Joined';
                         btn.classList.remove('bg-blue-500');
                         btn.classList.add('bg-green-500');
-
-                        const list = document.getElementById('community-list');
-                        if (list) {
-                            const li = document.createElement('li');
-                            li.className = 'community-item';
-                            li.innerHTML =
-                                `<a href="/dashboard?community=${slug}" class="block px-2 py-1 transition hover:bg-blue-50 text-gray-800"><span class="font-medium text-sm">${escapeHtml(btn.closest('div').querySelector('.font-medium')?.textContent || '')}</span></a>`;
-                            list.appendChild(li);
-                        }
+                        // Refresh the server-rendered list to reflect new membership (no auto highlight)
+                        await refreshCommunityList();
 
                         setTimeout(() => {
                             dropdown.classList.add('hidden');

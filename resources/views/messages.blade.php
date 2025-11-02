@@ -42,14 +42,15 @@
 
 <x-layout :title="'Messages'" :community="$community" :communities="$communities">
     @if ($community)
-        <div class="grid grid-cols-3 h-[650px] rounded-2xl overflow-hidden shadow overflow-y-hidden border border-blue-200">
+        <div
+            class="grid grid-cols-3 h-[650px] rounded-2xl overflow-hidden shadow overflow-y-hidden border border-blue-200">
             <!-- Sidebar -->
             <div class="flex flex-col bg-white border-r border-gray-200 shadow-sm">
                 <!-- Header -->
                 <div class="flex items-center justify-between px-4 py-6 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-800">Messages</h3>
                     <button onclick="document.getElementById('newForm').classList.toggle('hidden')"
-                            class="text-blue-600 hover:text-blue-700 transition transform hover:scale-110 active:scale-95">
+                        class="text-blue-600 hover:text-blue-700 transition transform hover:scale-110 active:scale-95">
                         <i class="fa-solid fa-plus text-lg"></i>
                     </button>
                 </div>
@@ -60,27 +61,33 @@
                         <form action="{{ route('channels.store', $community) }}" method="POST" class="space-y-2">
                             @csrf
                             <input type="text" name="name" required placeholder="New channel"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400">
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400">
                             <button type="submit"
-                                    class="w-full items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                                class="w-full items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
                                 Create Channel
                             </button>
                         </form>
                     @elseif ($tab === 'direct')
-                        <form action="{{ route('threads.store', $community) }}" method="POST" class="space-y-4 rounded-xl">
+                        <form action="{{ route('threads.store', $community) }}" method="POST"
+                            class="space-y-4 rounded-xl">
                             @csrf
-                            <label for="participant_ids" class="block text-sm font-semibold text-gray-700 mb-1 text-center">
+                            <label for="participant_ids"
+                                class="block text-sm font-semibold text-gray-700 mb-1 text-center">
                                 Select one or more members to DM
                             </label>
 
                             {{-- Avatar-enhanced member list --}}
                             <div class="space-y-2 max-h-64 overflow-y-auto">
                                 @foreach ($community->members->where('id', '!=', $userId)->sortBy('name') as $member)
-                                    <label class="flex items-center gap-3 px-3 py-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                                        <input type="checkbox" name="participant_ids[]" value="{{ $member->id }}" class="accent-blue-500 w-4 h-4">
-                                        <div class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
+                                    <label
+                                        class="flex items-center gap-3 px-3 py-2 rounded-md border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                        <input type="checkbox" name="participant_ids[]" value="{{ $member->id }}"
+                                            class="accent-blue-500 w-4 h-4">
+                                        <div
+                                            class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
                                             @if (!empty($member->avatar))
-                                                <img src="{{ $member->avatar_url }}" alt="{{ $member->name }}'s avatar" class="w-full h-full object-cover">
+                                                <img src="{{ $member->avatar_url }}" alt="{{ $member->name }}'s avatar"
+                                                    class="w-full h-full object-cover">
                                             @else
                                                 <span class="text-white text-xs font-semibold">
                                                     {{ strtoupper(substr($member->name, 0, 1)) }}
@@ -92,7 +99,7 @@
                                 @endforeach
                             </div>
                             <button type="submit"
-                                    class="w-full items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                                class="w-full items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
                                 Start Conversation
                             </button>
                         </form>
@@ -102,11 +109,11 @@
                 <!-- Tabs -->
                 <div class="flex items-center justify-around bg-gray-100 border-b border-gray-200">
                     <a href="{{ route('messages', ['tab' => 'channel', 'community' => $community->slug]) }}"
-                       class="flex-1 text-sm font-medium py-3 text-center transition rounded-t-xl {{ $tab === 'channel' ? 'bg-blue-100 text-blue-600 shadow-inner' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+                        class="flex-1 text-sm font-medium py-3 text-center transition rounded-t-xl {{ $tab === 'channel' ? 'bg-blue-100 text-blue-600 shadow-inner' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                         <i class="fa-solid fa-hashtag mr-1"></i> Groups
                     </a>
                     <a href="{{ route('messages', ['tab' => 'direct', 'community' => $community->slug]) }}"
-                       class="flex-1 text-sm font-medium py-3 text-center transition rounded-t-xl {{ $tab === 'direct' ? 'bg-blue-100 text-blue-600 shadow-inner' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
+                        class="flex-1 text-sm font-medium py-3 text-center transition rounded-t-xl {{ $tab === 'direct' ? 'bg-blue-100 text-blue-600 shadow-inner' : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50' }}">
                         <i class="fa-regular fa-user mr-1"></i> Direct
                     </a>
                 </div>
@@ -114,7 +121,7 @@
                 <!-- Search -->
                 <div class="px-4 py-3 border-b border-gray-200 bg-white relative">
                     <input type="text" id="searchInput" placeholder="Search..."
-                           class="w-full text-sm pl-9 pr-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400 shadow-sm transition">
+                        class="w-full text-sm pl-9 pr-3 py-2 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-400 focus:outline-none placeholder-gray-400 shadow-sm transition">
                     <i class="fa-solid fa-magnifying-glass absolute left-7 top-5 text-gray-400 text-sm"></i>
                 </div>
 
@@ -140,10 +147,11 @@
 
                         <div class="relative group">
                             <a href="{{ route('messages', ['tab' => $tab, 'community' => $community->slug, $tab === 'channel' ? 'channel_id' : 'thread_id' => $item->id]) }}"
-                               class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition {{ $isActive ? 'bg-blue-100/50' : '' }}">
+                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition {{ $isActive ? 'bg-blue-100/50' : '' }}">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-sm font-medium text-gray-800 truncate">{{ $name }}</span>
+                                        <span
+                                            class="text-sm font-medium text-gray-800 truncate">{{ $name }}</span>
                                         <span class="text-xs text-gray-400">{{ $timestamp }}</span>
                                     </div>
                                     <p class="text-sm text-gray-500 truncate">{{ $preview }}</p>
@@ -152,27 +160,31 @@
 
                             <div class="absolute bottom-0 right-1">
                                 @if ($tab === 'channel' && $isOwner)
-                                    <form method="POST" action="{{ route('channels.destroy', $item) }}" data-id="{{ $item->id }}">
+                                    <form method="POST" action="{{ route('channels.destroy', $item) }}"
+                                        data-id="{{ $item->id }}">
                                         @csrf @method('DELETE')
                                         <button type="button" onclick="confirmDeleteChannel(this)">
                                             <div class="text-red-400 hover:text-red-500 text-xs">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                     viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
                                                 </svg>
                                             </div>
                                         </button>
                                     </form>
                                 @elseif ($tab === 'direct' && $item->messages->isEmpty() && $item->participants->contains('id', $userId))
-                                    <form method="POST" action="{{ route('threads.destroy', $item) }}" data-id="{{ $item->id }}">
+                                    <form method="POST" action="{{ route('threads.destroy', $item) }}"
+                                        data-id="{{ $item->id }}">
                                         @csrf @method('DELETE')
                                         <button type="button" onclick="confirmDeleteThread(this)">
                                             <div class="text-red-400 hover:text-red-500 text-xs">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                     viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
                                                 </svg>
                                             </div>
                                         </button>
@@ -187,7 +199,8 @@
             <!-- Chat -->
             <div class="col-span-2 flex flex-col h-full bg-white overflow-hidden">
                 @if ($channel || $thread)
-                    <div class="sticky top-0 border-b border-gray-300 p-4 bg-gray-100/30 flex justify-between items-center">
+                    <div
+                        class="sticky top-0 border-b border-gray-300 p-4 bg-gray-100/30 flex justify-between items-center">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900">
                                 {{ $tab === 'channel' ? '# ' . $channel->name : $thread->participants->where('id', '!=', $userId)->pluck('name')->join(', ') }}
@@ -201,68 +214,77 @@
                     <div id="message-scroll" class="flex-1 overflow-y-auto bg-white px-2 space-y-2 text-center">
                         @if ($tab === 'channel' && $channel)
                             <p class="text-[11px] text-gray-400">
-                                Started {{ $channel->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
+                                Started
+                                {{ $channel->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
                             </p>
                         @elseif ($tab === 'direct' && $thread)
                             <p class="text-[11px] text-gray-400">
-                                Started {{ $thread->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
+                                Started
+                                {{ $thread->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
                             </p>
                         @endif
 
                         @foreach ($messages->reverse() as $message)
                             <div class="flex {{ $message->user_id === $userId ? 'justify-end' : 'justify-start' }} group items-start gap-2"
-                                 data-message-id="{{ $message->id }}"
-                                 data-author-id="{{ $message->user_id }}">
+                                data-message-id="{{ $message->id }}" data-author-id="{{ $message->user_id }}">
                                 @if ($message->user_id === $userId)
                                     {{-- Trash icon --}}
                                     <form method="POST" action="{{ route('messages.destroy', $message->id) }}"
-                                          data-message-id="{{ $message->id }}"
-                                          class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px]">
+                                        data-message-id="{{ $message->id }}"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px]">
                                         @csrf @method('DELETE')
                                         <button type="button" onclick="confirmDeleteMessage(this)"
-                                                class="text-red-400 hover:text-red-500 transition transform hover:scale-110"
-                                                title="Delete">
+                                            class="text-red-400 hover:text-red-500 transition transform hover:scale-110"
+                                            title="Delete">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                 viewBox="0 0 24 24" stroke="currentColor">
+                                                viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                    d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
                                             </svg>
                                         </button>
                                     </form>
                                 @endif
 
                                 @if ($message->user_id !== $userId)
-                                    <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
+                                    <div
+                                        class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
                                         @php $sender = $message->user; @endphp
                                         @if ($sender && $sender->avatar)
-                                            <img src="{{ $sender->avatar_url }}" alt="{{ $sender->name }}'s avatar" class="w-full h-full object-cover">
+                                            <img src="{{ $sender->avatar_url }}" alt="{{ $sender->name }}'s avatar"
+                                                class="w-full h-full object-cover">
                                         @else
-                                            <span class="text-white font-bold text-lg">{{ strtoupper(substr($sender->name ?? 'U', 0, 1)) }}</span>
+                                            <span
+                                                class="text-white font-bold text-lg">{{ strtoupper(substr($sender->name ?? 'U', 0, 1)) }}</span>
                                         @endif
                                     </div>
                                 @endif
 
-                                <div class="max-w-[75%] flex flex-col {{ $message->user_id === $userId ? 'items-end' : 'items-start' }}">
+                                <div
+                                    class="max-w-[75%] flex flex-col {{ $message->user_id === $userId ? 'items-end' : 'items-start' }}">
                                     @if ($message->user_id !== $userId)
                                         <div class="text-left">
-                                            <span class="text-[10px] font-medium text-gray-500 block">{{ $message->user->name }}</span>
+                                            <span
+                                                class="text-[10px] font-medium text-gray-500 block">{{ $message->user->name }}</span>
                                         </div>
                                     @endif
 
                                     <!-- NOTE: bubble is relative so the tail anchors correctly -->
-                                    <div class="relative px-4 py-2 max-w-[255px] break-words text-sm
+                                    <div
+                                        class="relative px-4 py-2 max-w-[255px] break-words text-sm
                                         {{ $message->user_id === $userId
                                             ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
                                             : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform z-[2]' }}">
                                         {!! nl2br(e($message->body)) !!}
-                                        <div class="absolute bottom-0
+                                        <div
+                                            class="absolute bottom-0
                                             {{ $message->user_id === $userId
                                                 ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
                                                 : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]' }}">
                                         </div>
                                     </div>
 
-                                    <div class="text-[9px] text-gray-400 {{ $message->user_id === $userId ? 'text-right mr-2' : 'text-left mb-2' }}">
+                                    <div
+                                        class="text-[9px] text-gray-400 {{ $message->user_id === $userId ? 'text-right mr-2' : 'text-left mb-2' }}">
                                         {{ $message->created_at->timezone('America/New_York')->format('g:i A') }}
                                     </div>
                                 </div>
@@ -272,9 +294,10 @@
 
                     <!-- Message Input -->
                     <form action="{{ route('messages.store') }}" method="POST"
-                          class="sticky bottom-0 border-t border-gray-300 px-4 py-3 bg-gray-100/40 flex gap-3 items-end">
+                        class="sticky bottom-0 border-t border-gray-300 px-4 py-3 bg-gray-100/40 flex gap-3 items-end">
                         @csrf
-                        <input type="hidden" name="messageable_type" value="{{ isset($channel) ? 'channel' : 'thread' }}">
+                        <input type="hidden" name="messageable_type"
+                            value="{{ isset($channel) ? 'channel' : 'thread' }}">
                         <input type="hidden" name="messageable_id" value="{{ $channel->id ?? $thread->id }}">
 
                         <div class="flex flex-col flex-1">
@@ -282,15 +305,15 @@
                                 <span id="charCount">0</span>/500
                             </div>
                             <textarea id="messageInput" name="body" rows="1" maxlength="500" placeholder="Type your message..."
-                                      class="resize-none px-4 py-2 rounded-2xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm leading-5"
-                                      oninput="updateCharCount()" required></textarea>
+                                class="resize-none px-4 py-2 rounded-2xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm leading-5"
+                                oninput="updateCharCount()" required></textarea>
                         </div>
 
                         <button type="submit"
-                                class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-md transition-all duration-200 flex items-center justify-center hover:shadow-blue-200 hover:scale-110"
-                                title="Send">
+                            class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-md transition-all duration-200 flex items-center justify-center hover:shadow-blue-200 hover:scale-110"
+                            title="Send">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                 stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                stroke-width="2" stroke="currentColor" class="w-5 h-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-7 7m7-7l7 7" />
                             </svg>
                         </button>
@@ -312,7 +335,7 @@
     <!-- Scripts -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const scrollContainer = document.getElementById('message-scroll');
+            let scrollContainer = document.getElementById('message-scroll');
             const searchInput = document.getElementById('searchInput');
             const groupTab = document.querySelector('a[href*="tab=channel"]');
             const directTab = document.querySelector('a[href*="tab=direct"]');
@@ -320,7 +343,7 @@
             const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
             const csrfToken = document.getElementById('csrf-token')?.value || '';
             const currentUserId = @json($userId);
-            const messageFormSelector = 'form[action="{{ route("messages.store") }}"]';
+            const messageFormSelector = 'form[action="{{ route('messages.store') }}"]';
             let messageForm = document.querySelector(messageFormSelector);
             let messageableType = messageForm?.querySelector('input[name="messageable_type"]')?.value || null;
             let messageableId = messageForm?.querySelector('input[name="messageable_id"]')?.value || null;
@@ -338,12 +361,16 @@
                 if (!isoString) return '';
                 const dt = new Date(isoString);
                 if (Number.isNaN(dt.getTime())) return '';
-                return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                return dt.toLocaleTimeString([], {
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
             };
 
             const isNearBottom = () => {
                 if (!scrollContainer) return false;
-                return (scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer.clientHeight) < 80;
+                return (scrollContainer.scrollHeight - scrollContainer.scrollTop - scrollContainer
+                    .clientHeight) < 80;
             };
 
             const getLastMessageId = () => {
@@ -368,6 +395,13 @@
                 return `<span class="text-white font-bold text-lg">${escapeHtml(initial)}</span>`;
             };
 
+            // Tail helper to render bubble tails without relying on pseudo-elements (works on dynamic updates)
+            const tailMarkup = (isSelf) => {
+                return isSelf ?
+                    '<div class="absolute bottom-0 right-0 translate-x-[6px] w-[18px] h-[22px] pointer-events-none"><div class="w-full h-full bg-blue-500 rounded-bl-[16px_14px]"></div><div class="absolute top-0 right-[-18px] w-[24px] h-[22px] bg-white rounded-bl-[10px]"></div></div>' :
+                    '<div class="absolute bottom-0 left-0 -translate-x-[6px] w-[18px] h-[22px] pointer-events-none"><div class="w-full h-full bg-gray-200 rounded-br-[16px_14px]"></div><div class="absolute top-0 left-[-18px] w-[24px] h-[22px] bg-white rounded-br-[10px]"></div></div>';
+            };
+
             // Bubble builder: bubble itself is relative; classes match Blade exactly
             const buildMessageMarkup = (message, isSelf) => {
                 const safeBody = escapeHtml(message.body || '').replace(/\n/g, '<br>');
@@ -376,43 +410,40 @@
 
                 return `
                     ${isSelf ? `
-                      <form method="POST" data-id="${message.id}"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
-                        <input type="hidden" name="_token" value="${csrfToken}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
-                          title="Delete" onclick="confirmDeleteMessage(this)">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                               viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                          </svg>
-                        </button>
-                      </form>
-                    ` : ''}
+                              <form method="POST" data-id="${message.id}"
+                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
+                                <input type="hidden" name="_token" value="${csrfToken}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
+                                  title="Delete" onclick="confirmDeleteMessage(this)">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                       viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                  </svg>
+                                </button>
+                              </form>
+                            ` : ''}
 
                     ${!isSelf ? `
-                      <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
-                        ${createAvatarMarkup(message)}
-                      </div>
-                    ` : ''}
+                              <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
+                                ${createAvatarMarkup(message)}
+                              </div>
+                            ` : ''}
 
                     <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
                       ${!isSelf ? `
-                        <div class="text-left">
-                          <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
-                        </div>
-                      ` : ''}
+                                <div class="text-left">
+                                  <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
+                                </div>
+                              ` : ''}
 
-                      <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
-                        : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform z-[2]'}">
-                        ${safeBody}
-                        <div class="absolute bottom-0 ${isSelf
-                          ? 'right-0 translate-x-[6px] w-[18px] h-[22px] bg-blue-500 rounded-bl-[16px_14px] after:content-[""] after:absolute after:right-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-bl-[10px]'
-                          : 'left-0 -translate-x-[6px] w-[18px] h-[22px] bg-gray-200 rounded-br-[16px_14px] after:content-[""] after:absolute after:left-[-18px] after:w-[24px] after:h-[22px] after:bg-white after:rounded-br-[10px]'}">
-                        </div>
-                      </div>
+                                            <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
+                                                ? 'bg-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
+                                                : 'bg-gray-200 text-gray-900 rounded-[15px] self-start shadow-sm hover:scale-[1.02] transition-transform z-[2]'}">
+                                                ${safeBody}
+                                                ${tailMarkup(isSelf)}
+                                            </div>
 
                       <div class="text-[9px] text-gray-400 ${isSelf ? 'text-right mr-2' : 'text-left mb-2'}">
                         ${timeLabel}
@@ -421,13 +452,16 @@
                 `;
             };
 
-            const appendMessageElement = (message, { scrollToBottom = false } = {}) => {
+            const appendMessageElement = (message, {
+                scrollToBottom = false
+            } = {}) => {
                 if (!scrollContainer || !message?.id) return;
                 if (scrollContainer.querySelector(`[data-message-id="${message.id}"]`)) return;
 
                 const isSelf = Number(message.user_id) === Number(currentUserId);
                 const wrapper = document.createElement('div');
-                wrapper.className = `flex ${isSelf ? 'justify-end' : 'justify-start'} group items-start gap-2 fade-in overflow-visible`;
+                wrapper.className =
+                    `flex ${isSelf ? 'justify-end' : 'justify-start'} group items-start gap-2 fade-in overflow-visible`;
                 wrapper.dataset.messageId = message.id;
                 wrapper.dataset.authorId = message.user_id;
                 wrapper.innerHTML = buildMessageMarkup(message, isSelf);
@@ -467,7 +501,9 @@
                     });
                     if (lastMessageId) params.append('since_id', lastMessageId);
                     const res = await fetch(`/messages/feed?${params.toString()}`, {
-                        headers: { 'Accept': 'application/json' },
+                        headers: {
+                            'Accept': 'application/json'
+                        },
                         credentials: 'same-origin'
                     });
 
@@ -479,7 +515,8 @@
                         const shouldStick = isNearBottom();
                         incoming.forEach(message => {
                             appendMessageElement(message, {
-                                scrollToBottom: shouldStick || Number(message.user_id) === Number(currentUserId)
+                                scrollToBottom: shouldStick || Number(message.user_id) ===
+                                    Number(currentUserId)
                             });
                         });
                         lastMessageId = Number(payload.latest_id ?? lastMessageId);
@@ -543,7 +580,9 @@
                         const payload = await res.json();
                         const savedMessage = payload?.message;
                         if (savedMessage) {
-                            appendMessageElement(savedMessage, { scrollToBottom: true });
+                            appendMessageElement(savedMessage, {
+                                scrollToBottom: true
+                            });
                             lastMessageId = Math.max(lastMessageId ?? 0, Number(savedMessage.id));
                             updateSidebarAfterMessage(savedMessage, messageableType, messageableId);
                         }
@@ -580,17 +619,29 @@
                     const form = e.target;
                     const token = form.querySelector('input[name="_token"]').value;
                     const formData = new FormData(form);
-                    const currentTab = groupTab?.classList.contains('bg-blue-100') ? 'channel' : 'direct';
+                    const currentTab = groupTab?.classList.contains('bg-blue-100') ? 'channel' :
+                        'direct';
 
                     try {
-                        const res = await fetch(form.action, { method: 'POST', headers: { 'X-CSRF-TOKEN': token }, body: formData });
+                        const res = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': token
+                            },
+                            body: formData
+                        });
                         if (!res.ok) throw new Error('Failed to create');
 
-                        showToastify(currentTab === 'channel' ? 'Channel created successfully.' : 'Conversation created successfully.', 'success');
+                        showToastify(currentTab === 'channel' ? 'Channel created successfully.' :
+                            'Conversation created successfully.', 'success');
 
                         const url = new URL(window.location.href);
                         url.searchParams.set('tab', currentTab);
-                        const listRes = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        const listRes = await fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         const listHtml = await listRes.text();
                         const doc = new DOMParser().parseFromString(listHtml, 'text/html');
                         const newList = doc.querySelector('#listContainer');
@@ -610,7 +661,8 @@
                                 </div>`;
                         }
 
-                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
+                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove(
+                            'bg-blue-100/50'));
                     } catch (err) {
                         console.error(err);
                         showToastify('Failed to create conversation.', 'error');
@@ -641,7 +693,11 @@
                     try {
                         const url = new URL(window.location.href);
                         url.searchParams.set('tab', tab);
-                        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        const res = await fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
                         const html = await res.text();
                         const doc = new DOMParser().parseFromString(html, 'text/html');
                         const newList = doc.querySelector('#listContainer');
@@ -659,16 +715,108 @@
                                 </div>`;
                         }
 
-                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove('bg-blue-100/50'));
+                        listContainer?.querySelectorAll('a').forEach(a => a.classList.remove(
+                            'bg-blue-100/50'));
                         applyTabStyles(tab);
                     } catch (err) {
                         console.error('Failed to load tab:', err);
                     }
                 };
 
-                groupTab.addEventListener('click', e => { e.preventDefault(); loadTab('channel'); });
-                directTab.addEventListener('click', e => { e.preventDefault(); loadTab('direct'); });
+                groupTab.addEventListener('click', e => {
+                    e.preventDefault();
+                    loadTab('channel');
+                });
+                directTab.addEventListener('click', e => {
+                    e.preventDefault();
+                    loadTab('direct');
+                });
             }
+
+            // --- No-reload conversation switching ---
+            const highlightActiveConversation = (url) => {
+                if (!listContainer) return;
+                const u = new URL(url, window.location.origin);
+                const wantedChannel = u.searchParams.get('channel_id');
+                const wantedThread = u.searchParams.get('thread_id');
+                listContainer.querySelectorAll('a').forEach(a => {
+                    a.classList.remove('bg-blue-100/50');
+                    const match = (wantedChannel && a.href.includes(`channel_id=${wantedChannel}`)) ||
+                        (wantedThread && a.href.includes(`thread_id=${wantedThread}`));
+                    if (match) a.classList.add('bg-blue-100/50');
+                });
+            };
+
+            const loadConversation = async (url, pushState = true) => {
+                try {
+                    // leave previous echo channel if any
+                    try {
+                        window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
+                    } catch (_) {}
+
+                    const res = await fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    if (!res.ok) throw new Error('Failed to load conversation');
+                    const html = await res.text();
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    const newChat = doc.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                    if (newChat && chatArea) {
+                        // preserve scroll stickiness if near bottom before swap
+                        const shouldStick = isNearBottom();
+                        chatArea.innerHTML = newChat.innerHTML;
+                        // refresh scroll container reference after DOM swap
+                        scrollContainer = document.getElementById('message-scroll');
+
+                        // Refresh references and listeners
+                        messageForm = document.querySelector(messageFormSelector);
+                        messageableType = messageForm?.querySelector('input[name="messageable_type"]')
+                            ?.value || null;
+                        messageableId = messageForm?.querySelector('input[name="messageable_id"]')?.value ||
+                            null;
+                        lastMessageId = getLastMessageId();
+                        initializeMessageForm();
+                        startMessagePolling();
+                        updateCharCount();
+                        try {
+                            window.subscribeToActiveConversation && window.subscribeToActiveConversation();
+                        } catch (_) {}
+
+                        if (shouldStick) {
+                            const sc = document.getElementById('message-scroll');
+                            if (sc) sc.scrollTop = sc.scrollHeight;
+                        }
+                    }
+
+                    highlightActiveConversation(url);
+                    if (pushState) window.history.pushState({
+                        ajax: true
+                    }, '', url);
+                } catch (err) {
+                    console.error(err);
+                    if (typeof showToastify === 'function') showToastify('Unable to open conversation.',
+                        'error');
+                }
+            };
+
+            // Intercept sidebar conversation clicks
+            listContainer?.addEventListener('click', (e) => {
+                const a = e.target.closest('a');
+                if (!a || !listContainer.contains(a)) return;
+                // allow new tab and modifier key behaviors
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || a.target === '_blank') return;
+                // ignore clicks on forms (trash/delete) within the list item
+                if (e.target.closest('form')) return;
+                e.preventDefault();
+                loadConversation(a.href, true);
+            });
+
+            // Back/forward navigation without reload
+            window.addEventListener('popstate', () => {
+                loadConversation(window.location.href, false);
+            });
         });
 
         function confirmDeleteMessage(button) {
@@ -698,10 +846,13 @@
                             setTimeout(async () => {
                                 msgEl.remove();
 
-                                const chat = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                                const chat = document.querySelector(
+                                    'form[action="{{ route('messages.store') }}"]');
                                 if (chat) {
-                                    const messageableType = chat.querySelector('input[name="messageable_type"]').value;
-                                    const messageableId = chat.querySelector('input[name="messageable_id"]').value;
+                                    const messageableType = chat.querySelector(
+                                        'input[name="messageable_type"]').value;
+                                    const messageableId = chat.querySelector(
+                                        'input[name="messageable_id"]').value;
 
                                     await refreshSidebarAfterDelete(messageableType, messageableId);
                                 }
@@ -716,6 +867,118 @@
                 } catch (err) {
                     console.error(err);
                     showToastify('Something went wrong.', 'error');
+                }
+            }, 'bg-red-400 hover:bg-red-500', 'Delete');
+        }
+
+        // Delete a channel from the sidebar (owner only)
+        function confirmDeleteChannel(button) {
+            const form = button.closest('form');
+            if (!form) return;
+            const token = form.querySelector('input[name="_token"]').value;
+            const channelId = form.dataset.id;
+
+            showConfirmToast('Are you sure you want to delete this channel?', async () => {
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
+                        },
+                        body: '_method=DELETE'
+                    });
+
+                    if (res.status >= 200 && res.status < 400) {
+                        // Remove the list item
+                        const item = form.closest('.group');
+                        if (item) item.remove();
+
+                        // If the deleted channel is currently open, clear chat and leave echo channel
+                        const chatForm = document.querySelector(
+                            'form[action="{{ route('messages.store') }}"]');
+                        if (chatForm) {
+                            const type = chatForm.querySelector('input[name="messageable_type"]').value;
+                            const id = chatForm.querySelector('input[name="messageable_id"]').value;
+                            if (type === 'channel' && String(id) === String(channelId)) {
+                                try {
+                                    window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
+                                } catch (_) {}
+                                const chatArea = document.querySelector(
+                                    '.col-span-2.flex.flex-col.h-full.bg-white');
+                                if (chatArea) {
+                                    chatArea.innerHTML = `
+                                      <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
+                                        <p>Select a conversation or channel to start chatting</p>
+                                      </div>`;
+                                }
+                            }
+                        }
+
+                        showToastify('Channel deleted successfully.', 'success');
+                    } else {
+                        const data = await res.json().catch(() => ({}));
+                        showToastify(data.message || 'Failed to delete channel.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToastify('Something went wrong deleting the channel.', 'error');
+                }
+            }, 'bg-red-400 hover:bg-red-500', 'Delete');
+        }
+
+        // Delete a direct thread (only when empty per server rules)
+        function confirmDeleteThread(button) {
+            const form = button.closest('form');
+            if (!form) return;
+            const token = form.querySelector('input[name="_token"]').value;
+            const threadId = form.dataset.id;
+
+            showConfirmToast('Are you sure you want to delete this conversation?', async () => {
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
+                        },
+                        body: '_method=DELETE'
+                    });
+
+                    if (res.status >= 200 && res.status < 400) {
+                        const item = form.closest('.group');
+                        if (item) item.remove();
+
+                        const chatForm = document.querySelector(
+                            'form[action="{{ route('messages.store') }}"]');
+                        if (chatForm) {
+                            const type = chatForm.querySelector('input[name="messageable_type"]').value;
+                            const id = chatForm.querySelector('input[name="messageable_id"]').value;
+                            if (type === 'thread' && String(id) === String(threadId)) {
+                                try {
+                                    window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
+                                } catch (_) {}
+                                const chatArea = document.querySelector(
+                                    '.col-span-2.flex.flex-col.h-full.bg-white');
+                                if (chatArea) {
+                                    chatArea.innerHTML = `
+                                      <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
+                                        <p>Select a conversation or channel to start chatting</p>
+                                      </div>`;
+                                }
+                            }
+                        }
+
+                        showToastify('Conversation deleted successfully.', 'success');
+                    } else {
+                        const data = await res.json().catch(() => ({}));
+                        showToastify(data.message || 'Failed to delete conversation.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToastify('Something went wrong deleting the conversation.', 'error');
                 }
             }, 'bg-red-400 hover:bg-red-500', 'Delete');
         }
@@ -755,7 +1018,10 @@
             if (!isoString) return '';
             const dt = new Date(isoString);
             if (Number.isNaN(dt.getTime())) return '';
-            return dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            return dt.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit'
+            });
         }
 
         async function refreshSidebarAfterDelete(messageableType, messageableId) {
@@ -774,7 +1040,8 @@
                     let lastTimestamp = null;
 
                     for (let i = messageEls.length - 1; i >= 0; i--) {
-                        const bubble = messageEls[i].querySelector('[class*="bg-gradient-to-r"], [class*="bg-gray-200"]');
+                        const bubble = messageEls[i].querySelector(
+                            '[class*="bg-gradient-to-r"], [class*="bg-gray-200"]');
                         const timestampEl = messageEls[i].querySelector('div.text-gray-400');
                         if (bubble && timestampEl) {
                             lastMessage = bubble.textContent.trim();
@@ -823,8 +1090,13 @@
 
         function restoreDistanceFromBottom(scroller, distance) {
             if (!scroller) return;
-            const apply = () => { scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight - distance; };
-            requestAnimationFrame(() => { apply(); requestAnimationFrame(apply); });
+            const apply = () => {
+                scroller.scrollTop = scroller.scrollHeight - scroller.clientHeight - distance;
+            };
+            requestAnimationFrame(() => {
+                apply();
+                requestAnimationFrame(apply);
+            });
         }
 
         // Echo subscription management
@@ -844,7 +1116,7 @@
 
         function subscribeToActiveConversation() {
             __subscriptionCount++;
-            const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+            const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
             if (!chatForm || !window.Echo) return;
 
             const typeInput = chatForm.querySelector('input[name="messageable_type"]');
@@ -924,12 +1196,13 @@
 
                 ch.listen('MessageDeleted', (e) => {
                     try {
-                        const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                        const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
                         if (chatForm) {
                             const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                             const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
                             const currentType = currentTypeRaw === 'thread' ? 'messagethread' : currentTypeRaw;
-                            if (String(currentType) !== String(e.messageable_type) || String(currentId) !== String(e.messageable_id)) {
+                            if (String(currentType) !== String(e.messageable_type) || String(currentId) !== String(e
+                                    .messageable_id)) {
                                 return;
                             }
                         }
@@ -938,12 +1211,15 @@
                         let messageEl = null;
                         if (scrollContainer) {
                             messageEl = scrollContainer.querySelector(`[data-message-id="${e.id}"]`) ||
-                                        scrollContainer.querySelector(`[data-message-id='${e.id}']`);
+                                scrollContainer.querySelector(`[data-message-id='${e.id}']`);
                         }
                         if (!messageEl) {
                             const els = document.querySelectorAll('[data-message-id]');
                             for (const el of els) {
-                                if (el.getAttribute('data-message-id') == e.id) { messageEl = el; break; }
+                                if (el.getAttribute('data-message-id') == e.id) {
+                                    messageEl = el;
+                                    break;
+                                }
                             }
                         }
 
@@ -965,7 +1241,7 @@
                             }
                         }
 
-                        const chat = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                        const chat = document.querySelector('form[action="{{ route('messages.store') }}"]');
                         if (chat) {
                             const messageableType = chat.querySelector('input[name="messageable_type"]').value;
                             const messageableId = chat.querySelector('input[name="messageable_id"]').value;
@@ -978,11 +1254,20 @@
 
                 // Optional raw Pusher binding kept as-is
                 try {
-                    const pusher = window.Echo && window.Echo.connector && window.Echo.connector.pusher ? window.Echo.connector.pusher : null;
+                    const pusher = window.Echo && window.Echo.connector && window.Echo.connector.pusher ? window.Echo
+                        .connector.pusher : null;
                     if (pusher) {
                         let pusherChannel = null;
-                        try { pusherChannel = pusher.channel(channelName) || pusher.channel(`private-${channelName}`) || null; } catch (e) { pusherChannel = null; }
-                        if (!pusherChannel) { try { pusherChannel = pusher.subscribe(channelName); } catch (e) {} }
+                        try {
+                            pusherChannel = pusher.channel(channelName) || pusher.channel(`private-${channelName}`) || null;
+                        } catch (e) {
+                            pusherChannel = null;
+                        }
+                        if (!pusherChannel) {
+                            try {
+                                pusherChannel = pusher.subscribe(channelName);
+                            } catch (e) {}
+                        }
                         if (pusherChannel && typeof pusherChannel.bind === 'function') {
                             pusherChannel.bind('App\\Events\\MessageDeleted', (payload) => {
                                 try {
@@ -991,12 +1276,15 @@
                                     let messageEl = null;
                                     if (scrollContainer) {
                                         messageEl = scrollContainer.querySelector(`[data-message-id="${e.id}"]`) ||
-                                                    scrollContainer.querySelector(`[data-message-id='${e.id}']`);
+                                            scrollContainer.querySelector(`[data-message-id='${e.id}']`);
                                     }
                                     if (!messageEl) {
                                         const els = document.querySelectorAll('[data-message-id]');
                                         for (const el of els) {
-                                            if (el.getAttribute('data-message-id') == e.id) { messageEl = el; break; }
+                                            if (el.getAttribute('data-message-id') == e.id) {
+                                                messageEl = el;
+                                                break;
+                                            }
                                         }
                                     }
 
@@ -1010,7 +1298,8 @@
                                             flexEl.style.transform = 'translateY(-6px)';
                                             setTimeout(() => {
                                                 flexEl.remove();
-                                                requestAnimationFrame(() => restoreDistanceFromBottom(sc, dist));
+                                                requestAnimationFrame(() => restoreDistanceFromBottom(sc,
+                                                    dist));
                                             }, 220);
                                         } else {
                                             messageEl.remove();
@@ -1018,18 +1307,30 @@
                                         }
                                     } else {
                                         try {
-                                            const res = fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                                            const res = fetch(window.location.href, {
+                                                headers: {
+                                                    'X-Requested-With': 'XMLHttpRequest'
+                                                }
+                                            });
                                             res.then(r => r.text()).then(html => {
-                                                const doc = new DOMParser().parseFromString(html, 'text/html');
-                                                const newChat = doc.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                                                const doc = new DOMParser().parseFromString(html,
+                                                    'text/html');
+                                                const newChat = doc.querySelector(
+                                                    '.col-span-2.flex.flex-col.h-full.bg-white');
                                                 if (newChat) {
-                                                    const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                                                    const chatArea = document.querySelector(
+                                                        '.col-span-2.flex.flex-col.h-full.bg-white');
                                                     const sc = document.getElementById('message-scroll');
                                                     const dist = getDistanceFromBottom(sc);
                                                     chatArea.innerHTML = newChat.innerHTML;
                                                     initializeMessageForm();
-                                                    try { window.subscribeToActiveConversation && window.subscribeToActiveConversation(); } catch (er) {}
-                                                    requestAnimationFrame(() => restoreDistanceFromBottom(document.getElementById('message-scroll'), dist));
+                                                    try {
+                                                        window.subscribeToActiveConversation && window
+                                                            .subscribeToActiveConversation();
+                                                    } catch (er) {}
+                                                    requestAnimationFrame(() => restoreDistanceFromBottom(
+                                                        document.getElementById('message-scroll'),
+                                                        dist));
                                                 }
                                             }).catch(() => {});
                                         } catch (err) {}
@@ -1047,7 +1348,9 @@
         }
 
         // Subscribe on initial load
-        document.addEventListener('DOMContentLoaded', () => { subscribeToActiveConversation(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            subscribeToActiveConversation();
+        });
 
         // --- Community-level updates (channels/threads created or deleted)
         const __communityId = @json($community?->id ?? null);
@@ -1067,7 +1370,11 @@
 
                 url.searchParams.set('tab', activeTab);
 
-                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
                 if (!res.ok) return;
                 const html = await res.text();
                 const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -1098,41 +1405,51 @@
             if (!__communityId || !window.Echo) return;
             try {
                 const ch = window.Echo.private(`community.${__communityId}`);
-                ch.listen('.ChannelCreated', async () => { await refreshSidebarList('channel'); });
+                ch.listen('.ChannelCreated', async () => {
+                    await refreshSidebarList('channel');
+                });
                 ch.listen('.ChannelDeleted', async (e) => {
                     await refreshSidebarList('channel');
-                    const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                    const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
                     if (chatForm) {
                         const type = chatForm.querySelector('input[name="messageable_type"]').value;
                         const id = chatForm.querySelector('input[name="messageable_id"]').value;
                         if (type === 'channel' && parseInt(id) === parseInt(e.id)) {
-                            const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                            const chatArea = document.querySelector(
+                                '.col-span-2.flex.flex-col.h-full.bg-white');
                             if (chatArea) {
                                 chatArea.innerHTML = `
                                     <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
                                         <p>Select a conversation or channel to start chatting</p>
                                     </div>`;
-                                try { window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel(); } catch (err) {}
+                                try {
+                                    window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
+                                } catch (err) {}
                             }
                         }
                     }
                 });
 
-                ch.listen('.ThreadCreated', async () => { await refreshSidebarList('direct'); });
+                ch.listen('.ThreadCreated', async () => {
+                    await refreshSidebarList('direct');
+                });
                 ch.listen('.ThreadDeleted', async (e) => {
                     await refreshSidebarList('direct');
-                    const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                    const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
                     if (chatForm) {
                         const type = chatForm.querySelector('input[name="messageable_type"]').value;
                         const id = chatForm.querySelector('input[name="messageable_id"]').value;
                         if (type === 'thread' && parseInt(id) === parseInt(e.id)) {
-                            const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                            const chatArea = document.querySelector(
+                                '.col-span-2.flex.flex-col.h-full.bg-white');
                             if (chatArea) {
                                 chatArea.innerHTML = `
                                     <div class="flex-1 flex items-center justify-center text-gray-400 italic bg-white">
                                         <p>Select a conversation or channel to start chatting</p>
                                     </div>`;
-                                try { window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel(); } catch (err) {}
+                                try {
+                                    window.leaveCurrentEchoChannel && window.leaveCurrentEchoChannel();
+                                } catch (err) {}
                             }
                         }
                     }
@@ -1140,35 +1457,51 @@
 
                 ch.listen('MessageSent', async (e) => {
                     try {
-                        const incomingType = e.messageable_type === 'thread' ? 'messagethread' : e.messageable_type;
+                        const incomingType = e.messageable_type === 'thread' ? 'messagethread' : e
+                            .messageable_type;
                         const incomingId = e.messageable_id;
 
-                        updateSidebarAfterMessage({ body: e.body, created_at: e.created_at }, incomingType === 'messagethread' ? 'thread' : incomingType, incomingId);
+                        updateSidebarAfterMessage({
+                            body: e.body,
+                            created_at: e.created_at
+                        }, incomingType === 'messagethread' ? 'thread' : incomingType, incomingId);
                         await refreshSidebarList();
 
-                        const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                        const chatForm = document.querySelector(
+                            'form[action="{{ route('messages.store') }}"]');
                         if (!chatForm) return;
                         const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                         const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
                         const currentType = currentTypeRaw === 'thread' ? 'messagethread' : currentTypeRaw;
 
-                        if (String(currentType) === String(incomingType) && String(currentId) === String(incomingId)) {
-                            if (typeof __currentEchoChannelName === 'string' && __currentEchoChannelName === `${incomingType}.${incomingId}`) {
+                        if (String(currentType) === String(incomingType) && String(currentId) === String(
+                                incomingId)) {
+                            if (typeof __currentEchoChannelName === 'string' && __currentEchoChannelName ===
+                                `${incomingType}.${incomingId}`) {
                                 return;
                             }
 
-                            const res = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                            const res = await fetch(window.location.href, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
                             const html = await res.text();
                             const doc = new DOMParser().parseFromString(html, 'text/html');
                             const newChat = doc.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
                             if (newChat) {
-                                const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                                const chatArea = document.querySelector(
+                                    '.col-span-2.flex.flex-col.h-full.bg-white');
                                 const sc = document.getElementById('message-scroll');
                                 const dist = getDistanceFromBottom(sc);
                                 chatArea.innerHTML = newChat.innerHTML;
                                 initializeMessageForm();
-                                try { window.subscribeToActiveConversation && window.subscribeToActiveConversation(); } catch (er) {}
-                                requestAnimationFrame(() => restoreDistanceFromBottom(document.getElementById('message-scroll'), dist));
+                                try {
+                                    window.subscribeToActiveConversation && window
+                                        .subscribeToActiveConversation();
+                                } catch (er) {}
+                                requestAnimationFrame(() => restoreDistanceFromBottom(document.getElementById(
+                                    'message-scroll'), dist));
                             }
                         }
                     } catch (err) {
@@ -1178,34 +1511,47 @@
 
                 ch.listen('MessageDeleted', async (e) => {
                     try {
-                        const incomingType = e.messageable_type === 'thread' ? 'messagethread' : e.messageable_type;
+                        const incomingType = e.messageable_type === 'thread' ? 'messagethread' : e
+                            .messageable_type;
                         const incomingId = e.messageable_id;
 
-                        refreshSidebarAfterDelete(incomingType === 'messagethread' ? 'thread' : incomingType, incomingId);
+                        refreshSidebarAfterDelete(incomingType === 'messagethread' ? 'thread' : incomingType,
+                            incomingId);
                         await refreshSidebarList();
 
-                        const chatForm = document.querySelector('form[action="{{ route("messages.store") }}"]');
+                        const chatForm = document.querySelector(
+                            'form[action="{{ route('messages.store') }}"]');
                         if (!chatForm) return;
                         const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                         const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
                         const currentType = currentTypeRaw === 'thread' ? 'messagethread' : currentTypeRaw;
 
-                        if (String(currentType) === String(incomingType) && String(currentId) === String(incomingId)) {
-                            if (typeof __currentEchoChannelName === 'string' && __currentEchoChannelName === `${incomingType}.${incomingId}`) {
+                        if (String(currentType) === String(incomingType) && String(currentId) === String(
+                                incomingId)) {
+                            if (typeof __currentEchoChannelName === 'string' && __currentEchoChannelName ===
+                                `${incomingType}.${incomingId}`) {
                                 return;
                             }
 
                             const scBefore = document.getElementById('message-scroll');
                             const distBefore = getDistanceFromBottom(scBefore);
-                            const res = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                            const res = await fetch(window.location.href, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
                             const html = await res.text();
                             const doc = new DOMParser().parseFromString(html, 'text/html');
                             const newChat = doc.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
                             if (newChat) {
-                                const chatArea = document.querySelector('.col-span-2.flex.flex-col.h-full.bg-white');
+                                const chatArea = document.querySelector(
+                                    '.col-span-2.flex.flex-col.h-full.bg-white');
                                 chatArea.innerHTML = newChat.innerHTML;
                                 initializeMessageForm();
-                                try { window.subscribeToActiveConversation && window.subscribeToActiveConversation(); } catch (er) {}
+                                try {
+                                    window.subscribeToActiveConversation && window
+                                        .subscribeToActiveConversation();
+                                } catch (er) {}
                                 const scAfter = document.getElementById('message-scroll');
                                 restoreDistanceFromBottom(scAfter, distBefore);
                             }
@@ -1219,7 +1565,9 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => { subscribeToCommunityUpdates(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            subscribeToCommunityUpdates();
+        });
 
         window.subscribeToActiveConversation = subscribeToActiveConversation;
         window.leaveCurrentEchoChannel = leaveCurrentEchoChannel;

@@ -172,11 +172,7 @@
         <ul>
             <li>📧 You'll receive a reminder email closer to the event date</li>
             <li>💬 Join the community discussion about this event</li>
-            <li>📱 Add this event to your calendar</li>
         </ul>
-
-        <p>If you need to change your RSVP or have any questions, you can visit the event page using the button above.
-        </p>
 
         <div class="footer">
             <p>This email was sent by <strong>Gatherly</strong><br>

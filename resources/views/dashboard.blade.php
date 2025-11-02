@@ -32,11 +32,55 @@
                 body {
                     scroll-behavior: smooth;
                 }
+
+                /* Responsive overrides driven by JS breakpoint attribute on <html> */
+                html[data-breakpoint="sm"] .resp-avatar {
+                    width: 2.25rem !important;
+                    /* 36px */
+                    height: 2.25rem !important;
+                }
+
+                html[data-breakpoint="sm"] .post-card,
+                html[data-breakpoint="sm"] .bg-white\/90 {
+                    padding: .75rem !important;
+                }
+
+                html[data-breakpoint="sm"] .post-content p {
+                    font-size: .92rem !important;
+                }
+
+                html[data-breakpoint="md"] .resp-avatar {
+                    width: 2.75rem !important;
+                    /* 44px */
+                    height: 2.75rem !important;
+                }
+
+                html[data-breakpoint="lg"] .resp-avatar {
+                    width: 3rem !important;
+                    /* 48px */
+                    height: 3rem !important;
+                }
+
+                /* Sidebar visibility */
+                html[data-breakpoint="sm"] #sidebar {
+                    display: none !important;
+                }
+
+                html[data-breakpoint="md"] #sidebar {
+                    display: block;
+                }
+
+                /* Tweak action button sizes on small screens */
+                html[data-breakpoint="sm"] .post-actions .w-8 {
+                    width: 2rem !important;
+                    height: 2rem !important;
+                }
             </style>
 
 
             <!-- Posts Section -->
-            <section class="lg:col-span-8 xl:col-span-9 2xl:col-span-9 space-y-6">
+            <section class="w-full space-y-6 md:col-span-2 lg:col-span-8 xl:col-span-9 2xl:col-span-9">
+
                 @if ($community)
                     <div class="flex items-center justify-between  backdrop-blur-md px-4 py-3 rounded-xl">
                         <div>
@@ -65,20 +109,20 @@
                     <div
                         class="bg-white/80 backdrop-blur-sm border border-blue-200 shadow-xl shadow-blue-100/50 rounded-2xl p-5 transition hover:shadow-blue-200/70">
                         <form method="POST" action="{{ route('posts.store', $community->slug) }}"
-                            enctype="multipart/form-data" class="space-y-4">
+                            enctype="multipart/form-data" class="post-form space-y-4 w-full">
                             @csrf
 
-                            <div class="flex gap-4 items-start">
+                            <div class="flex flex-col sm:flex-row gap-4 items-start w-full">
                                 <!-- Avatar -->
                                 @php
                                     $user = auth()->user();
                                 @endphp
 
                                 <div
-                                    class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300">
+                                    class="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-sky-300 to-indigo-300 resp-avatar">
                                     @if ($user && $user->avatar)
-                                        <img src="{{ $user->avatar_url }}"
-                                            alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}'s avatar"
+                                            class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-bold text-lg">
                                             {{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}
@@ -86,21 +130,15 @@
                                     @endif
                                 </div>
 
-
-
-
-
                                 <!-- Form Content -->
-                                <div class="flex-1 flex flex-col gap-4">
+                                <div class="flex-1 flex flex-col gap-4 w-full">
                                     <!-- Textarea -->
                                     <textarea name="content" placeholder="Share something with {{ $community->name }}..."
-                                        class="w-full bg-white border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 p-4 text-gray-800 text-sm resize-none shadow-sm transition"
+                                        class="w-full bg-white border border-gray-200 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 p-3 sm:p-4 text-gray-800 text-[0.95rem] sm:text-sm md:text-base leading-5 sm:leading-6 resize-none shadow-sm transition min-h-24 sm:min-h-28 lg:min-h-32"
                                         rows="3" required></textarea>
 
                                     <!-- Image Preview -->
                                     <div id="image-preview-container" class="flex flex-wrap gap-3"></div>
-
-
 
                                     <!-- Approval Message -->
                                     @if ($requiresApproval)
@@ -117,9 +155,10 @@
 
 
                                     <!-- Actions -->
-                                    <div class="flex justify-end items-center gap-3 pt-2">
+                                    <div
+                                        class="flex flex-col sm:flex-row justify-stretch sm:justify-end items-stretch sm:items-center gap-3 pt-2 w-full">
                                         <label for="photo-upload"
-                                            class="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-full bg-white hover:bg-blue-50 hover:border-blue-300 text-gray-600 cursor-pointer shadow-sm transition">
+                                            class="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 border border-gray-200 rounded-full bg-white hover:bg-blue-50 hover:border-blue-300 text-gray-600 cursor-pointer shadow-sm transition">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor"
                                                 viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -130,7 +169,7 @@
                                             accept="image/*">
 
                                         <button type="submit"
-                                            class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                                            class="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300 w-full sm:w-auto">
                                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                                             </svg>
@@ -146,7 +185,7 @@
                     <section class="col-span-3 w-full">
                         <x-community-welcome />
                     </section>
-
+            </section>
     </div>
     @endif
 
@@ -174,13 +213,21 @@
                             <div class="flex items-center gap-3">
                                 @php
                                     $postUser = $post->user;
+                                    // Status styling for display next to actions
+                                    $statusStyles = [
+                                        'draft' => 'bg-gray-100 text-gray-700',
+                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                        'published' => 'bg-green-100 text-green-800',
+                                        'rejected' => 'bg-red-100 text-red-700',
+                                    ];
+                                    $status = strtolower($post->status ?? 'draft');
                                 @endphp
 
                                 <div
-                                    class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                    class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden resp-avatar">
                                     @if ($postUser && $postUser->avatar)
-                                        <img src="{{ $postUser->avatar_url }}"
-                                            alt="{{ $postUser->name }}'s avatar" class="w-full h-full object-cover">
+                                        <img src="{{ $postUser->avatar_url }}" alt="{{ $postUser->name }}'s avatar"
+                                            class="w-full h-full object-cover">
                                     @else
                                         <span class="text-white font-semibold">
                                             {{ strtoupper(substr($postUser->name ?? 'U', 0, 1)) }}
@@ -193,61 +240,66 @@
                                     <p class="text-sm font-semibold text-gray-800">
                                         {{ $post->user->name ?? 'Unknown' }}
                                     </p>
-                                    <p class="text-xs text-gray-500">
+                                    <p class="text-[11px] text-gray-500">
                                         {{ '@' .
                                             (\App\Models\User::find($post->user_id)?->username ??
                                                 Str::slug(\App\Models\User::find($post->user_id)?->name ?? 'user')) }}
                                     </p>
-
-
-
                                 </div>
                             </div>
 
-                            @if ($canModerate || $post->user_id === $userId)
-                                <div class="relative">
-                                    <button onclick="toggleDropdown({{ $post->id }})"
-                                        class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                                        &#x2026;
-                                    </button>
-                                    <div id="dropdown-{{ $post->id }}"
-                                        class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
-                                        @if ($canModerate && $post->status === 'pending')
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="text-xs inline-block px-2 py-0.5 rounded font-medium {{ $statusStyles[$status] ?? 'bg-gray-100 text-gray-700' }}">
+                                    {{ ucfirst($status) }}
+                                </span>
+
+                                @if ($canModerate || $post->user_id === $userId)
+                                    <div class="relative">
+                                        <button onclick="toggleDropdown({{ $post->id }})"
+                                            class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                            &#x2026;
+                                        </button>
+                                        <div id="dropdown-{{ $post->id }}"
+                                            class="absolute right-0 mt-2 w-32 bg-white border border-gray-200 rounded shadow-lg hidden z-10">
+                                            @if ($canModerate && $post->status === 'pending')
+                                                <form method="POST"
+                                                    action="{{ route('posts.update', [$community->slug, $post->id]) }}"
+                                                    data-community="{{ $community->slug }}"
+                                                    onsubmit="return handlePostAction(event)">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="status" value="published">
+                                                    <input type="hidden" name="content" value="{{ $post->content }}">
+                                                    <button type="submit"
+                                                        class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
+                                                        Publish
+                                                    </button>
+                                                </form>
+                                            @endif
+                                            <button onclick="startEdit({{ $post->id }})"
+                                                class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
                                             <form method="POST"
-                                                action="{{ route('posts.update', [$community->slug, $post->id]) }}"
+                                                action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
                                                 data-community="{{ $community->slug }}"
                                                 onsubmit="return handlePostAction(event)">
                                                 @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="published">
-                                                <input type="hidden" name="content" value="{{ $post->content }}">
-                                                <button type="submit"
-                                                    class="block w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100">
-                                                    Publish
+                                                @method('DELETE')
+                                                <button type="button"
+                                                    onclick="deletePost({{ $post->id }}, this)"
+                                                    class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                    Delete
                                                 </button>
                                             </form>
-                                        @endif
-                                        <button onclick="startEdit({{ $post->id }})"
-                                            class="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</button>
-                                        <form method="POST"
-                                            action="{{ route('posts.destroy', [$community->slug, $post->id]) }}"
-                                            data-community="{{ $community->slug }}"
-                                            onsubmit="return handlePostAction(event)">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" onclick="deletePost({{ $post->id }}, this)"
-                                                class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        </div>
                                     </div>
-                                </div>
-                            @endif
+                                @endif
+                            </div>
                         </div>
 
 
                         <div class="post-content relative" id="content-{{ $post->id }}">
-                            <p class="text-black text-sm mb-1 mt-4">{{ $post->content }}</p>
+                            <p class="text-black text-sm mb-2 mt-4">{{ $post->content }}</p>
 
 
                             @if ($post->image_path)
@@ -257,38 +309,54 @@
                                 </div>
                             @endif
 
-                            <div class="text-xs text-gray-400 mt-9">
-                                Posted {{ $post->created_at->diffForHumans() }}
-                                @if ($post->content_updated_at && $post->content_updated_at > $post->created_at)
-                                    • <span class="text-xs text-gray-400 mt-9 italic">(edited)</span>
-                                @endif
-                            </div>
-                            <div class="flex items-center gap-5 mt-4 text-sm">
-                                <!-- ❤️ Like Button -->
-                                <button onclick="toggleLike({{ $post->id }}, '{{ $community->slug }}')"
-                                    id="like-btn-{{ $post->id }}"
-                                    class="flex items-center gap-2 group transition">
-                                    <div
-                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-pink-50 border border-pink-200 text-pink-500 hover:bg-pink-100 hover:scale-105 transition">
-                                        <i
-                                            class="fa-solid fa-heart group-hover:scale-110 transition-transform duration-200"></i>
-                                    </div>
-                                    <span id="like-count-{{ $post->id }}"
-                                        class="text-gray-600 group-hover:text-pink-600">
-                                        {{ $post->likes->count() }}
-                                    </span>
-                                </button>
+                            <div class="flex items-center justify-between mt-6">
 
-                                <!-- 💬 Reply Button -->
-                                <button onclick="toggleCommentBox({{ $post->id }})"
-                                    class="flex items-center gap-2 group transition">
-                                    <div
-                                        class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-500 hover:bg-blue-100 hover:scale-105 transition">
-                                        <i
-                                            class="fa-regular fa-comment group-hover:scale-110 transition-transform duration-200"></i>
-                                    </div>
-                                    <span class="text-gray-600 group-hover:text-blue-600">Reply</span>
-                                </button>
+                                <div class="flex items-center gap-5 text-sm flex-wrap">
+                                    <!-- Like Button -->
+                                    @php
+                                        $liked = auth()->check()
+                                            ? $post->likes->contains('user_id', auth()->id())
+                                            : false;
+                                        $baseCircle =
+                                            'w-8 h-8 rounded-full flex items-center justify-center hover:scale-105 transition';
+                                        $circleColor = $liked
+                                            ? 'bg-pink-50 border-pink-200 text-pink-500 hover:bg-pink-100 ring-1 ring-pink-200'
+                                            : 'bg-gray-100 text-gray-500 hover:bg-pink-100';
+                                        $iconState = $liked ? 'fa-solid' : 'fa-regular';
+                                        $countColor = $liked ? 'text-pink-600' : 'text-gray-600';
+                                    @endphp
+                                    <button onclick="toggleLike({{ $post->id }}, '{{ $community->slug }}')"
+                                        id="like-btn-{{ $post->id }}" data-liked="{{ $liked ? '1' : '0' }}"
+                                        class="flex items-center gap-2 group transition">
+                                        <div class="{{ $baseCircle }} {{ $circleColor }}">
+                                            <i
+                                                class="{{ $iconState }} fa-heart group-hover:scale-110 group-hover:text-pink-500 transition-transform duration-200"></i>
+                                        </div>
+                                        <span id="like-count-{{ $post->id }}"
+                                            class="{{ $countColor }} group-hover:text-pink-600">
+                                            {{ $post->likes->count() }}
+                                        </span>
+                                    </button>
+
+                                    <!-- 💬 Reply Button -->
+                                    <button onclick="toggleCommentBox({{ $post->id }})"
+                                        class="flex items-center gap-2 group transition">
+                                        <div
+                                            class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-500 hover:bg-blue-100 hover:scale-105 transition">
+                                            <i
+                                                class="fa-regular fa-comment group-hover:scale-110 transition-transform duration-200"></i>
+                                        </div>
+                                        <span class="text-gray-600 group-hover:text-blue-600">Reply</span>
+                                    </button>
+                                </div>
+
+                                <div class="text-[11px] text-gray-400 whitespace-nowrap">
+                                    Posted {{ $post->created_at->diffForHumans() }}
+                                    @if ($post->content_updated_at && $post->content_updated_at > $post->created_at)
+                                        • <span class="text-[11px] text-gray-400 italic">(edited)</span>
+                                    @endif
+                                </div>
+
                             </div>
 
 
@@ -310,7 +378,7 @@
                                     @foreach ($post->comments as $comment)
                                         <div class="flex items-start gap-2" data-comment-id="{{ $comment->id }}">
                                             <div
-                                                class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
+                                                class="w-7 h-7 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden resp-avatar">
                                                 @if ($comment->user->avatar)
                                                     <img src="{{ $comment->user->avatar_url }}"
                                                         alt="{{ $comment->user->name }}'s avatar"
@@ -330,8 +398,13 @@
                                                 @if ($comment->user_id === auth()->id() || $canModerate)
                                                     <button
                                                         onclick="deleteComment({{ $comment->id }}, {{ $post->id }}, '{{ $community->slug }}')"
-                                                        class="text-red-500 hover:text-red-600 transition">
-                                                        <i class="fas fa-trash-alt text-xs"></i>
+                                                        class="text-red-600 hover:text-red-700 transition">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                        </svg>
                                                     </button>
                                                 @endif
                                             </div>
@@ -340,23 +413,6 @@
                                 </div>
                             </div>
 
-                            @php
-                                $statusStyles = [
-                                    'draft' => 'bg-gray-100 text-gray-700',
-                                    'pending' => 'bg-yellow-100 text-yellow-800',
-                                    'published' => 'bg-green-100 text-green-800',
-                                    'rejected' => 'bg-red-100 text-red-700',
-                                ];
-                                $status = strtolower($post->status);
-                            @endphp
-
-                            <div class="absolute top-2 right-3 text-xs">
-
-                                <span
-                                    class="inline-block px-2 py-0.5 rounded font-medium {{ $statusStyles[$status] ?? 'bg-gray-100 text-gray-700' }}">
-                                    {{ ucfirst($status) }}
-                                </span>
-                            </div>
                         </div>
 
 
@@ -377,8 +433,7 @@
                                 <div id="edit-image-preview-{{ $post->id }}"
                                     class="relative w-full max-w-xs mt-2">
                                     @if ($post->image_path)
-                                        <img id="edit-crop-preview-{{ $post->id }}"
-                                            src="{{ $post->image_url }}"
+                                        <img id="edit-crop-preview-{{ $post->id }}" src="{{ $post->image_url }}"
                                             class="rounded border object-contain w-full max-h-60 shadow" />
                                         <button type="button" onclick="startEditCrop({{ $post->id }})"
                                             class="absolute top-1 left-1 bg-white text-blue-600 border border-blue-200 w-7 h-7 flex items-center justify-center shadow hover:bg-blue-50 transition rounded-full"
@@ -398,20 +453,29 @@
 
                                 <input type="file" name="image" id="edit-photo-upload-{{ $post->id }}"
                                     class="hidden" accept="image/*">
-                                <label for="edit-photo-upload-{{ $post->id }}"
-                                    class="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-full bg-white hover:bg-blue-50 hover:border-blue-300 text-gray-600 cursor-pointer shadow-sm transition">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 7h2l2-3h10l2 3h2a2 2 0 012 2v9a2 2 0 01-2 2H3a2 2 0 01-2-2V9a2 2 0 012-2zm9 3a4 4 0 100 8 4 4 0 000-8z" />
-                                    </svg>
-                                </label>
 
-                                <div class="flex gap-3">
-                                    <button type="submit"
-                                        class="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700">Save</button>
-                                    <button type="button" onclick="cancelEdit({{ $post->id }})"
-                                        class="text-gray-600 hover:underline text-sm">Cancel</button>
+                                <div class="flex items-center justify-between gap-4">
+                                    <!-- Upload Button -->
+                                    <label for="edit-photo-upload-{{ $post->id }}"
+                                        class="flex items-center justify-center w-10 h-10 border border-gray-200 rounded-full bg-white hover:bg-blue-50 hover:border-blue-300 text-gray-600 cursor-pointer shadow-sm transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 7h2l2-3h10l2 3h2a2 2 0 012 2v9a2 2 0 01-2 2H3a2 2 0 01-2-2V9a2 2 0 012-2zm9 3a4 4 0 100 8 4 4 0 000-8z" />
+                                        </svg>
+                                    </label>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex gap-3">
+                                        <button type="button" onclick="cancelEdit({{ $post->id }})"
+                                            class="text-gray-600 underline text-sm">Cancel</button>
+                                        <button type="submit"
+                                            class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-3 py-2 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
+                                            Save
+                                        </button>
+                                    </div>
                                 </div>
+
                             </form>
                         @endif
 
@@ -940,6 +1004,11 @@
             }
         };
         async function toggleLike(postId, slug) {
+            const btn = document.getElementById(`like-btn-${postId}`);
+            const countEl = document.getElementById(`like-count-${postId}`);
+            const circle = btn.querySelector('div');
+            const icon = btn.querySelector('i');
+
             const res = await fetch(`/communities/${slug}/posts/${postId}/like`, {
                 method: 'POST',
                 headers: {
@@ -947,7 +1016,35 @@
                 }
             });
             const data = await res.json();
-            document.getElementById(`like-count-${postId}`).textContent = data.like_count;
+
+            // Update count if provided
+            if (typeof data.like_count !== 'undefined') {
+                countEl.textContent = data.like_count;
+            }
+
+            // Decide liked state: prefer server-provided flag, otherwise toggle based on icon class
+            const liked = typeof data.liked !== 'undefined' ? data.liked : icon.classList.contains('fa-regular');
+
+            if (liked) {
+                // Apply liked styles (filled heart)
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid');
+                circle.classList.remove('bg-gray-50', 'border-gray-200', 'text-gray-400', 'hover:bg-gray-100');
+                circle.classList.add('bg-pink-50', 'border-pink-200', 'text-pink-500', 'hover:bg-pink-100');
+                // Add thin pink ring when liked
+                circle.classList.add('ring-1', 'ring-pink-200');
+                countEl.classList.add('text-pink-600');
+            } else {
+                // Apply unliked styles (outline heart)
+                icon.classList.remove('fa-solid');
+                icon.classList.add('fa-regular');
+                circle.classList.remove('bg-pink-50', 'border-pink-200', 'text-pink-500', 'hover:bg-pink-100');
+                // Use slightly darker neutral background/text for unliked, but hover should be pink
+                circle.classList.add('bg-gray-100', 'text-gray-500', 'hover:bg-pink-100');
+                // Remove pink ring when unliked
+                circle.classList.remove('ring-1', 'ring-pink-200');
+                countEl.classList.remove('text-pink-600');
+            }
         }
 
         function toggleCommentBox(postId) {
@@ -1030,11 +1127,15 @@
                 <strong>${data.comment.user}:</strong> ${data.comment.content}
             </p>
             ${(data.comment.is_author || canModerate) ? `
-                            <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
-                                    class="text-red-500 hover:text-red-600 transition">
-                                <i class="fas fa-trash-alt text-xs"></i>
-                            </button>
-                        ` : ''}
+                                                                                                                                                                                                                                                                                                                                        <button onclick="deleteComment(${data.comment.id}, ${postId}, '${slug}')" 
+                                                                                                                                                                                                                                                                                                                                                class="text-red-500 hover:text-red-600 transition">
+                                                                                                                                                                                                                                                                                                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                                                                                                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                                                                                                                            d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                                                                                                                                                    </svg></i>
+                                                                                                                                                                                                                                                                                                                                        </button>
+                                                                                                                                                                                                                                                                                                                                    ` : ''}
         </div>
     </div>
 `;
@@ -1042,6 +1143,42 @@
             }
             return false;
         }
+    </script>
+
+    <script>
+        // Responsive breakpoint manager: sets data-breakpoint on <html> so CSS can respond
+        (function() {
+            const breakpoints = [{
+                    name: 'sm',
+                    max: 639
+                },
+                {
+                    name: 'md',
+                    min: 640,
+                    max: 1023
+                },
+                {
+                    name: 'lg',
+                    min: 1024
+                }
+            ];
+
+            function getBp(width) {
+                if (width <= 639) return 'sm';
+                if (width >= 640 && width <= 1023) return 'md';
+                return 'lg';
+            }
+
+            function applyBreakpoint() {
+                const bp = getBp(window.innerWidth);
+                document.documentElement.setAttribute('data-breakpoint', bp);
+            }
+
+            // Run on load and resize/orientation change
+            applyBreakpoint();
+            window.addEventListener('resize', () => requestAnimationFrame(applyBreakpoint));
+            window.addEventListener('orientationchange', () => setTimeout(applyBreakpoint, 200));
+        })();
     </script>
 
 

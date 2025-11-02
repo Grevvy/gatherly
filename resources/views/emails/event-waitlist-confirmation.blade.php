@@ -193,8 +193,6 @@
             <li>🤞 Sometimes people change their minds closer to the event date</li>
         </ul>
 
-        <p>You can check your waitlist status anytime by visiting the event page using the button above.</p>
-
         <div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 0; color: #0369a1;"><strong>💡 Pro Tip:</strong> Follow the community for updates and
                 future events that might interest you!</p>

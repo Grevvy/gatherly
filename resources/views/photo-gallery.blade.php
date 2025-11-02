@@ -15,33 +15,41 @@
 @endphp
 
 <x-layout :title="'Dashboard - Gatherly'" :community="$community" :communities="$communities">
-    <div class="space-y-8">
-        <!-- Header Section -->
-        @if ($community)
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-gray-900">
-                    {{ Str::endsWith($community->name, 's') ? $community->name . '’' : $community->name . '’s' }} Photo
-                    Gallery
-                </h2>
+    <div class="bg-gradient-to-b from-white to-gray-50/40 min-h-screen">
+        <div class="space-y-8 pt-5 max-w-5xl mx-auto">
+            <!-- Header Section -->
+            @if ($community)
+                <div class="mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <div class="md:col-start-2 md:justify-self-center text-center">
+                            <h2 class="text-3xl font-extrabold text-gray-900 text-center mb-2">
+                                {{ Str::endsWith($community->name, 's') ? $community->name . '’' : $community->name . '’s' }}
+                                Photo Gallery
+                            </h2>
+                            <div class="h-1 w-24 mx-auto mt-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500">
+                            </div>
+                        </div>
 
-
-                <a href="{{ route('photos.create', ['community' => $community->slug]) }}"
-                    class="inline-flex items-center bg-blue-600 border border-transparent bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Upload Photo
-                </a>
-            </div>
-        @else
-            <div class="text-center py-12">
-                <div class="max-w-md mx-auto">
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">Select a Community</h3>
-                    <p class="text-gray-500">Choose a community from the sidebar to view and share photos.</p>
+                        <a href="{{ route('photos.create', ['community' => $community->slug]) }}"
+                            class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300 justify-self-center md:justify-self-end">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Upload Photo
+                        </a>
+                    </div>
                 </div>
-            </div>
-        @endif
+            @else
+                <div class="text-center py-12">
+                    <div class="max-w-md mx-auto">
+                        <h3 class="text-xl font-medium text-gray-900 mb-2">Select a Community</h3>
+                        <p class="text-gray-500">Choose a community from the sidebar to view its photo gallery.</p>
+                    </div>
+                </div>
+            @endif
+        </div>
 
         <!-- 📸 Photo Grid -->
         <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -68,11 +76,13 @@
                     </div>
 
                     <!-- Info area (visible under image) -->
-                    <div class="text-sm px-3 {{ $photo->isPending() ? 'py-2' : 'py-1' }}">
-                        <div class="flex justify-between items-center gap-2">
-                            <div class="min-w-0">
+                    <div class="h-px w-full bg-gray-200 "></div>
+
+                    <div class="text-sm px-3 {{ $photo->isPending() ? 'py-2' : 'py-1' }} flex items-end min-h-12">
+                        <div class="flex justify-between items-end gap-2 w-full">
+                            <div class="min-w-0 flex flex-col justify-end">
                                 @if (!empty(data_get($photo, 'caption')))
-                                    <p class="mt-0.5 text-[13px] text-gray-600 truncate mb-1"
+                                    <p class="mt-0.5 text-[13px] text-gray-600 truncate "
                                         title="{{ data_get($photo, 'caption') }}">
                                         “{{ data_get($photo, 'caption') }}”
                                     </p>
@@ -83,7 +93,6 @@
                                     <span class="ml-2 text-xs font-normal text-gray-500">•
                                         {{ optional(data_get($photo, 'created_at'))->diffForHumans() ?? 'Just now' }}</span>
                                 </p>
-
 
                             </div>
 

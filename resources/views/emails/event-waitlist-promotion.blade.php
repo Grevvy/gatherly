@@ -183,14 +183,10 @@
 
         <p><strong>What's Next?</strong></p>
         <ul>
-            <li>📧 Mark your calendar and plan to attend</li>
             <li>💬 Join the community discussion about this event</li>
             <li>🔔 You'll receive a reminder email closer to the event date</li>
             <li>🤝 Get ready to meet awesome people at the event!</li>
         </ul>
-
-        <p>We're excited to see you at the event! If you have any questions, you can visit the event page using the
-            button above.</p>
 
         <div style="background-color: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 0; color: #0369a1;"><strong>⏰ Time Sensitive:</strong> If your plans change, please update

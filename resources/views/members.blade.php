@@ -1,5 +1,6 @@
 <x-layout :community="$community" :communities="$communities">
-    <div class="min-h-screen px-6 py-10 bg-white">
+    <div class="min-h-screen px-6 pt-4 pb-10 bg-white">
+
 
         <!-- Header -->
         <div class="max-w-7xl mx-auto">
@@ -30,7 +31,7 @@
             <!-- Filter Tabs -->
             <div class="flex justify-center gap-3 mt-6 flex-wrap">
                 <button data-filter="all"
-                    class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-white/70 text-gray-600 hover:bg-purple-50 shadow-sm transition">
+                    class="tab-button px-5 py-2 rounded-full text-sm font-semibold bg-indigo-100 text-indigo-700 active shadow-sm transition hover:bg-purple-50">
                     All Members ({{ $community->memberships->count() }})
                 </button>
                 <button data-filter="online"
@@ -72,8 +73,8 @@
                                 <div
                                     class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-300 to-indigo-300 flex items-center justify-center overflow-hidden">
                                     @if ($user->avatar)
-                                        <img src="{{ $user->avatar_url }}"
-                                            alt="{{ $user->name }}'s avatar" class="w-full h-full object-cover">
+                                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}'s avatar"
+                                            class="w-full h-full object-cover">
                                     @else
                                         <span
                                             class="text-white font-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
@@ -247,8 +248,15 @@
 
             buttons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    buttons.forEach(b => b.classList.remove('bg-indigo-100', 'text-indigo-700', 'active'));
-                    buttons.forEach(b => b.classList.add('bg-gray-100', 'text-gray-600'));
+                    // Reset all buttons to the default (non-active) appearance
+                    buttons.forEach(b => {
+                        b.classList.remove('bg-indigo-100', 'text-indigo-700', 'active', 'bg-gray-100');
+                        // Ensure non-active classes from markup are present
+                        b.classList.add('bg-white/70', 'text-gray-600');
+                    });
+
+                    // Apply active styles to the clicked button
+                    btn.classList.remove('bg-white/70', 'text-gray-600');
                     btn.classList.add('bg-indigo-100', 'text-indigo-700', 'active');
 
                     const filter = btn.dataset.filter;

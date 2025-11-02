@@ -27,15 +27,6 @@
             @csrf
             @method('PATCH')
 
-            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
-                <button type="submit"
-                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">Update
-                    Event</button>
-
-                <a href="{{ route('events', ['community' => $event->community?->slug]) }}"
-                    class="text-gray-600 underline">Cancel</a>
-            </div>
-
             <!-- Title -->
             <div class="relative mb-4">
                 <span class="absolute top-2 left-3 text-sm text-gray-400 pointer-events-none z-10">Event Title</span>
@@ -99,6 +90,14 @@
                     <option value="published" {{ $event->status === 'published' ? 'selected' : '' }}>Published</option>
                     <option value="cancelled" {{ $event->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                 </select>
+            </div>
+            <div class="flex justify-between mb-6 pt-4 border-t border-gray-200">
+                <a href="{{ route('events', ['community' => $event->community?->slug]) }}"
+                    class="text-gray-600 underline">Cancel</a>
+                <button type="submit"
+                    class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:from-indigo-500 hover:to-blue-500 transition-all duration-300">Update
+                    Event</button>
+
             </div>
         </form>
     </div>

@@ -79,13 +79,6 @@
                 </div>
             </div>
 
-
-            <!-- Remember -->
-            <div class="flex items-center space-x-2">
-                <input type="checkbox" name="remember" id="remember" class="rounded border-slate-300">
-                <label for="remember" class="text-sm text-slate-700">Remember me</label>
-            </div>
-
             <!-- Login Button -->
             <button type="submit"
                 class="w-full bg-blue-700 text-white py-3 rounded-lg font-semibold hover:bg-blue-800 transition-all">
