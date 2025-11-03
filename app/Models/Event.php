@@ -21,12 +21,16 @@ class Event extends Model
         'capacity',
         'visibility',
         'status',
+        'boosted_at',
+        'boosted_until',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'published_at' => 'datetime',
+        'boosted_at' => 'datetime',
+        'boosted_until' => 'datetime',
     ];
 
     // Owner (creator) of the event
@@ -53,5 +57,18 @@ class Event extends Model
         return $this->belongsToMany(User::class, 'event_attendees')
             ->withPivot(['status', 'role', 'checked_in'])
             ->withTimestamps();
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query
+            ->orderByRaw('CASE WHEN boosted_until IS NOT NULL AND boosted_until > NOW() THEN 0 ELSE 1 END')
+            ->orderByDesc('boosted_until')
+            ->orderBy('starts_at');
+    }
+
+    public function isBoosted(): bool
+    {
+        return $this->boosted_until !== null && $this->boosted_until->isFuture();
     }
 }

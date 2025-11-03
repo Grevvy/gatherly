@@ -56,7 +56,7 @@ class DashboardController extends \Illuminate\Routing\Controller
                           });
                     });
                 })
-                ->latest()
+                ->ordered()
                 ->get();
         }
 

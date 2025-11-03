@@ -62,7 +62,7 @@ class EventController extends Controller
         $q = Event::query()
             ->when($request->filled('community'), fn($qq) => $qq->where('community_id', $request->community))
             ->when($request->filled('q'), fn($qq) => $qq->where('title', 'like', '%' . $request->q . '%'))
-            ->orderBy('starts_at', 'asc');
+            ->ordered();
 
         return response()->json($q->paginate(12));
     }
@@ -335,6 +335,42 @@ class EventController extends Controller
         }
 
         return response()->json($event);
+    }
+
+    public function boost(Request $request, Event $event)
+    {
+        $this->authorizeManage($event);
+
+        $data = $request->validate([
+            'duration_days' => ['nullable','integer','min:1','max:14'],
+        ]);
+
+        $duration = $data['duration_days'] ?? 3;
+        $boostedAt = now();
+
+        $event->forceFill([
+            'boosted_at' => $boostedAt,
+            'boosted_until' => $boostedAt->copy()->addDays($duration),
+        ])->save();
+
+        return response()->json([
+            'message' => 'Event boosted successfully.',
+            'boosted_until' => $event->boosted_until,
+        ]);
+    }
+
+    public function unboost(Event $event)
+    {
+        $this->authorizeManage($event);
+
+        $event->forceFill([
+            'boosted_at' => null,
+            'boosted_until' => null,
+        ])->save();
+
+        return response()->json([
+            'message' => 'Event boost removed.',
+        ]);
     }
 
     // RSVP: accept/decline/waitlist

@@ -15,7 +15,7 @@
         ? $community
             ->events()
             ->withCount(['attendees as accepted_count' => fn($q) => $q->where('status', 'accepted')])
-            ->orderBy('starts_at')
+            ->ordered()
             ->get()
         : collect();
 
@@ -281,7 +281,38 @@
                                                         {{ ucfirst($event->status) }}
                                                     </span>
                                                 @endif
+                                                @if ($event->isBoosted())
+                                                    <span
+                                                        class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                                        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                                                        Boosted
+                                                    </span>
+                                                @endif
                                                 @if ($canManage && $activeNestedTab !== 'Attending')
+                                                    @if ($event->isBoosted())
+                                                        <button onclick="unboostEvent({{ $event->id }})"
+                                                            class="text-amber-600 hover:text-amber-700 transition"
+                                                            title="Remove boost">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M18 12H6" />
+                                                                <path d="m7 21 8-18 2.38 5.44" />
+                                                            </svg>
+                                                        </button>
+                                                    @else
+                                                        <button onclick="boostEvent({{ $event->id }})"
+                                                            class="text-amber-500 hover:text-amber-600 transition"
+                                                            title="Boost event">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
+                                                            </svg>
+                                                        </button>
+                                                    @endif
                                                     <!-- Edit icon (pencil) -->
                                                     <a href="{{ route('edit-event', ['event' => $event->id]) }}"
                                                         class="text-blue-600 hover:text-blue-800 transition">
@@ -453,8 +484,15 @@
 
 
                                         </div>
-                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9">
-                                            Created {{ $event->created_at->diffForHumans() }}
+                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
+                                            <span>Created {{ $event->created_at->diffForHumans() }}</span>
+                                            @if ($event->isBoosted())
+                                                <span>•</span>
+                                                <span class="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                                    <i data-lucide="flame" class="w-3 h-3"></i>
+                                                    Boost ends {{ $event->boosted_until?->format('M j, g:i A') }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -575,7 +613,39 @@
                                                     class="px-2 py-1 rounded-md text-xs font-semibold {{ $statusColor }} capitalize">
                                                     {{ ucfirst($event->status) }}
                                                 </span>
-
+                                                @if ($event->isBoosted())
+                                                    <span
+                                                        class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold">
+                                                        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                                                        Boosted
+                                                    </span>
+                                                @endif
+                                                @if ($canManage)
+                                                    @if ($event->isBoosted())
+                                                        <button onclick="unboostEvent({{ $event->id }})"
+                                                            class="text-amber-600 hover:text-amber-700 transition"
+                                                            title="Remove boost">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M18 12H6" />
+                                                                <path d="m7 21 8-18 2.38 5.44" />
+                                                            </svg>
+                                                        </button>
+                                                    @else
+                                                        <button onclick="boostEvent({{ $event->id }})"
+                                                            class="text-amber-500 hover:text-amber-600 transition"
+                                                            title="Boost event">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                                stroke="currentColor" stroke-width="2"
+                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
+                                                            </svg>
+                                                        </button>
+                                                    @endif
+                                                @endif
                                             </div>
                                         </div>
 
@@ -690,8 +760,15 @@
                                             </div>
 
                                         </div>
-                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9">
-                                            Created {{ $event->created_at->diffForHumans() }}
+                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
+                                            <span>Created {{ $event->created_at->diffForHumans() }}</span>
+                                            @if ($event->isBoosted())
+                                                <span>•</span>
+                                                <span class="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                                    <i data-lucide="flame" class="w-3 h-3"></i>
+                                                    Boost ends {{ $event->boosted_until?->format('M j, g:i A') }}
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -722,7 +799,83 @@
                 'attendees' => $event->attendees->map(fn($a) => ['user' => ['name' => $a->user->name ?? 'Unknown']]),
             ];
         });
-    @endphp
+@endphp
+
+    <!-- Boost Modal -->
+    <div id="event-boost-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 opacity-0"
+            data-event-boost-backdrop></div>
+        <div class="absolute inset-0 flex items-center justify-center px-4 py-10">
+            <div id="event-boost-panel"
+                class="w-full max-w-md rounded-3xl bg-white/95 border border-white/60 shadow-[0_40px_120px_rgba(14,30,64,0.25)] backdrop-blur-lg p-6 sm:p-8 transform transition-all duration-300 origin-center scale-95 opacity-0">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-xs uppercase tracking-[0.3em] text-amber-500 font-semibold">Boost</div>
+                        <h3 class="text-xl font-semibold text-gray-900 mt-1">Spotlight this event</h3>
+                        <p class="text-sm text-gray-500 mt-2">
+                            Keep the event floating to the top so your members don’t miss it.
+                        </p>
+                    </div>
+                    <button type="button" onclick="closeEventBoostModal()"
+                        class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition flex items-center justify-center">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="mt-6 space-y-4">
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" data-event-boost-option data-value="1"
+                            class="event-boost-option group rounded-2xl border border-slate-200 bg-white py-4 text-center shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+                            <span class="block text-lg font-semibold text-slate-900">1 day</span>
+                            <span class="text-xs text-slate-400">Quick pulse</span>
+                        </button>
+                        <button type="button" data-event-boost-option data-value="3"
+                            class="event-boost-option group rounded-2xl border border-slate-200 bg-white py-4 text-center shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+                            <span class="block text-lg font-semibold text-slate-900">3 days</span>
+                            <span class="text-xs text-slate-400">Recommended</span>
+                        </button>
+                        <button type="button" data-event-boost-option data-value="7"
+                            class="event-boost-option group rounded-2xl border border-slate-200 bg-white py-4 text-center shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+                            <span class="block text-lg font-semibold text-slate-900">7 days</span>
+                            <span class="text-xs text-slate-400">Full week</span>
+                        </button>
+                    </div>
+                    <p id="event-boost-selection-label"
+                        class="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                        Selected: 3 days
+                    </p>
+
+                    <div id="event-boost-custom-wrapper"
+                        class="bg-slate-50/90 border border-slate-200 rounded-2xl px-4 py-3 transition-all duration-200">
+                        <label for="event-boost-custom" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Custom length</label>
+                        <div class="mt-2 flex items-center gap-3">
+                            <input type="number" min="1" max="14" id="event-boost-custom"
+                                class="w-20 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                                placeholder="3">
+                            <span class="text-sm text-slate-500">days</span>
+                            <button type="button" onclick="applyCustomEventBoostDuration()"
+                                class="ml-auto px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500 text-white shadow hover:bg-amber-600 transition">
+                                Apply
+                            </button>
+                        </div>
+                        <p class="mt-2 text-[11px] text-slate-400">Between 1 and 14 days. Custom picks override the quick options.</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex items-center justify-between">
+                    <button type="button" onclick="closeEventBoostModal()"
+                        class="px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 transition">
+                        Maybe later
+                    </button>
+                    <button type="button" onclick="submitEventBoostModal()"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-semibold shadow-[0_18px_45px_rgba(255,149,5,0.35)] hover:shadow-[0_20px_55px_rgba(255,149,5,0.45)] transition-all duration-200 hover:translate-y-[-1px]">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Boost now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Tab elements
@@ -1291,6 +1444,152 @@
                     onClick: onConfirm
                 }
             ]);
+        }
+
+        const eventBoostModal = document.getElementById('event-boost-modal');
+        const eventBoostBackdrop = eventBoostModal?.querySelector('[data-event-boost-backdrop]');
+        const eventBoostPanel = document.getElementById('event-boost-panel');
+        const eventBoostOptions = eventBoostModal?.querySelectorAll('[data-event-boost-option]');
+        const eventBoostCustomInput = document.getElementById('event-boost-custom');
+        const eventBoostCustomWrapper = document.getElementById('event-boost-custom-wrapper');
+        const eventBoostSelectionLabel = document.getElementById('event-boost-selection-label');
+
+        let eventBoostState = {
+            id: null,
+            duration: 3
+        };
+
+        function boostEvent(eventId) {
+            openEventBoostModal(eventId);
+        }
+
+        function openEventBoostModal(eventId) {
+            eventBoostState = { id: eventId, duration: 3 };
+            highlightEventBoostOption(eventBoostState.duration);
+            eventBoostCustomInput.value = '';
+            eventBoostCustomWrapper?.classList.remove('ring-2', 'ring-amber-400/80', 'border-amber-300', 'bg-amber-50');
+            eventBoostSelectionLabel.textContent = 'Selected: 3 days';
+
+            eventBoostModal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+
+            if (window.lucide) {
+                window.lucide.createIcons({ elements: eventBoostModal.querySelectorAll('[data-lucide]') });
+            }
+
+            requestAnimationFrame(() => {
+                eventBoostBackdrop?.classList.remove('opacity-0');
+                eventBoostBackdrop?.classList.add('opacity-100');
+                eventBoostPanel?.classList.remove('opacity-0', 'scale-95');
+                eventBoostPanel?.classList.add('opacity-100', 'scale-100');
+            });
+        }
+
+        function closeEventBoostModal() {
+            eventBoostBackdrop?.classList.remove('opacity-100');
+            eventBoostBackdrop?.classList.add('opacity-0');
+            eventBoostPanel?.classList.remove('opacity-100', 'scale-100');
+            eventBoostPanel?.classList.add('opacity-0', 'scale-95');
+
+            setTimeout(() => {
+                eventBoostModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }, 220);
+        }
+
+        function highlightEventBoostOption(value) {
+            eventBoostOptions?.forEach(btn => {
+                const btnValue = parseInt(btn.dataset.value, 10);
+                const isActive = value !== null && btnValue === parseInt(value, 10);
+                btn.classList.toggle('ring-2', isActive);
+                btn.classList.toggle('ring-amber-400/80', isActive);
+                btn.classList.toggle('bg-amber-50', isActive);
+                btn.classList.toggle('border-amber-300', isActive);
+            });
+            if (value !== null) {
+                eventBoostCustomWrapper?.classList.remove('ring-2', 'ring-amber-400/80', 'border-amber-300', 'bg-amber-50');
+                eventBoostSelectionLabel.textContent = `Selected: ${value} day${value === 1 ? '' : 's'}`;
+            }
+        }
+
+        function selectEventBoostOption(button) {
+            const value = parseInt(button.dataset.value, 10);
+            eventBoostState.duration = value;
+            eventBoostCustomInput.value = '';
+            highlightEventBoostOption(value);
+        }
+
+        function applyCustomEventBoostDuration() {
+            const value = parseInt(eventBoostCustomInput.value, 10);
+            if (Number.isNaN(value) || value < 1 || value > 14) {
+                showToastify('Please choose between 1 and 14 days.', 'error');
+                return;
+            }
+            eventBoostState.duration = value;
+            highlightEventBoostOption(null);
+            eventBoostCustomWrapper?.classList.add('ring-2', 'ring-amber-400/80', 'border-amber-300', 'bg-amber-50');
+            eventBoostSelectionLabel.textContent = `Selected: ${value} day${value === 1 ? '' : 's'}`;
+        }
+
+        eventBoostOptions?.forEach(btn => {
+            btn.addEventListener('click', () => selectEventBoostOption(btn));
+        });
+        eventBoostBackdrop?.addEventListener('click', closeEventBoostModal);
+        document.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Escape' && !eventBoostModal.classList.contains('hidden')) {
+                closeEventBoostModal();
+            }
+        });
+
+        async function submitEventBoostModal() {
+            const { id, duration } = eventBoostState;
+
+            try {
+                const res = await fetch(`/events/${id}/boost`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: JSON.stringify({ duration_days: duration })
+                });
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Unable to boost this event.');
+                }
+
+                closeEventBoostModal();
+                showToastify(data.message || 'Event boosted successfully.', 'success');
+                window.location.reload();
+            } catch (error) {
+                console.error(error);
+                showToastify(error.message || 'Unable to boost this event.', 'error');
+            }
+        }
+
+        async function unboostEvent(eventId) {
+            try {
+                const res = await fetch(`/events/${eventId}/boost`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    }
+                });
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    throw new Error(data.message || 'Unable to remove this boost.');
+                }
+
+                showToastify(data.message || 'Boost removed.', 'success');
+                window.location.reload();
+            } catch (error) {
+                console.error(error);
+                showToastify(error.message || 'Unable to remove this boost.', 'error');
+            }
         }
 
         async function deleteEvent(eventId, button) {

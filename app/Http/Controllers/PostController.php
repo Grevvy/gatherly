@@ -66,7 +66,7 @@ class PostController extends Controller
                 });
             })
             ->with(['user:id,name'])
-            ->latest()
+            ->ordered()
             ->paginate(15);
 
         return response()->json($posts);
@@ -293,6 +293,45 @@ class PostController extends Controller
 
         return response()->json($post->fresh());
     }
+
+    public function boost(Request $request, Community $community, Post $post): JsonResponse
+    {
+        abort_if((int) $post->community_id !== (int) $community->id, 404);
+        $this->authorize('boost', $post);
+
+        $data = $request->validate([
+            'duration_days' => ['nullable','integer','min:1','max:14'],
+        ]);
+
+        $duration = $data['duration_days'] ?? 3;
+        $boostedAt = now();
+
+        $post->forceFill([
+            'boosted_at' => $boostedAt,
+            'boosted_until' => $boostedAt->copy()->addDays($duration),
+        ])->save();
+
+        return response()->json([
+            'message' => 'Post boosted successfully.',
+            'boosted_until' => $post->boosted_until,
+        ]);
+    }
+
+    public function unboost(Community $community, Post $post): JsonResponse
+    {
+        abort_if((int) $post->community_id !== (int) $community->id, 404);
+        $this->authorize('boost', $post);
+
+        $post->forceFill([
+            'boosted_at' => null,
+            'boosted_until' => null,
+        ])->save();
+
+        return response()->json([
+            'message' => 'Post boost removed.',
+        ]);
+    }
+
     public function toggleLike(Community $community, Post $post): JsonResponse
     {
         $user = Auth::user();
@@ -323,4 +362,5 @@ class PostController extends Controller
             'liked' => $liked,
             'like_count' => $post->likes()->count()
         ]);
-    }}
+    }
+}

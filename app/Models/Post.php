@@ -20,11 +20,15 @@ class Post extends Model
         'community_id',
         'image_path',
         'content_updated_at',
+        'boosted_at',
+        'boosted_until',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
         'content_updated_at' => 'datetime',
+        'boosted_at' => 'datetime',
+        'boosted_until' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -72,6 +76,19 @@ class Post extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query
+            ->orderByRaw('CASE WHEN boosted_until IS NOT NULL AND boosted_until > NOW() THEN 0 ELSE 1 END')
+            ->orderByDesc('boosted_until')
+            ->latest();
+    }
+
+    public function isBoosted(): bool
+    {
+        return $this->boosted_until !== null && $this->boosted_until->isFuture();
     }
 
     public function scopeRejected($query)

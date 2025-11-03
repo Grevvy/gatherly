@@ -350,10 +350,11 @@
                                     </button>
                                 </div>
 
-                                <div class="text-[11px] text-gray-400 whitespace-nowrap">
-                                    Posted {{ $post->created_at->diffForHumans() }}
+                                <div class="text-[11px] text-gray-400 whitespace-nowrap flex items-center gap-1">
+                                    <span>Posted {{ $post->created_at->diffForHumans() }}</span>
                                     @if ($post->content_updated_at && $post->content_updated_at > $post->created_at)
-                                        • <span class="text-[11px] text-gray-400 italic">(edited)</span>
+                                        <span>•</span>
+                                        <span class="text-[11px] text-gray-400 italic">(edited)</span>
                                     @endif
                                 </div>
 
@@ -372,9 +373,9 @@
                                         class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:scale-105 transition">
                                         Send
                                     </button>
-                                </form>
+                </form>
 
-                                <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
+                <div id="comments-list-{{ $post->id }}" class="mt-3 space-y-2">
                                     @foreach ($post->comments as $comment)
                                         <div class="flex items-start gap-2" data-comment-id="{{ $comment->id }}">
                                             <div
@@ -1144,6 +1145,7 @@
             return false;
         }
     </script>
+
 
     <script>
         // Responsive breakpoint manager: sets data-breakpoint on <html> so CSS can respond

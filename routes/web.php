@@ -175,6 +175,9 @@ Route::middleware('auth')->group(function () {
 
     // Approve draft events (community owner/admin/moderator, event owner/host)
     Route::post('/events/{event}/approve', [\App\Http\Controllers\EventController::class, 'approve']);
+    Route::post('/events/{event}/boost', [\App\Http\Controllers\EventController::class, 'boost'])->name('events.boost');
+    Route::delete('/events/{event}/boost', [\App\Http\Controllers\EventController::class, 'unboost'])->name('events.unboost');
+
 
     // RSVP
     Route::post('/events/{event}/rsvp', [\App\Http\Controllers\EventController::class, 'rsvp']);
@@ -188,12 +191,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
+    Route::post('/communities/{community:slug}/posts/{post}/boost', [PostController::class, 'boost'])->name('posts.boost');
+    Route::delete('/communities/{community:slug}/posts/{post}/boost', [PostController::class, 'unboost'])->name('posts.unboost');
     Route::get('/communities/{community:slug}/posts', [PostController::class, 'index'])->name('posts.index');
     Route::post('/communities/{community:slug}/posts', [PostController::class, 'store'])->name('posts.store');
     Route::get('/communities/{community:slug}/posts/{post}', [PostController::class, 'show'])->name('posts.show');
     Route::put('/communities/{community:slug}/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/communities/{community:slug}/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/communities/{community:slug}/posts/{post}/moderate', [PostController::class, 'moderate'])->name('posts.moderate');
+    Route::post('/communities/{community:slug}/posts/{post}/boost', [PostController::class, 'boost'])->name('posts.boost');
+    Route::delete('/communities/{community:slug}/posts/{post}/boost', [PostController::class, 'unboost'])->name('posts.unboost');
 
     // Onboarding routes
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding');

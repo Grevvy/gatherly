@@ -104,8 +104,13 @@ public function store(Request $request)
 
     // ✅ banner image
     if ($request->hasFile('banner_image')) {
-        $path = $request->file('banner_image')->store('communities/banners', 's3');
-        $data['banner_image'] = $path; // Store path only, URL will be generated when needed
+        try {
+            $path = $request->file('banner_image')->store('communities/banners', 's3');
+            $data['banner_image'] = $path; // S3 path
+        } catch (\Throwable $exception) {
+            $fallbackPath = $request->file('banner_image')->store('communities/banners', 'public');
+            $data['banner_image'] = '/storage/' . ltrim($fallbackPath, '/');
+        }
     }
 
     return DB::transaction(function () use ($data) {
@@ -159,11 +164,20 @@ public function store(Request $request)
                     $old = str_replace('/storage/', '', $community->banner_image);
                     Storage::disk('public')->delete($old);
                 } else {
-                    Storage::disk('s3')->delete($community->banner_image);
+                    try {
+                        Storage::disk('s3')->delete($community->banner_image);
+                    } catch (\Throwable $exception) {
+                        // ignore when S3 is not configured locally
+                    }
                 }
             }
-            $path = $request->file('banner_image')->store('communities/banners', 's3');
-            $data['banner_image'] = $path; // Store path only
+            try {
+                $path = $request->file('banner_image')->store('communities/banners', 's3');
+                $data['banner_image'] = $path;
+            } catch (\Throwable $exception) {
+                $fallbackPath = $request->file('banner_image')->store('communities/banners', 'public');
+                $data['banner_image'] = '/storage/' . ltrim($fallbackPath, '/');
+            }
         }
 
         $community->update($data);
@@ -180,7 +194,11 @@ public function store(Request $request)
                 $old = str_replace('/storage/', '', $community->banner_image);
                 Storage::disk('public')->delete($old);
             } else {
-                Storage::disk('s3')->delete($community->banner_image);
+                try {
+                    Storage::disk('s3')->delete($community->banner_image);
+                } catch (\Throwable $exception) {
+                    // ignore missing S3 during local dev
+                }
             }
         }
 

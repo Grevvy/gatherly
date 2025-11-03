@@ -136,4 +136,24 @@ class PostPolicy
             ->where('status', 'active')
             ->exists();
     }
+
+    /**
+     * Determine if the user can boost the post.
+     */
+    public function boost(User $user, Post $post): bool
+    {
+        if ($user->isSiteAdmin()) {
+            return true;
+        }
+
+        if ($post->user_id === $user->id) {
+            return true;
+        }
+
+        return CommunityMembership::where('community_id', $post->community_id)
+            ->where('user_id', $user->id)
+            ->whereIn('role', ['owner', 'admin', 'moderator'])
+            ->where('status', 'active')
+            ->exists();
+    }
 }
