@@ -205,7 +205,7 @@
                             <h2 class="text-2xl font-bold text-gray-900">
                                 {{ $tab === 'channel' ? '# ' . $channel->name : $thread->participants->where('id', '!=', $userId)->pluck('name')->join(', ') }}
                             </h2>
-                            <p class="text-xs text-gray-500">
+                            <p id="message-count" class="text-xs text-gray-500">
                                 {{ $messages->count() }} {{ Str::plural('message', $messages->count()) }}
                             </p>
                         </div>
@@ -226,7 +226,9 @@
 
                         @foreach ($messages->reverse() as $message)
                             <div class="flex {{ $message->user_id === $userId ? 'justify-end' : 'justify-start' }} group items-start gap-2"
-                                data-message-id="{{ $message->id }}" data-author-id="{{ $message->user_id }}">
+                                data-message-id="{{ $message->id }}" data-author-id="{{ $message->user_id }}"
+                                data-body="{{ e($message->body) }}"
+                                data-created-at="{{ $message->created_at->toIso8601String() }}">
                                 @if ($message->user_id === $userId)
                                     {{-- Trash icon --}}
                                     <form method="POST" action="{{ route('messages.destroy', $message->id) }}"
@@ -410,33 +412,33 @@
 
                 return `
                     ${isSelf ? `
-                              <form method="POST" data-id="${message.id}"
-                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
-                                <input type="hidden" name="_token" value="${csrfToken}">
-                                <input type="hidden" name="_method" value="DELETE">
-                                <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
-                                  title="Delete" onclick="confirmDeleteMessage(this)">
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                       viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                                  </svg>
-                                </button>
-                              </form>
-                            ` : ''}
+                                              <form method="POST" data-id="${message.id}"
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
+                                                <input type="hidden" name="_token" value="${csrfToken}">
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
+                                                  title="Delete" onclick="confirmDeleteMessage(this)">
+                                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                       viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                          d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                  </svg>
+                                                </button>
+                                              </form>
+                                            ` : ''}
 
                     ${!isSelf ? `
-                              <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
-                                ${createAvatarMarkup(message)}
-                              </div>
-                            ` : ''}
+                                              <div class="w-9 h-9 rounded-full ml-3 mt-7 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
+                                                ${createAvatarMarkup(message)}
+                                              </div>
+                                            ` : ''}
 
                     <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
                       ${!isSelf ? `
-                                <div class="text-left">
-                                  <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
-                                </div>
-                              ` : ''}
+                                                <div class="text-left">
+                                                  <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
+                                                </div>
+                                              ` : ''}
 
                                             <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
                                                 ? 'bg-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
@@ -464,9 +466,16 @@
                     `flex ${isSelf ? 'justify-end' : 'justify-start'} group items-start gap-2 fade-in overflow-visible`;
                 wrapper.dataset.messageId = message.id;
                 wrapper.dataset.authorId = message.user_id;
+                wrapper.dataset.body = message.body || '';
+                wrapper.dataset.createdAt = message.created_at || '';
                 wrapper.innerHTML = buildMessageMarkup(message, isSelf);
 
                 scrollContainer.appendChild(wrapper);
+
+                // Update the live message counter
+                try {
+                    updateMessageCounter();
+                } catch (_) {}
 
                 if (scrollToBottom) {
                     setTimeout(() => {
@@ -599,6 +608,10 @@
             initializeMessageForm();
             startMessagePolling();
             updateCharCount();
+            // Initialize message counter on load
+            try {
+                updateMessageCounter();
+            } catch (_) {}
 
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
@@ -784,6 +797,11 @@
                             window.subscribeToActiveConversation && window.subscribeToActiveConversation();
                         } catch (_) {}
 
+                        // Update header counter for the newly loaded conversation
+                        try {
+                            updateMessageCounter();
+                        } catch (_) {}
+
                         if (shouldStick) {
                             const sc = document.getElementById('message-scroll');
                             if (sc) sc.scrollTop = sc.scrollHeight;
@@ -845,6 +863,11 @@
                             msgEl.style.transform = 'translateY(-5px)';
                             setTimeout(async () => {
                                 msgEl.remove();
+
+                                // Update message counter after deletion
+                                try {
+                                    updateMessageCounter();
+                                } catch (_) {}
 
                                 const chat = document.querySelector(
                                     'form[action="{{ route('messages.store') }}"]');
@@ -1028,34 +1051,72 @@
             try {
                 const listItems = document.querySelectorAll('#listContainer .group');
 
-                listItems.forEach(item => {
+                for (const item of listItems) {
                     const link = item.querySelector('a');
                     if (!link) return;
 
                     const urlParam = messageableType === 'channel' ? 'channel_id' : 'thread_id';
                     if (!link.href.includes(`${urlParam}=${messageableId}`)) return;
+                    // Determine if the currently open conversation matches the one we're updating
+                    const chatForm = document.querySelector('form[action="{{ route('messages.store') }}"]');
+                    const openTypeRaw = chatForm?.querySelector('input[name="messageable_type"]')?.value;
+                    const openId = chatForm?.querySelector('input[name="messageable_id"]')?.value;
+                    const openType = openTypeRaw === 'thread' ? 'messagethread' : openTypeRaw;
 
-                    const messageEls = document.querySelectorAll('#message-scroll [data-message-id]');
-                    let lastMessage = null;
-                    let lastTimestamp = null;
+                    let lastMessageBody = null;
+                    let lastMessageCreatedAt = null;
 
-                    for (let i = messageEls.length - 1; i >= 0; i--) {
-                        const bubble = messageEls[i].querySelector(
-                            '[class*="bg-gradient-to-r"], [class*="bg-gray-200"]');
-                        const timestampEl = messageEls[i].querySelector('div.text-gray-400');
-                        if (bubble && timestampEl) {
-                            lastMessage = bubble.textContent.trim();
-                            lastTimestamp = timestampEl.textContent.trim();
-                            break;
+                    if (openType && openId && String(openType) === (messageableType === 'thread' ? 'messagethread' :
+                            messageableType) && String(openId) === String(messageableId)) {
+                        // Use DOM of current conversation
+                        const wrappers = document.querySelectorAll('#message-scroll [data-message-id][data-author-id]');
+                        if (wrappers.length) {
+                            const lastWrapper = wrappers[wrappers.length - 1];
+                            lastMessageBody = (lastWrapper.dataset.body || '').trim();
+                            lastMessageCreatedAt = lastWrapper.dataset.createdAt || '';
+                        }
+                    } else {
+                        // Not the open conversation; perform a lightweight fetch to get latest message
+                        // Endpoint should return JSON { body: string|null, created_at: isoString|null }
+                        // If endpoint is not implemented yet, we gracefully skip.
+                        try {
+                            const params = new URLSearchParams({
+                                messageable_type: messageableType,
+                                messageable_id: messageableId,
+                                peek: '1'
+                            });
+                            const res = await fetch(`/messages/peek?${params.toString()}`, {
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            });
+                            if (res.ok) {
+                                const data = await res.json().catch(() => ({}));
+                                if (data && (data.body || data.created_at)) {
+                                    lastMessageBody = (data.body || '').trim();
+                                    lastMessageCreatedAt = data.created_at || '';
+                                }
+                            }
+                        } catch (e) {
+                            // Silently ignore if endpoint missing
                         }
                     }
 
                     const preview = item.querySelector('p.text-gray-500');
                     const timestamp = item.querySelector('span.text-xs.text-gray-400');
 
-                    if (lastMessage) {
-                        if (preview) preview.textContent = lastMessage;
-                        if (timestamp) timestamp.textContent = lastTimestamp;
+                    if (lastMessageBody) {
+                        // Truncate overly long previews
+                        const trimmed = lastMessageBody.length > 80 ? lastMessageBody.slice(0, 77) + '…' :
+                            lastMessageBody;
+                        if (preview) preview.textContent = trimmed || 'No messages yet';
+                        if (timestamp) {
+                            if (lastMessageCreatedAt) {
+                                timestamp.textContent = formatTimeForSidebar(lastMessageCreatedAt);
+                            } else {
+                                timestamp.textContent = '';
+                            }
+                        }
                     } else {
                         if (preview) preview.textContent = 'No messages yet';
                         if (timestamp) timestamp.textContent = '';
@@ -1066,10 +1127,13 @@
                         if (messageableType === 'channel') {
                             trashForm.classList.remove('hidden');
                         } else {
-                            trashForm.classList.toggle('hidden', messageEls.length > 0);
+                            // Hide thread delete option if there are any messages remaining
+                            const wrappersRemaining = document.querySelectorAll(
+                                '#message-scroll [data-message-id][data-author-id]').length;
+                            trashForm.classList.toggle('hidden', wrappersRemaining > 0);
                         }
                     }
-                });
+                }
             } catch (err) {
                 console.error('Sidebar refresh failed:', err);
             }
@@ -1080,6 +1144,16 @@
             const counter = document.getElementById('charCount');
             if (!input || !counter) return;
             counter.textContent = input.value.length;
+        }
+
+        // Live update the visible "X messages" counter in the header
+        function updateMessageCounter() {
+            const counterEl = document.getElementById('message-count');
+            const sc = document.getElementById('message-scroll');
+            if (!counterEl || !sc) return;
+            // Count only real message wrappers (they have both data-message-id and data-author-id)
+            const count = sc.querySelectorAll('[data-message-id][data-author-id]').length;
+            counterEl.textContent = `${count} message${count === 1 ? '' : 's'}`;
         }
 
         // Preserve chat scroll position helpers
@@ -1165,6 +1239,8 @@
                     wrapper.className = `flex justify-start group items-start gap-2 fade-in overflow-visible`;
                     wrapper.setAttribute('data-message-id', e.id);
                     wrapper.setAttribute('data-author-id', e.user.id);
+                    wrapper.dataset.body = e.body || '';
+                    wrapper.dataset.createdAt = e.created_at || '';
 
                     try {
                         wrapper.innerHTML = buildMessageMarkup(messageObj, false);
@@ -1192,6 +1268,10 @@
                     scrollContainer.appendChild(wrapper);
                     scrollContainer.scrollTop = scrollContainer.scrollHeight;
                     wrapper.offsetHeight;
+                    // Update counter for incoming messages
+                    try {
+                        updateMessageCounter();
+                    } catch (_) {}
                 });
 
                 ch.listen('MessageDeleted', (e) => {
@@ -1201,7 +1281,9 @@
                             const currentTypeRaw = chatForm.querySelector('input[name="messageable_type"]').value;
                             const currentId = chatForm.querySelector('input[name="messageable_id"]').value;
                             const currentType = currentTypeRaw === 'thread' ? 'messagethread' : currentTypeRaw;
-                            if (String(currentType) !== String(e.messageable_type) || String(currentId) !== String(e
+                            const incomingType = e.messageable_type === 'thread' ? 'messagethread' : e
+                                .messageable_type;
+                            if (String(currentType) !== String(incomingType) || String(currentId) !== String(e
                                     .messageable_id)) {
                                 return;
                             }
@@ -1234,10 +1316,16 @@
                                 setTimeout(() => {
                                     flexEl.remove();
                                     requestAnimationFrame(() => restoreDistanceFromBottom(sc, dist));
+                                    try {
+                                        updateMessageCounter();
+                                    } catch (_) {}
                                 }, 220);
                             } else {
                                 messageEl.remove();
                                 requestAnimationFrame(() => restoreDistanceFromBottom(sc, dist));
+                                try {
+                                    updateMessageCounter();
+                                } catch (_) {}
                             }
                         }
 
@@ -1300,10 +1388,16 @@
                                                 flexEl.remove();
                                                 requestAnimationFrame(() => restoreDistanceFromBottom(sc,
                                                     dist));
+                                                try {
+                                                    updateMessageCounter();
+                                                } catch (_) {}
                                             }, 220);
                                         } else {
                                             messageEl.remove();
                                             requestAnimationFrame(() => restoreDistanceFromBottom(sc, dist));
+                                            try {
+                                                updateMessageCounter();
+                                            } catch (_) {}
                                         }
                                     } else {
                                         try {
@@ -1331,6 +1425,9 @@
                                                     requestAnimationFrame(() => restoreDistanceFromBottom(
                                                         document.getElementById('message-scroll'),
                                                         dist));
+                                                    try {
+                                                        updateMessageCounter();
+                                                    } catch (_) {}
                                                 }
                                             }).catch(() => {});
                                         } catch (err) {}
@@ -1502,6 +1599,9 @@
                                 } catch (er) {}
                                 requestAnimationFrame(() => restoreDistanceFromBottom(document.getElementById(
                                     'message-scroll'), dist));
+                                try {
+                                    updateMessageCounter();
+                                } catch (_) {}
                             }
                         }
                     } catch (err) {
@@ -1554,6 +1654,9 @@
                                 } catch (er) {}
                                 const scAfter = document.getElementById('message-scroll');
                                 restoreDistanceFromBottom(scAfter, distBefore);
+                                try {
+                                    updateMessageCounter();
+                                } catch (_) {}
                             }
                         }
                     } catch (err) {
