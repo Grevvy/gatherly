@@ -213,12 +213,12 @@
 
                     <div id="message-scroll" class="flex-1 overflow-y-auto bg-white px-2 space-y-2">
                         @if ($tab === 'channel' && $channel)
-                            <p class="text-[11px] text-gray-400">
+                            <p class="text-[11px] text-gray-400 text-center">
                                 Started
                                 {{ $channel->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
                             </p>
                         @elseif ($tab === 'direct' && $thread)
-                            <p class="text-[11px] text-gray-400">
+                            <p class="text-[11px] text-gray-400 text-center">
                                 Started
                                 {{ $thread->created_at->timezone('America/New_York')->format('F j, Y \a\t g:i A') }}
                             </p>
@@ -412,33 +412,33 @@
 
                 return `
                     ${isSelf ? `
-                                                      <form method="POST" data-id="${message.id}"
-                                                        class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
-                                                        <input type="hidden" name="_token" value="${csrfToken}">
-                                                        <input type="hidden" name="_method" value="DELETE">
-                                                        <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
-                                                          title="Delete" onclick="confirmDeleteMessage(this)">
-                                                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                               viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
-                                                          </svg>
-                                                        </button>
-                                                      </form>
-                                                    ` : ''}
+                                                          <form method="POST" data-id="${message.id}"
+                                                            class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-[8px] mr-[2px] delete-message-form">
+                                                            <input type="hidden" name="_token" value="${csrfToken}">
+                                                            <input type="hidden" name="_method" value="DELETE">
+                                                            <button type="button" class="delete-message-btn text-red-400 hover:text-red-500 transition transform hover:scale-110"
+                                                              title="Delete" onclick="confirmDeleteMessage(this)">
+                                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                                                   viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                      d="M6 7h12M8 7v12a1 1 0 001 1h6a1 1 0 001-1V7M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2" />
+                                                              </svg>
+                                                            </button>
+                                                          </form>
+                                                        ` : ''}
 
                                         ${!isSelf ? `
-                                                                                                        <div class="w-9 h-9 rounded-full ml-3 self-end mb-1 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
-                                                        ${createAvatarMarkup(message)}
-                                                      </div>
-                                                    ` : ''}
+                                                                                                            <div class="w-9 h-9 rounded-full ml-3 self-end mb-1 flex items-center justify-center overflow-hidden bg-gradient-to-br from-sky-300 to-indigo-300 relative z-[50]">
+                                                            ${createAvatarMarkup(message)}
+                                                          </div>
+                                                        ` : ''}
 
                     <div class="max-w-[75%] flex flex-col ${isSelf ? 'items-end' : 'items-start'}">
                       ${!isSelf ? `
-                                                        <div class="text-left">
-                                                          <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
-                                                        </div>
-                                                      ` : ''}
+                                                            <div class="text-left">
+                                                              <span class="text-[10px] font-medium text-gray-500 block">${displayName}</span>
+                                                            </div>
+                                                          ` : ''}
 
                                             <div class="relative px-4 py-2 max-w-[255px] break-words text-sm ${isSelf
                                                 ? 'bg-blue-500 text-white rounded-[15px] self-end shadow-sm hover:scale-[1.02] transition-transform mr-2'
