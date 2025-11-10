@@ -1,16 +1,19 @@
 @php
     use App\Models\Community;
 
-    // Communities the user has joined (for sidebar)
+    // Communities the user has joined (for sidebar) — show only ACTIVE memberships (exclude pending requests)
     $userCommunities = Community::whereHas('memberships', function ($q) {
-        $q->where('user_id', auth()->id());
+        $q->where('user_id', auth()->id())->where('status', 'active');
     })->get();
 
     // Recommended communities (passed from controller)
     $recommended = $recommended ?? collect();
 
-    // All communities (passed from controller) 
+    // All communities (passed from controller)
     $communities = $communities ?? collect();
+
+    // Build unified list for the All Communities section (includes recommended + all, de-duped by id)
+    $allCommunities = $communities->concat($recommended)->unique('id');
 @endphp
 
 <x-layout :title="'Explore Communities'" :community="null" :communities="$userCommunities">
@@ -38,7 +41,8 @@
             <!-- 🔍 Search Bar -->
             <div class="max-w-2xl mx-auto mb-10">
                 <div class="relative">
-                    <input id="communitySearch" type="text" placeholder="Search communities by name, description, or tags..."
+                    <input id="communitySearch" type="text"
+                        placeholder="Search communities by name, description, or tags..."
                         class="w-full px-4 py-3 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-200 
                         shadow-sm focus:ring-2 focus:ring-blue-200 focus:border-blue-200 focus:outline-none 
                         placeholder-gray-400 text-sm transition-all duration-300 hover:shadow-md hover:border-blue-100">
@@ -86,9 +90,9 @@
                                         class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->visibility ?? 'public') }}</span>
                                     <span
                                         class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->join_policy ?? 'open') }}</span>
-                                    <span
-                                        class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $community->memberships->count() ?? 0 }}
-                                        members</span>
+                                    @php $__mc = $community->memberships->count() ?? 0; @endphp
+                                    <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $__mc }}
+                                        {{ $__mc === 1 ? 'member' : 'members' }}</span>
                                 </div>
 
                                 @if (!empty($community->tags))
@@ -155,7 +159,7 @@
             <!-- 🌍 All Communities -->
             <h2 class="text-2xl font-bold text-gray-900 mb-3">🌍 All Communities</h2>
             <div id="communitiesGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($communities as $community)
+                @forelse($allCommunities as $community)
                     <div
                         class="group relative bg-white/80 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-md 
                     hover:shadow-blue-200/70 transition-all duration-300 p-5 flex flex-col justify-between 
@@ -181,9 +185,9 @@
                                     class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->visibility ?? 'public') }}</span>
                                 <span
                                     class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">{{ ucfirst($community->join_policy ?? 'open') }}</span>
-                                <span
-                                    class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $community->memberships->count() ?? 0 }}
-                                    members</span>
+                                @php $__mc2 = $community->memberships->count() ?? 0; @endphp
+                                <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ $__mc2 }}
+                                    {{ $__mc2 === 1 ? 'member' : 'members' }}</span>
                             </div>
 
                             @if (!empty($community->tags))
@@ -343,7 +347,9 @@
 
                     if (res.status === 403 && buttonText === 'Invite Only') {
                         // Show specific message for invite-only communities
-                        showToastify(errorData?.message || 'This community is invite-only. You must be invited by a community moderator to join.', 'error');
+                        showToastify(errorData?.message ||
+                            'This community is invite-only. You must be invited by a community moderator to join.',
+                            'error');
                     } else {
                         showToastify(errorData?.message || 'Failed to join community', 'error');
                     }
@@ -390,8 +396,8 @@
             const isMember = membership && membership.status === 'active';
             const isPending = membership && membership.status === 'pending';
             const joinPolicy = community.join_policy || 'open';
-            const buttonText = joinPolicy === 'request' ? 'Request to Join' : 
-                             joinPolicy === 'invite' ? 'Invite Only' : 'Join';
+            const buttonText = joinPolicy === 'request' ? 'Request to Join' :
+                joinPolicy === 'invite' ? 'Invite Only' : 'Join';
 
             const tags = community.tags || [];
             const tagsHtml = tags.length > 0 ? `
@@ -399,19 +405,21 @@
                     <p class="text-xs font-semibold text-gray-600 mb-1">Tags:</p>
                     <div class="flex flex-wrap gap-2">
                         ${tags.map(tag => `
-                            <span class="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
-                                ${tag.charAt(0).toUpperCase() + tag.slice(1)}
-                            </span>
-                        `).join('')}
+                                        <span class="px-2 py-1 text-xs font-semibold text-blue-600 bg-blue-100 rounded-full shadow-sm">
+                                            ${tag.charAt(0).toUpperCase() + tag.slice(1)}
+                                        </span>
+                                    `).join('')}
                     </div>
                 </div>
             ` : '';
 
             let buttonHtml;
             if (isMember) {
-                buttonHtml = `<button disabled class="bg-gray-300 text-white text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Member ✓</button>`;
+                buttonHtml =
+                    `<button disabled class="bg-gray-300 text-white text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Member ✓</button>`;
             } else if (isPending) {
-                buttonHtml = `<button disabled class="bg-yellow-100 text-yellow-700 text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Request Pending</button>`;
+                buttonHtml =
+                    `<button disabled class="bg-yellow-100 text-yellow-700 text-sm px-4 py-1.5 rounded-xl font-semibold cursor-not-allowed">Request Pending</button>`;
             } else {
                 const isDisabled = joinPolicy === 'invite';
                 buttonHtml = `<button 
@@ -443,7 +451,7 @@
                         <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-2">
                             <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">${(community.visibility || 'public').charAt(0).toUpperCase() + (community.visibility || 'public').slice(1)}</span>
                             <span class="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">${(community.join_policy || 'open').charAt(0).toUpperCase() + (community.join_policy || 'open').slice(1)}</span>
-                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${community.memberships_count || 0} members</span>
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">${community.memberships_count || 0} ${(community.memberships_count || 0) === 1 ? 'member' : 'members'}</span>
                         </div>
                         ${tagsHtml}
                     </div>
@@ -466,60 +474,76 @@
             showSpinner();
 
             fetch(`/explore/search?q=${encodeURIComponent(query)}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin'
-            })
-            .then(response => response.json())
-            .then(data => {
-                hideSpinner();
-                
-                // Update recommended communities
-                if (recommendedGrid) {
-                    if (data.recommended && data.recommended.length > 0) {
-                        recommendedGrid.innerHTML = data.recommended.map(community => renderCommunityCard(community)).join('');
-                    } else {
-                        recommendedGrid.innerHTML = `
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    hideSpinner();
+
+                    // Update recommended communities
+                    if (recommendedGrid) {
+                        if (data.recommended && data.recommended.length > 0) {
+                            recommendedGrid.innerHTML = data.recommended.map(community => renderCommunityCard(
+                                community)).join('');
+                        } else {
+                            recommendedGrid.innerHTML = `
                             <div class="col-span-full text-center text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl py-10">
                                 <p class="text-base font-medium mb-2">No recommended communities found</p>
                                 <p class="text-sm text-gray-500">Try different search terms</p>
                             </div>
                         `;
+                        }
                     }
-                }
 
-                // Update all communities
-                if (communitiesGrid) {
-                    if (data.communities && data.communities.length > 0) {
-                        communitiesGrid.innerHTML = data.communities.map(community => renderCommunityCard(community)).join('');
-                    } else {
-                        communitiesGrid.innerHTML = `
+                    // Update all communities (merge recommended + communities and de-duplicate by slug/id)
+                    if (communitiesGrid) {
+                        const allList = [];
+                        const seen = new Set();
+                        const addList = (arr) => {
+                            (arr || []).forEach(c => {
+                                const key = (c && (c.slug || c.id || c.name)) || null;
+                                if (key && !seen.has(key)) {
+                                    seen.add(key);
+                                    allList.push(c);
+                                }
+                            });
+                        };
+                        addList(data.recommended);
+                        addList(data.communities);
+
+                        if (allList.length > 0) {
+                            communitiesGrid.innerHTML = allList.map(community => renderCommunityCard(community)).join(
+                                '');
+                        } else {
+                            communitiesGrid.innerHTML = `
                             <div class="col-span-full text-center text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl py-10">
                                 <p class="text-base font-medium mb-2">No communities found</p>
                                 <p class="text-sm text-gray-500">Try different search terms</p>
                             </div>
                         `;
+                        }
                     }
-                }
-            })
-            .catch(error => {
-                hideSpinner();
-                console.error('Search failed:', error);
-            });
+                })
+                .catch(error => {
+                    hideSpinner();
+                    console.error('Search failed:', error);
+                });
         }
 
         if (searchInput) {
             searchInput.addEventListener('input', function(e) {
                 const query = e.target.value;
-                
+
                 // Clear existing timeout
                 if (searchTimeout) {
                     clearTimeout(searchTimeout);
                 }
-                
+
                 // Debounce search requests
                 searchTimeout = setTimeout(() => {
                     performSearch(query);
