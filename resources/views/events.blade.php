@@ -293,10 +293,10 @@
                                                         <button onclick="unboostEvent({{ $event->id }})"
                                                             class="text-amber-600 hover:text-amber-700 transition"
                                                             title="Remove boost">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                stroke-linecap="round" stroke-linejoin="round">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round">
                                                                 <path d="M18 12H6" />
                                                                 <path d="m7 21 8-18 2.38 5.44" />
                                                             </svg>
@@ -305,8 +305,8 @@
                                                         <button onclick="boostEvent({{ $event->id }})"
                                                             class="text-amber-500 hover:text-amber-600 transition"
                                                             title="Boost event">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                viewBox="0 0 24 24" fill="none"
                                                                 stroke="currentColor" stroke-width="2"
                                                                 stroke-linecap="round" stroke-linejoin="round">
                                                                 <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
@@ -484,11 +484,13 @@
 
 
                                         </div>
-                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
+                                        <div
+                                            class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
                                             <span>Created {{ $event->created_at->diffForHumans() }}</span>
                                             @if ($event->isBoosted())
                                                 <span>•</span>
-                                                <span class="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                                <span
+                                                    class="inline-flex items-center gap-1 text-amber-600 font-medium">
                                                     <i data-lucide="flame" class="w-3 h-3"></i>
                                                     Boost ends {{ $event->boosted_until?->format('M j, g:i A') }}
                                                 </span>
@@ -625,8 +627,8 @@
                                                         <button onclick="unboostEvent({{ $event->id }})"
                                                             class="text-amber-600 hover:text-amber-700 transition"
                                                             title="Remove boost">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                viewBox="0 0 24 24" fill="none"
                                                                 stroke="currentColor" stroke-width="2"
                                                                 stroke-linecap="round" stroke-linejoin="round">
                                                                 <path d="M18 12H6" />
@@ -637,8 +639,8 @@
                                                         <button onclick="boostEvent({{ $event->id }})"
                                                             class="text-amber-500 hover:text-amber-600 transition"
                                                             title="Boost event">
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                                viewBox="0 0 24 24" fill="none"
                                                                 stroke="currentColor" stroke-width="2"
                                                                 stroke-linecap="round" stroke-linejoin="round">
                                                                 <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z" />
@@ -760,11 +762,13 @@
                                             </div>
 
                                         </div>
-                                        <div class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
+                                        <div
+                                            class="text-[11px] text-gray-400 whitespace-nowrap text-right mt-9 flex items-center gap-1 justify-end">
                                             <span>Created {{ $event->created_at->diffForHumans() }}</span>
                                             @if ($event->isBoosted())
                                                 <span>•</span>
-                                                <span class="inline-flex items-center gap-1 text-amber-600 font-medium">
+                                                <span
+                                                    class="inline-flex items-center gap-1 text-amber-600 font-medium">
                                                     <i data-lucide="flame" class="w-3 h-3"></i>
                                                     Boost ends {{ $event->boosted_until?->format('M j, g:i A') }}
                                                 </span>
@@ -799,7 +803,7 @@
                 'attendees' => $event->attendees->map(fn($a) => ['user' => ['name' => $a->user->name ?? 'Unknown']]),
             ];
         });
-@endphp
+    @endphp
 
     <!-- Boost Modal -->
     <div id="event-boost-modal" class="fixed inset-0 z-50 hidden">
@@ -847,7 +851,8 @@
 
                     <div id="event-boost-custom-wrapper"
                         class="bg-slate-50/90 border border-slate-200 rounded-2xl px-4 py-3 transition-all duration-200">
-                        <label for="event-boost-custom" class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Custom length</label>
+                        <label for="event-boost-custom"
+                            class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Custom length</label>
                         <div class="mt-2 flex items-center gap-3">
                             <input type="number" min="1" max="14" id="event-boost-custom"
                                 class="w-20 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
@@ -858,7 +863,8 @@
                                 Apply
                             </button>
                         </div>
-                        <p class="mt-2 text-[11px] text-slate-400">Between 1 and 14 days. Custom picks override the quick options.</p>
+                        <p class="mt-2 text-[11px] text-slate-400">Between 1 and 14 days. Custom picks override the
+                            quick options.</p>
                     </div>
                 </div>
 
@@ -922,6 +928,9 @@
 
             listTab.classList.remove('text-blue-600');
             listTab.classList.add('text-gray-500');
+
+            // Re-render calendar so buttons reflect latest attending state without full page reload
+            renderCalendar();
         });
 
         listTab.addEventListener('click', () => {
@@ -983,6 +992,13 @@
             const today = new Date();
             const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
             let selectedCell = null;
+
+            // Build a set of event IDs the user is currently attending (from the Attending list DOM)
+            const attendingIds = new Set(
+                Array.from(document.querySelectorAll('#attending-view [id^="event-card-attending-"]'))
+                .map(el => parseInt(el.id.replace('event-card-attending-', ''), 10))
+                .filter(Number.isFinite)
+            );
 
             // --- PREVIOUS MONTH DAYS ---
             for (let i = firstDay - 1; i >= 0; i--) {
@@ -1093,22 +1109,30 @@
                 dayEvents.appendChild(divider);
 
                 if (dayEventsList.length) {
+                    // Recompute attending IDs at click time to avoid stale closure after RSVP changes
+                    const attendingIds = new Set(
+                        Array.from(document.querySelectorAll('#attending-view [id^="event-card-attending-"]'))
+                        .map(el => parseInt(el.id.replace('event-card-attending-', ''), 10))
+                        .filter(Number.isFinite)
+                    );
                     dayEventsList.forEach(ev => {
-                        // Create clickable link card
-                        const card = document.createElement('a');
-                        card.href = `/events/${ev.id}/details`;
+                        // Card container
+                        const card = document.createElement('div');
+                        card.id = `calendar-event-card-${ev.id}`;
                         card.className =
-                            'block border border-gray-200 p-3 shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-200 cursor-pointer rounded-lg';
+                            'border border-gray-200 p-3 shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-200 rounded-lg';
 
                         const wrapper = document.createElement('div');
                         wrapper.className = 'space-y-2 text-sm text-gray-800';
 
-                        const title = document.createElement('p');
-                        title.className = 'font-semibold text-blue-700 hover:text-blue-800';
-                        title.textContent = ev.title;
+                        // Title (clickable link to details)
+                        const titleLink = document.createElement('a');
+                        titleLink.href = `/events/${ev.id}/details`;
+                        titleLink.className = 'font-semibold text-blue-700 hover:text-blue-800 block';
+                        titleLink.textContent = ev.title;
 
                         const timeRow = document.createElement('div');
-                        timeRow.className = 'flex items-center gap-1 text-gray-600';
+                        timeRow.className = 'flex items-center justify-between gap-2 text-gray-600';
 
                         const clockIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                         clockIcon.setAttribute('class', 'h-4 w-4 text-blue-600');
@@ -1132,7 +1156,7 @@
                         const timeText = document.createElement('span');
                         timeText.textContent = `${startTime}${endTime ? ` – ${endTime}` : ''}`;
 
-                        // Add location if available
+                        // Optional location
                         if (ev.location) {
                             const locationRow = document.createElement('div');
                             locationRow.className = 'flex items-center gap-1 text-gray-600 text-xs';
@@ -1155,11 +1179,59 @@
                             wrapper.appendChild(locationRow);
                         }
 
-                        timeRow.appendChild(clockIcon);
-                        timeRow.appendChild(timeText);
-                        wrapper.appendChild(title);
-                        wrapper.appendChild(timeRow);
+                        // Build left and right sides of the same row
+                        const leftTime = document.createElement('div');
+                        leftTime.className = 'flex items-center gap-1';
+                        leftTime.appendChild(clockIcon);
+                        leftTime.appendChild(timeText);
+
+                        // Right controls: small inline buttons
+                        const rightControls = document.createElement('div');
+                        rightControls.className = 'flex items-center gap-2 shrink-0';
+
+                        const primaryBtn = document.createElement('button');
+                        primaryBtn.type = 'button';
+                        primaryBtn.id = `calendar-primary-btn-${ev.id}`;
+                        primaryBtn.className =
+                            'px-3 py-1.5 rounded-full text-sm font-medium shadow-sm transition bg-gray-200 text-gray-700 hover:bg-gray-300';
+
+                        if (attendingIds.has(ev.id)) {
+                            primaryBtn.textContent = 'Leave Event';
+                            primaryBtn.className =
+                                'px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition bg-gray-200 text-gray-800 hover:bg-gray-300 hover:shadow-lg';
+                            primaryBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                sendRSVP(ev.id, 'declined', primaryBtn);
+                            });
+                        } else {
+                            primaryBtn.textContent = 'RSVP to Event';
+                            primaryBtn.className =
+                                'px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition bg-gradient-to-r from-blue-400 to-sky-500 text-white hover:shadow-lg';
+                            primaryBtn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                sendRSVP(ev.id, 'accepted', primaryBtn);
+                            });
+                        }
+
+                        const detailsLink = document.createElement('a');
+                        detailsLink.href = `/events/${ev.id}/details`;
+                        detailsLink.className =
+                            'px-3 py-1.5 rounded-full border border-blue-200 bg-white/70 backdrop-blur-md text-blue-700 hover:bg-blue-50 text-sm font-medium shadow-sm transition text-center';
+                        detailsLink.textContent = 'View Details';
+
+                        // Assemble time row with inline controls
+                        rightControls.appendChild(primaryBtn);
+                        rightControls.appendChild(detailsLink);
+                        timeRow.appendChild(leftTime);
+                        timeRow.appendChild(rightControls);
+
+                        // Assemble card
                         card.appendChild(wrapper);
+                        // Title and time row
+                        wrapper.appendChild(titleLink);
+                        wrapper.appendChild(timeRow);
                         dayEvents.appendChild(card);
                     });
                 } else {
@@ -1260,6 +1332,8 @@
                     showToastify('RSVP updated successfully.', 'success');
                     // If this was an Un-RSVP action from waitlist or attending list, update UI without reload
                     if (status === 'declined' && button) {
+                        // Detect if decline originated from a calendar card button
+                        const isCalendarDecline = !!(button.id && button.id.startsWith('calendar-primary-btn-'));
                         const isAttendingTabActive = !document.getElementById('attending-view').classList.contains(
                             'hidden');
 
@@ -1315,6 +1389,39 @@
 
                         // Remove the un-RSVP button itself from whichever card it was on
                         button.remove();
+
+                        // Also update matching calendar card button if present (no reload needed)
+                        const calendarBtn = document.getElementById(`calendar-primary-btn-${eventId}`);
+                        if (calendarBtn) {
+                            calendarBtn.disabled = false;
+                            calendarBtn.textContent = 'RSVP to Event';
+                            calendarBtn.className =
+                                'px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition bg-gradient-to-r from-blue-400 to-sky-500 text-white hover:shadow-lg';
+                            calendarBtn.onclick = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                sendRSVP(eventId, 'accepted', calendarBtn);
+                            };
+                        }
+
+                        // If calendar view is currently visible and this was NOT a calendar-origin decline, re-render to ensure day cards reflect latest state
+                        const isCalendarVisible = !document.getElementById('calendar-view').classList.contains(
+                            'hidden');
+                        if (!isCalendarDecline && isCalendarVisible && typeof renderCalendar === 'function') {
+                            renderCalendar();
+                        }
+
+                        // If the decline came from the calendar, automatically switch to Events list Upcoming tab
+                        if (isCalendarDecline) {
+                            // Switch main tab to list
+                            activateTab(listTab, calendarTab);
+                            // Ensure Upcoming sub-tab is active
+                            setActiveTab(upcomingTab, attendingTab, upcomingView, attendingView);
+                            // Update URL query param to reflect list view
+                            const urlParams = new URLSearchParams(window.location.search);
+                            urlParams.set('tab', 'list');
+                            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+                        }
 
                     } else {
                         // Accepted flow or other success: keep current behavior
@@ -1464,7 +1571,10 @@
         }
 
         function openEventBoostModal(eventId) {
-            eventBoostState = { id: eventId, duration: 3 };
+            eventBoostState = {
+                id: eventId,
+                duration: 3
+            };
             highlightEventBoostOption(eventBoostState.duration);
             eventBoostCustomInput.value = '';
             eventBoostCustomWrapper?.classList.remove('ring-2', 'ring-amber-400/80', 'border-amber-300', 'bg-amber-50');
@@ -1474,7 +1584,9 @@
             document.body.classList.add('overflow-hidden');
 
             if (window.lucide) {
-                window.lucide.createIcons({ elements: eventBoostModal.querySelectorAll('[data-lucide]') });
+                window.lucide.createIcons({
+                    elements: eventBoostModal.querySelectorAll('[data-lucide]')
+                });
             }
 
             requestAnimationFrame(() => {
@@ -1542,7 +1654,10 @@
         });
 
         async function submitEventBoostModal() {
-            const { id, duration } = eventBoostState;
+            const {
+                id,
+                duration
+            } = eventBoostState;
 
             try {
                 const res = await fetch(`/events/${id}/boost`, {
@@ -1552,7 +1667,9 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
                     },
-                    body: JSON.stringify({ duration_days: duration })
+                    body: JSON.stringify({
+                        duration_days: duration
+                    })
                 });
                 const data = await res.json().catch(() => ({}));
 
