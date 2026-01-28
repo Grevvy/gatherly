@@ -20,7 +20,8 @@ class DashboardController extends \Illuminate\Routing\Controller
         $user = auth()->user();
 
         
-        if (!$user->memberships()->exists()) {
+        // Site admins can always view dashboard, even without memberships
+        if (!$user->isSiteAdmin() && !$user->memberships()->exists()) {
             return redirect()->route('explore')
                 ->with('info', 'Join a community to start your feed!');
         }
@@ -29,6 +30,18 @@ class DashboardController extends \Illuminate\Routing\Controller
         $community = $request->query('community')
             ? Community::where('slug', $request->query('community'))->first()
             : null;
+        
+        // Check if user can access this community
+        if ($community && !$user->isSiteAdmin()) {
+            $isMember = CommunityMembership::where('community_id', $community->id)
+                ->where('user_id', $user->id)
+                ->exists();
+            $isPublic = $community->visibility === 'public';
+            
+            if (!$isMember && !$isPublic) {
+                abort(403, 'You do not have access to this community');
+            }
+        }
 
         $posts = collect();
 

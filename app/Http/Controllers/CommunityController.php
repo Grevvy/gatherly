@@ -14,6 +14,8 @@ class CommunityController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
+        
         $q = Community::query()
             ->when($request->filled('q'), function ($qq) use ($request) {
                 $term = '%'.strtolower($request->q).'%';
@@ -21,6 +23,15 @@ class CommunityController extends Controller
             })
             ->when($request->filled('visibility'), fn($qq) => $qq->where('visibility', $request->visibility))
             ->when($request->boolean('mine'), fn($qq) => $qq->whereHas('memberships', fn($m) => $m->where('user_id', Auth::id())))
+            // Site admins can see all communities
+            ->when(!$user->isSiteAdmin() && !$request->boolean('mine') && !$request->filled('visibility'), function ($qq) use ($user) {
+                $qq->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                        ->orWhereHas('memberships', function ($membership) use ($user) {
+                            $membership->where('user_id', $user->id);
+                        });
+                });
+            })
             ->latest();
 
         return response()->json($q->paginate(12));
